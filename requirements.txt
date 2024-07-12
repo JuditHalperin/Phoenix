@@ -1,0 +1,12 @@
+numpy
+pandas
+scikit-learn
+scipy
+pyyaml
+pytz
+seaborn
+matplotlib
+lightgbm
+xgboost
+gseapy
+bioservices

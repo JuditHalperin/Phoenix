@@ -1,0 +1,122 @@
+import pandas as pd
+from scripts.consts import ALL_CELLS, CELL_TYPE_COL
+from scripts.utils import save_csv, transform_log, re_transform_log
+
+
+def filter_cells():
+    pass
+
+
+def filter_genes(expression):
+    return expression
+
+
+def log_normalize():
+    pass
+
+
+def reduce_dimension():
+    pass
+
+
+def preprocess_data(
+        expression: pd.DataFrame,
+        cell_types: pd.DataFrame,
+        pseudotime: pd.DataFrame,
+        reduction: pd.DataFrame,
+        normalized: bool,
+        exclude_cell_types: list[str],
+        exclude_lineages: list[str],
+        output: str
+    ):
+    # TODO: implement single-cell preprocessing
+
+    # Exclude
+    if exclude_cell_types:
+        raise NotImplementedError('`exclude_cell_types` is not supported yet')
+        # expression = expression.loc[~expression.iloc[:, 0].isin(exclude_cell_types)]
+    if exclude_lineages:
+        raise NotImplementedError('`exclude_lineages` is not supported yet')
+        # expression = expression.drop(columns=[lineage for lineage in exclude_lineages])
+
+    # Preprocess single-cell data
+    if not normalized:
+        raise NotImplementedError('Non-normalized data is not supported yet')
+        expression = filter_cells()
+        expression = log_normalize()
+    expression = filter_genes(expression)
+
+    # Reduce dimensions
+    if not reduction:
+        raise NotImplementedError('Missing `reduction` is not supported yet')
+        reduction = reduce_dimension()
+
+    # Update all inputs
+    cell_types = cell_types.loc[expression.index] if cell_types else None
+    pseudotime = pseudotime.loc[expression.index] if pseudotime else None
+    reduction = reduction.loc[expression.index]
+
+    # Save preprocessed data
+    save_csv(expression, 'expression', output)
+    save_csv(cell_types, 'cell_types', output)
+    save_csv(pseudotime, 'pseudotime', output)
+    save_csv(reduction, 'reduction', output)
+
+    return expression, cell_types, pseudotime, reduction
+
+
+def intersect_genes(gene_set: list[str], all_genes: list[str], required_len: int = 5) -> list[str]:
+
+    is_set = lambda gene_set: len(list(set(gene_set).intersection(set(all_genes)))) >= min(required_len, len(gene_set) // 2)
+
+    if is_set(gene_set):
+        return gene_set
+
+    gene_set = [g.lower() for g in gene_set]
+    if is_set(gene_set):
+        return gene_set
+
+    gene_set = [g.upper() for g in gene_set]
+    if is_set(gene_set):
+        return gene_set
+
+    to_title = lambda word: word[0].upper() + word[1:].lower()
+    gene_set = [to_title(g) for g in gene_set]
+    if is_set(gene_set):
+        return gene_set
+
+    return []
+
+
+def get_cell_types(cell_types):
+    return (cell_types[CELL_TYPE_COL].unique().tolist() + [ALL_CELLS]) if cell_types is not None else [] 
+
+
+def get_lineages(pseudotime):
+    return pseudotime.columns if pseudotime is not None else []
+
+
+def get_top_sum_pathways(data, ascending: bool, size: int) -> list[str]:
+    return data.dropna().sum(axis=1).sort_values(ascending=ascending).head(size).index.tolist()
+
+
+def get_column_unique_pathways(data, col: str, size: int, threshold: float) -> list[str]:
+    data = data[(data[col] == data.min(axis=1)) & (data[col] <= threshold)]
+    data = data.loc[data[col].dropna().sort_values(ascending=True).index]
+    to_drop = [col, ALL_CELLS] if ALL_CELLS in data.columns else [col]
+    data['max_diff'] = data.drop(to_drop, axis=1).min(axis=1) - data[col]
+    data = data.sort_values(by='max_diff', ascending=False)
+    return data.head(size).index.tolist()
+
+
+def get_all_column_unique_pathways(data, size: int, threshold: float):
+    size = size // data.shape[1]
+    pathways = []
+    for col in data.columns:
+        if col != ALL_CELLS:
+            pathways.extend(get_column_unique_pathways(data, col, size, threshold))
+    return pathways
+
+
+def sum_gene_expression(gene_set_expression: pd.DataFrame) -> pd.Series:
+    return transform_log(re_transform_log(gene_set_expression).sum(axis=1)).astype(pd.Series)
