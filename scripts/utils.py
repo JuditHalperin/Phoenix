@@ -51,7 +51,7 @@ def define_background(set_size: int, repeats: int, cell_type: str = None, lineag
 
 def define_set_size(set_len: int, set_fraction: float, min_set_size: int) -> int:
     set_size = min(max(int(set_len * set_fraction), min_set_size), set_len)
-    return min(SIZES, key=lambda x: abs(x - set_size))
+    return max((x for x in SIZES if x <= set_size), default=None)
 
 
 def get_color_mapping(cell_types: list[str]) -> dict[str, str]:
@@ -126,8 +126,11 @@ def summarise_result(target, set_name, original_gene_set, gene_set, top_genes, s
     return {key: convert2str(value) for key, value in result.items()}
 
 
-def read_results(title: str, output_path: str, index_col=None) -> pd.DataFrame:
-    return read_csv(os.path.join(output_path, f'{make_valid_filename(title)}.csv'), index_col=index_col)
+def read_results(title: str, output_path: str, index_col=None) -> pd.DataFrame | None:
+    try:
+        return read_csv(os.path.join(output_path, f'{make_valid_filename(title)}.csv'), index_col=index_col)
+    except:
+        return None
 
 
 def get_preprocessed_data(data: pd.DataFrame | str, output_path: str):
@@ -139,9 +142,9 @@ def get_preprocessed_data(data: pd.DataFrame | str, output_path: str):
 def get_experiment(results: pd.DataFrame | str, output_path: str, set_name: str = None, target: str = None):
     if isinstance(results, str):
         results = read_results(results, output_path)
-    if set_name:
+    if set_name and results:
         results = results[results['set_name'] == set_name]
-    if target:
+    if target and results:
         results = results[results[TARGET_COL] == target]
     return results
 

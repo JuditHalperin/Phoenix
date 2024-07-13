@@ -226,6 +226,11 @@ def plot_experiment(
     target_data = get_preprocessed_data(target_data, output)
     experiment = get_experiment(results, output, set_name, target)
 
+    if target_data is None:
+        raise ValueError(f'Cannot access `{output}/{target_type}.csv`')
+    if experiment is None:
+        raise ValueError(f'Cannot access `{output}/{results}.csv`')
+
     plt.figure(figsize=(13, 10), dpi=200)
 
     # Gene set prediction score
@@ -256,13 +261,16 @@ def plot_all_cell_types_and_trajectories(
         pseudotime: pd.DataFrame,
         output: str = None,
     ):
-    plt.figure(figsize=(13, 5), dpi=200)
+    num_plots = cell_types is not None + pseudotime is not None
+    plt.figure(figsize=(6.5 * num_plots, 5), dpi=200)
 
-    plt.subplot(1, 2, 1)
-    _plot_cell_types(reduction, cell_types, title=True)
+    if cell_types is not None:
+        plt.subplot(1, num_plots, 1)
+        _plot_cell_types(reduction, cell_types, title=True)
     
-    plt.subplot(1, 2, 2)
-    _plot_pseudotime(reduction, pseudotime, title=True)
+    if pseudotime is not None:
+        plt.subplot(1, num_plots, num_plots)
+        _plot_pseudotime(reduction, pseudotime, title=True)
     
     save_plot('all_cell_types_and_trajectories', output)
 
@@ -289,10 +297,13 @@ def plot(
     # Plot target data
     plot_all_cell_types_and_trajectories(reduction, cell_types, pseudotime, output)
 
-    # Plot classification results
+    # Plot prediction results
     for result_type, target_data, target_type in zip([classification_results, regression_results], [cell_types, pseudotime], ['Cell-types', 'Pseudotime']):
 
         results = get_experiment(result_type, output)
+        if target_data is None or results is None:
+            continue
+
         data = results.pivot(index='set_name', columns=TARGET_COL, values='p_value')
         data = data.reindex(index=results['set_name'].unique(), columns=results[TARGET_COL].unique())
 

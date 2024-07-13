@@ -13,10 +13,10 @@ def plot_tool(
         plot(output)
 
     if cell_type:
-        plot_experiment(output, cell_type, pathway, 'cell_types')
+        plot_experiment(output, cell_type, pathway, 'cell_types', 'cell_type_classification', 'cell_types')
 
     if lineage:
-        plot_experiment(output, lineage, pathway, 'pseudotime')
+        plot_experiment(output, lineage, pathway, 'pseudotime', 'pseudotime_regression', 'pseudotime')
 
 
 if __name__ == '__main__':
