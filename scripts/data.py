@@ -68,22 +68,23 @@ def preprocess_data(
 def intersect_genes(gene_set: list[str], all_genes: list[str], required_len: int = 5) -> list[str]:
 
     is_set = lambda gene_set: len(list(set(gene_set).intersection(set(all_genes)))) >= min(required_len, len(gene_set) // 2)
+    intersect_set = lambda gene_set: sorted([g for g in set(gene_set) if g in all_genes])
 
     if is_set(gene_set):
-        return gene_set
+        return intersect_set(gene_set)
 
     gene_set = [g.lower() for g in gene_set]
     if is_set(gene_set):
-        return gene_set
+        return intersect_set(gene_set)
 
     gene_set = [g.upper() for g in gene_set]
     if is_set(gene_set):
-        return gene_set
+        return intersect_set(gene_set)
 
     to_title = lambda word: word[0].upper() + word[1:].lower()
     gene_set = [to_title(g) for g in gene_set]
     if is_set(gene_set):
-        return gene_set
+        return intersect_set(gene_set)
 
     return []
 
@@ -97,7 +98,7 @@ def get_lineages(pseudotime):
 
 
 def get_top_sum_pathways(data, ascending: bool, size: int) -> list[str]:
-    return data.dropna().sum(axis=1).sort_values(ascending=ascending).head(size).index.tolist()
+    return data.dropna(axis=0).sum(axis=1).sort_values(ascending=ascending).head(size).index.tolist()
 
 
 def get_column_unique_pathways(data, col: str, size: int, threshold: float) -> list[str]:

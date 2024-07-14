@@ -50,12 +50,12 @@ def _plot_prediction_scores(
     """
     
     # Draw line for pathway of interest's score
-    plt.axvline(x=experiment['pathway_score'], color=INTEREST_COLOR, label=f'{set_name}: {experiment['pathway_score']}, p={experiment['p_value']}', linestyle='--')
+    plt.axvline(x=experiment['pathway_score'], color=INTEREST_COLOR, label=f'{set_name}: {experiment["pathway_score"]}, p={experiment["p_value"]}', linestyle='--')
 
     # Draw distribution for background score
     plot_args = {
         'x': experiment['background_scores'] if not rm_outliers else remove_outliers(experiment['background_scores']),
-        'label': f'Random genes: {experiment['background_score_mean']}',
+        'label': f'Random genes: {experiment["background_score_mean"]}',
         'color': BACKGROUND_COLOR
     }
     if by_freq:

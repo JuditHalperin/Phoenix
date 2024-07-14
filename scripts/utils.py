@@ -95,13 +95,14 @@ def load_background_scores(background: str, cache_path: str = None):
         print(f'Loading background {background} from cache...')
         with open(f'{cache_path}/{make_valid_filename(background)}.yml', 'r') as file:
             return yaml.load(file, Loader=yaml.FullLoader)
-    return None
+    return []
 
 
-def save_background_scores(background_scores: list[float], background: str, cache_path: str):
-    print(f'Saving background {background} in cache...')
-    with open(f'{cache_path}/{make_valid_filename(background)}.yml', 'w') as file:
-        yaml.dump(background_scores, file)
+def save_background_scores(background_scores: list[float], background: str, cache_path: str = None):
+    if cache_path:
+        print(f'Saving background {background} in cache...')
+        with open(f'{cache_path}/{make_valid_filename(background)}.yml', 'w') as file:
+            yaml.dump(background_scores, file)
 
 
 def summarise_result(target, set_name, original_gene_set, gene_set, top_genes, set_size, feature_selection, predictor, metric, cross_validation, repeats, seed, pathway_score, background_scores: list[float], p_value):
@@ -121,7 +122,7 @@ def summarise_result(target, set_name, original_gene_set, gene_set, top_genes, s
         'pathway_score': pathway_score,
         'background_scores': background_scores,
         'background_score_mean': np.mean(background_scores),
-        'p_value': p_value,
+        'p_value': convert2sci(p_value),
     }
     return {key: convert2str(value) for key, value in result.items()}
 

@@ -117,7 +117,7 @@ def parse_plot_args() -> argparse.Namespace:
                         help='')
     parser.add_argument('--lineage', type=str,
                         help='')
-    parser.add_argument('--pathway', type=str, required=True,
+    parser.add_argument('--pathway', type=str,
                         help='')
     parser.add_argument('--all_plots', action='store_true', default=False,
                         help='')
@@ -133,7 +133,9 @@ def process_plot_args(args):
 
 
 def validate_plot_args(args):
-    assert args.cell_type or args.lineage, 'Provide either `cell_type` or `lineage` target column'
+    if not args.all_plots:
+        assert args.pathway, 'Provide `pathway`'
+        assert args.cell_type or args.lineage, 'Provide either `cell_type` or `lineage` target column'
 
 
 def get_plot_args():

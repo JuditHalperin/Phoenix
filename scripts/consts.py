@@ -89,7 +89,7 @@ INTEREST_COLOR = 'red'
 # Defaults
 DB = 'ALL'
 CLASSIFIER = 'RF'
-REGRESSOR = 'LGBM'
+REGRESSOR = 'RF'
 CLASSIFICATION_METRIC = 'f1_weighted'
 REGRESSION_METRIC = 'neg_mean_squared_error'
 CROSS_VALIDATION = 10

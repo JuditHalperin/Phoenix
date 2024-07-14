@@ -7,7 +7,6 @@ from sklearn.feature_selection import SelectKBest, f_classif, f_regression
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from scipy.stats import ttest_1samp
 from scripts.consts import METRICS, ALL_CELLS, SEED, CELL_TYPE_COL
-from scripts.utils import convert2sci
 
 
 def get_target(
@@ -20,9 +19,7 @@ def get_target(
     """
     scale: whether to normalize continuous target pseudo-time values using min-max scaler
     """
-    assert (cell_types and cell_type) or (pseudotime and lineage)
-
-    if pseudotime:
+    if pseudotime is not None:
         y = pseudotime.loc[:, lineage].dropna()
         return pd.Series(MinMaxScaler().fit_transform(y.values.reshape(-1, 1)).flatten(), index=y.index) if scale else y
     
@@ -50,7 +47,7 @@ def get_data(
     feature_selection: either 'ANOVA' or 'RF', supported for both classification and regression
     ordered_selection: ignored if feature_selection is set
     """
-    assert (cell_types and cell_type) or (pseudotime and lineage)
+    assert (cell_types is not None and cell_type is not None) or (pseudotime is not None and lineage is not None)
     is_regression = pseudotime is not None
 
     y = get_target(cell_types, pseudotime, cell_type, lineage, scale_target)
@@ -71,7 +68,7 @@ def get_data(
         
         if feature_selection == 'RF':
             if 'n_estimators' not in selection_args.keys():
-                selection_args['n_estimators'] = 20
+                selection_args['n_estimators'] = 50
             if is_regression:
                 importances = RandomForestRegressor(random_state=seed, **selection_args).fit(X, y).feature_importances_
             else:
@@ -129,5 +126,5 @@ def train(
 
 def compare_scores(pathway_score: float, background_scores: list[float]) -> float:
     alternative = 'less'  # background is less than pathway
-    p = ttest_1samp(background_scores, pathway_score, alternative=alternative)[1]
-    return convert2sci(p)
+    p_value = ttest_1samp(background_scores, pathway_score, alternative=alternative)[1]
+    return p_value if not np.isnan(p_value) else 1.0
