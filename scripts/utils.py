@@ -54,6 +54,18 @@ def define_set_size(set_len: int, set_fraction: float, min_set_size: int) -> int
     return max((x for x in SIZES if x <= set_size), default=None)
 
 
+def define_batch_size(gene_set_len: int, threads: int) -> int:
+    return np.ceil(gene_set_len / threads)
+
+
+def get_gene_set_batches(gene_sets: list[str], batch_size: int) -> list[dict[str, list[str]]]:
+    gene_set_batches = []
+    for batch_start in range(0, len(gene_sets), batch_size):
+        set_names = list(gene_sets.keys())[batch_start:min(batch_start + batch_size, len(gene_sets))]
+        gene_set_batches.append({set_name: gene_sets[set_name] for set_name in set_names})
+    return gene_set_batches
+
+
 def get_color_mapping(cell_types: list[str]) -> dict[str, str]:
     """
     cell_types: unique

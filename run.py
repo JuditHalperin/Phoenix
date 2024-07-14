@@ -1,10 +1,12 @@
+import threading
 import pandas as pd
+import numpy as np
 from scripts.args import get_run_args
 from scripts.data import preprocess_data, intersect_genes, get_cell_types, get_lineages
 from scripts.pathways import get_gene_sets
 from scripts.prediction import get_data, train, compare_scores
 from scripts.consts import CLASSIFIERS, REGRESSORS, CLASSIFIER_ARGS, REGRESSOR_ARGS
-from scripts.utils import define_background, define_set_size, load_background_scores, save_background_scores, summarise_result, save_csv
+from scripts.utils import define_background, define_set_size, define_batch_size, get_gene_set_batches, load_background_scores, save_background_scores, summarise_result, save_csv
 from scripts.visualization import plot
 
 
@@ -96,19 +98,13 @@ def run_task(
     p_value = compare_scores(pathway_score, background_scores)
 
     return p_value, pathway_score, background_scores, top_genes
-    
 
-def run_tool(
+
+def run_gene_set_batch(
+        gene_sets: list[str],
         expression: str,
         cell_types: str,
         pseudotime: str,
-        reduction: str,
-        normalized: bool,
-        exclude_cell_types: list[str],
-        exclude_lineages: list[str],
-        organism: str,
-        pathway_database: list[str],
-        custom_pathways: list[str],
         feature_selection: str,
         set_fraction: float,
         min_set_size: int,
@@ -119,21 +115,15 @@ def run_tool(
         cross_validation: int,
         repeats: int,
         seed: int,
-        output: str,
         cache: str,
-    ) -> None:
-
-    expression, cell_types, pseudotime, reduction = preprocess_data(
-        expression, cell_types, pseudotime, reduction,
-        normalized, exclude_cell_types, exclude_lineages, output
-    )
-    gene_sets = get_gene_sets(pathway_database, custom_pathways, organism)
-    set_num = len(gene_set)
+        batch: int = None,
+    ) -> tuple[list, list]:
 
     classification_results, regression_results = [], []
 
+    logger = f'Batch {batch}: ' if batch else ''
     for i, (set_name, original_gene_set) in enumerate(gene_sets.items()):
-        print(f'Pathway {i + 1}/{set_num}: {set_name}')
+        print(f'{logger}Pathway {i + 1}/{len(gene_sets)}: {set_name}')
 
         gene_set = intersect_genes(original_gene_set, expression.columns)
         if not gene_set:
@@ -173,6 +163,66 @@ def run_tool(
                 set_size, feature_selection, regressor, regression_metric,
                 cross_validation, repeats, seed, pathway_score, background_scores, p_value
             ))
+
+    return classification_results, regression_results
+
+
+def run_tool(
+        expression: str,
+        cell_types: str,
+        pseudotime: str,
+        reduction: str,
+        normalized: bool,
+        exclude_cell_types: list[str],
+        exclude_lineages: list[str],
+        organism: str,
+        pathway_database: list[str],
+        custom_pathways: list[str],
+        feature_selection: str,
+        set_fraction: float,
+        min_set_size: int,
+        classifier: str,
+        regressor: str,
+        classification_metric: str,
+        regression_metric: str,
+        cross_validation: int,
+        repeats: int,
+        seed: int,
+        threads: int,
+        output: str,
+        cache: str,
+    ) -> None:
+
+    expression, cell_types, pseudotime, reduction = preprocess_data(
+        expression, cell_types, pseudotime, reduction,
+        normalized, exclude_cell_types, exclude_lineages, output
+    )
+    gene_sets = get_gene_sets(pathway_database, custom_pathways, organism)
+
+    batch_args = {
+        'expression': expression, 'cell_types': cell_types, 'pseudotime': pseudotime,
+        'feature_selection': feature_selection, 'set_fraction': set_fraction, 'min_set_size': min_set_size,
+        'classifier': classifier, 'regressor': regressor, 'classification_metric': classification_metric, 'regression_metric': regression_metric,
+        'cross_validation': cross_validation, 'repeats': repeats, 'seed': seed, 'cache': cache,
+    }
+
+    if not threads:
+        classification_results, regression_results = run_gene_set_batch(gene_sets=gene_sets, **batch_args)
+
+    else:
+        results = []
+        thread_objects = []
+
+        batch_size = define_batch_size(len(gene_sets), threads)
+        for batch, batch_gene_sets in enumerate(get_gene_set_batches(gene_sets, batch_size)):
+            thread = threading.Thread(target=lambda batch=batch, gene_sets=batch_gene_sets, batch_args=batch_args: results.append(run_gene_set_batch(batch, gene_sets, **batch_args)))
+            thread.start()
+            thread_objects.append(thread)
+
+        for thread in thread_objects:
+            thread.join()
+
+        classification_results, regression_results = [r[0] for r in results], [r[1] for r in results]
 
     # Results
     save_csv(classification_results, 'cell_type_classification', output, keep_index=False)

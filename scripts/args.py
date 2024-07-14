@@ -57,7 +57,7 @@ def parse_run_args() -> argparse.Namespace:
                         help='')
     
     # Output
-    parser.add_argument('--threads', type=int,
+    parser.add_argument('--threads', type=int, default=None,
                         help='')
     parser.add_argument('--output', type=str, required=True,
                         help='')
@@ -101,6 +101,7 @@ def validate_run_args(args):
     assert args.repeats > 1
     assert args.seed > 0
     assert 0 < args.set_fraction <= 1
+    assert not args.threads or args.threads >= 1
 
 
 def get_run_args():
