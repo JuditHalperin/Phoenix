@@ -3,20 +3,20 @@ from scripts.visualization import plot, plot_experiment
 
 
 def plot_tool(
-        cell_type: str,
-        lineage: str,
-        pathway: str,
+        cell_type: list[str],
+        lineage: list[str],
+        pathway: list[str],
         all_plots: bool,
         output: str,
     ):
     if all_plots:
         plot(output)
 
-    if cell_type:
-        plot_experiment(output, cell_type, pathway, 'cell_types', 'cell_type_classification', 'cell_types')
-
-    if lineage:
-        plot_experiment(output, lineage, pathway, 'pseudotime', 'pseudotime_regression', 'pseudotime')
+    for p in pathway:
+        for c in cell_type:
+            plot_experiment(output, c, p, 'cell_types', 'cell_type_classification', 'cell_types')
+        for l in lineage:
+            plot_experiment(output, l, p, 'pseudotime', 'pseudotime_regression', 'pseudotime')
 
 
 if __name__ == '__main__':
