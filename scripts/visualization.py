@@ -315,6 +315,9 @@ def plot(
                 pathways.extend(pathway_names)
                 for pathway_name in pathway_names:
                     plot_experiment(output, target, pathway_name, target_type, results, target_data, expression, reduction)
-
         pathways.extend(get_top_sum_pathways(data, ascending=False, size=3))
+        
+        if data.shape[0] <= total_size:
+            pathways = data.index
+
         plot_p_values(data.loc[pathways], title=f'{target_type} Prediction', output=output)
