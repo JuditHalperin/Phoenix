@@ -1,4 +1,5 @@
 import argparse, os
+import pandas as pd
 from scripts.consts import *
 from scripts.utils import read_csv, get_full_path
 
@@ -8,17 +9,17 @@ def parse_run_args() -> argparse.Namespace:
 
     # Input data
     parser.add_argument('--expression', type=str, required=True,
-                        help='')
+                        help='Path to single-cell expression data in (CSV file) where genes in columns and cells in rows')
     parser.add_argument('--cell_types', type=str,
                         help='')
     parser.add_argument('--pseudotime', type=str,
                         help='')
-    parser.add_argument('--reduction', type=str,
-                        help='')
+    parser.add_argument('--reduction', type=str, default=REDUCTION,
+                        help='Path to dimensionality reduction data or reduction method name')
 
     # Data preprocessing
-    parser.add_argument('--normalized', action='store_true', default=False,
-                        help='')
+    parser.add_argument('--preprocessed', action='store_true', default=False,
+                        help='Log-normalized expression data')
     parser.add_argument('--exclude_cell_types', type=str, nargs='*',
                         help='Cell type to exclude from analysis')
     parser.add_argument('--exclude_lineages', type=str, nargs='*',
@@ -69,7 +70,10 @@ def process_run_args(args):
     args.expression = read_csv(args.expression)
     args.cell_types = read_csv(args.cell_types).loc[args.expression.index].rename(columns=[CELL_TYPE_COL]) if args.cell_types else None
     args.pseudotime = read_csv(args.pseudotime).loc[args.expression.index] if args.pseudotime else None
-    args.reduction = read_csv(args.reduction).loc[args.expression.index] if args.reduction else None
+    try:
+        args.reduction = read_csv(args.reduction).loc[args.expression.index]
+    except:
+        args.reduction = args.reduction.lower().replace('-', '').replace('_', '').replace(' ', '')
     if args.pathway_database:
         args.pathway_database = args.pathway_database.lower()
         args.pathway_database = DATABASES if args.pathway_database == ALL_DATABASES else [args.pathway_database]
@@ -90,6 +94,7 @@ def process_run_args(args):
 def validate_run_args(args):
     assert args.cell_types or args.pseudotime, 'Provide at least `cell_types` or `pseudotime`'
     assert ALL_CELLS not in args.cell_types[CELL_TYPE_COL].tolist(), f'`cell_types` cannot contain a cell-type called `{ALL_CELLS}`'
+    assert isinstance(args.reduction, pd.DataFrame) or args.reduction in REDUCTION_METHODS
     assert args.pathway_database or args.custom_pathways, 'Provide at least `pathway_database` or `custom_pathways`'
     assert not args.pathway_database or all([db in DATABASES for db in args.pathway_database])
     assert args.classifier in CLASSIFIERS
@@ -114,11 +119,11 @@ def get_run_args():
 def parse_plot_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('--cell_type', type=str,
+    parser.add_argument('--cell_type', type=str, nargs='*',
                         help='')
-    parser.add_argument('--lineage', type=str,
+    parser.add_argument('--lineage', type=str, nargs='*',
                         help='')
-    parser.add_argument('--pathway', type=str,
+    parser.add_argument('--pathway', type=str, nargs='*',
                         help='')
     parser.add_argument('--all_plots', action='store_true', default=False,
                         help='')

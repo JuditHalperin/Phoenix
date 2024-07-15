@@ -172,7 +172,7 @@ def run_tool(
         cell_types: str,
         pseudotime: str,
         reduction: str,
-        normalized: bool,
+        preprocessed: bool,
         exclude_cell_types: list[str],
         exclude_lineages: list[str],
         organism: str,
@@ -195,7 +195,7 @@ def run_tool(
 
     expression, cell_types, pseudotime, reduction = preprocess_data(
         expression, cell_types, pseudotime, reduction,
-        normalized, exclude_cell_types, exclude_lineages, output
+        preprocessed, exclude_cell_types, exclude_lineages, output
     )
     gene_sets = get_gene_sets(pathway_database, custom_pathways, organism)
 
@@ -222,7 +222,7 @@ def run_tool(
         for thread in thread_objects:
             thread.join()
 
-        classification_results, regression_results = [r[0] for r in results], [r[1] for r in results]
+        classification_results, regression_results = [batch[0] for batch in results], [batch[1] for batch in results]
 
     # Results
     save_csv(classification_results, 'cell_type_classification', output, keep_index=False)

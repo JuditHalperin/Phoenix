@@ -1,55 +1,72 @@
 import pandas as pd
-from scripts.consts import ALL_CELLS, CELL_TYPE_COL
+import numpy as np
+import scanpy as sc
+from scripts.consts import ALL_CELLS, CELL_TYPE_COL, NUM_GENES
 from scripts.utils import save_csv, transform_log, re_transform_log
 
-
-def filter_cells():
-    pass
+sc.settings.verbosity = 0
 
 
-def filter_genes(expression):
-    return expression
+def preprocess(expression: pd.DataFrame, preprocessed: bool, num_genes: int = NUM_GENES) -> pd.DataFrame:
+    adata = sc.AnnData(expression)
+
+    if not preprocessed:
+        sc.pp.filter_cells(adata, min_genes=100)
+        sc.pp.filter_genes(adata, min_cells=3)
+        sc.pp.normalize_total(adata, target_sum=1e4)
+        sc.pp.log1p(adata)
+
+    # Filter genes using top mean count
+    if len(adata.var) > num_genes:
+        adata.var['mean_counts'] = adata.X.mean(axis=0)
+        adata = adata[:, adata.var_names[np.argsort(adata.var['mean_counts'])[::-1]][:num_genes]]
+
+    return pd.DataFrame(data=adata.X, index=adata.obs_names, columns=adata.var_names)
 
 
-def log_normalize():
-    pass
+def reduce_dimension(expression: pd.DataFrame, reduction_method: str) -> pd.DataFrame:
+    adata = sc.AnnData(expression)
 
+    sc.tl.pca(adata)
+    if reduction_method == 'umap':
+        sc.pp.neighbors(adata)
+        sc.tl.umap(adata)
+    elif reduction_method == 'tsne':
+        sc.tl.tsne(adata)
 
-def reduce_dimension():
-    pass
+    return pd.DataFrame(
+        adata.obsm[f'X_{reduction_method}'],
+        columns=[f'{reduction_method}1', f'{reduction_method}2'],
+        index=adata.obs_names
+    )
 
 
 def preprocess_data(
         expression: pd.DataFrame,
         cell_types: pd.DataFrame,
         pseudotime: pd.DataFrame,
-        reduction: pd.DataFrame,
-        normalized: bool,
+        reduction: pd.DataFrame | str,
+        preprocessed: bool,
         exclude_cell_types: list[str],
         exclude_lineages: list[str],
         output: str
     ):
-    # TODO: implement single-cell preprocessing
+    """
+    preprocessed: whether expression data are already filtered and log-normalized. In this case neither cell filtering nor normalization is applied, only gene filtering if necessary
+    """
 
-    # Exclude
-    if exclude_cell_types:
-        raise NotImplementedError('`exclude_cell_types` is not supported yet')
-        # expression = expression.loc[~expression.iloc[:, 0].isin(exclude_cell_types)]
-    if exclude_lineages:
-        raise NotImplementedError('`exclude_lineages` is not supported yet')
-        # expression = expression.drop(columns=[lineage for lineage in exclude_lineages])
-
-    # Preprocess single-cell data
-    if not normalized:
-        raise NotImplementedError('Non-normalized data is not supported yet')
-        expression = filter_cells()
-        expression = log_normalize()
-    expression = filter_genes(expression)
+    # Filter and normalize
+    expression = preprocess(expression, preprocessed)
 
     # Reduce dimensions
-    if not reduction:
-        raise NotImplementedError('Missing `reduction` is not supported yet')
-        reduction = reduce_dimension()
+    if isinstance(reduction, str):
+        reduction = reduce_dimension(expression, reduction)
+
+    # Exclude targets
+    if exclude_cell_types:
+        raise NotImplementedError('`exclude_cell_types` is not supported yet')
+    if exclude_lineages:
+        raise NotImplementedError('`exclude_lineages` is not supported yet')
 
     # Update all inputs
     cell_types = cell_types.loc[expression.index] if cell_types else None

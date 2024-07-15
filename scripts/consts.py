@@ -12,6 +12,8 @@ from sklearn.metrics import accuracy_score, balanced_accuracy_score, f1_score, m
 
 SIZES = [1, 2, 3 ,4 ,5, 6, 7, 8, 9, 10, 15, 20, 35, 50, 75, 100, 120, 140, 160, 180, 200, 225, 250, 275, 300, 350, 400]
 
+REDUCTION_METHODS = ['pca', 'umap', 'tsne']
+
 DATABASES = ['go', 'kegg', 'msigdb']
 ALL_DATABASES = 'all'
 
@@ -87,6 +89,8 @@ INTEREST_COLOR = 'red'
 
 
 # Defaults
+NUM_GENES = 8000
+REDUCTION = 'umap'
 DB = 'ALL'
 CLASSIFIER = 'RF'
 REGRESSOR = 'RF'
