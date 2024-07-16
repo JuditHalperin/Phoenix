@@ -88,6 +88,8 @@ def process_run_args(args):
     args.feature_selection = args.feature_selection.upper()
     args.output = get_full_path(args.output)
     args.cache = os.path.join(args.output, 'cache')
+    if not os.path.exists(args.cache):
+        os.mkdir(args.cache)
     return args
 
 

@@ -105,7 +105,7 @@ def save_csv(data: list[dict] | pd.DataFrame, title: str, output_path: str, keep
 def load_background_scores(background: str, cache_path: str = None):
     if cache_path and os.path.exists(f'{cache_path}/{background}.yml'):
         print(f'Loading background {background} from cache...')
-        with open(f'{cache_path}/{make_valid_filename(background)}.yml', 'r') as file:
+        with open(f'{cache_path}/{make_valid_filename(background).lower()}.yml', 'r') as file:
             return yaml.load(file, Loader=yaml.FullLoader)
     return []
 
@@ -113,7 +113,7 @@ def load_background_scores(background: str, cache_path: str = None):
 def save_background_scores(background_scores: list[float], background: str, cache_path: str = None):
     if cache_path:
         print(f'Saving background {background} in cache...')
-        with open(f'{cache_path}/{make_valid_filename(background)}.yml', 'w') as file:
+        with open(f'{cache_path}/{make_valid_filename(background).lower()}.yml', 'w') as file:
             yaml.dump(background_scores, file)
 
 
