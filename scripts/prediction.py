@@ -120,8 +120,8 @@ def train(
         y_pred = model.predict(X_test)
 
         score = METRICS[metric](y_test, y_pred)
-        
-    return score.astype(float)
+
+    return float(score)
 
 
 def compare_scores(pathway_score: float, background_scores: list[float]) -> float:
