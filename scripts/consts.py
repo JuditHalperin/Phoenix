@@ -87,6 +87,7 @@ CELL_TYPE_COL = 'cell_type'
 BACKGROUND_COLOR = 'lightgrey'
 INTEREST_COLOR = 'red'
 
+LIST_SEP = ', '
 
 # Defaults
 NUM_GENES = 8000

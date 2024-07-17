@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from scipy.cluster import hierarchy
 from scripts.data import get_column_unique_pathways, get_top_sum_pathways, sum_gene_expression
-from scripts.utils import save_plot, get_experiment, get_preprocessed_data, remove_outliers, get_color_mapping
+from scripts.utils import save_plot, get_experiment, get_preprocessed_data, remove_outliers, get_color_mapping, convert2sci
 from scripts.consts import THRESHOLD, TARGET_COL, CLASSIFICATION_METRICS, ALL_CELLS, OTHER_CELLS, BACKGROUND_COLOR, INTEREST_COLOR, CELL_TYPE_COL
 
 
@@ -39,7 +39,7 @@ def plot_p_values(
 
 
 def _plot_prediction_scores(
-        experiment: pd.DataFrame,
+        experiment: dict[str, str | float | list[str]],
         set_name: str,
         by_freq: bool = True,
         rm_outliers: bool = False,
@@ -50,22 +50,32 @@ def _plot_prediction_scores(
     """
     
     # Draw line for pathway of interest's score
-    plt.axvline(x=experiment['pathway_score'], color=INTEREST_COLOR, label=f'{set_name}: {experiment["pathway_score"]}, p={experiment["p_value"]}', linestyle='--')
+    plt.axvline(
+        x=experiment['pathway_score'],
+        color=INTEREST_COLOR,
+        label=f'{set_name}: {np.round(experiment["pathway_score"], 3)}, p={convert2sci(experiment["p_value"])}',
+        linestyle='--'
+    )
 
     # Draw distribution for background score
+    background_scores = experiment['background_scores']
+    if rm_outliers:
+        background_scores = remove_outliers(background_scores)
+
     plot_args = {
-        'x': experiment['background_scores'] if not rm_outliers else remove_outliers(experiment['background_scores']),
-        'label': f'Random genes: {experiment["background_score_mean"]}',
+        'x': background_scores,
+        'label': f'Random genes: {np.round(experiment["background_score_mean"], 3)}',
         'color': BACKGROUND_COLOR
     }
+    
     if by_freq:
         plt.hist(bins=50, **plot_args)
         plt.ylabel('Frequency')
     else:
         sns.kdeplot(fill=True, **plot_args)
         plt.ylabel('Density')
-    
-    metric = experiment[['metric']][0]
+
+    metric = experiment['metric']
     plt.xlabel(metric)
     if metric in CLASSIFICATION_METRICS.keys():
         plt.xlim(0, 1)

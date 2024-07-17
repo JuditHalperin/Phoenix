@@ -4,7 +4,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
-from scripts.consts import SIZES, TARGET_COL
+from scripts.consts import SIZES, TARGET_COL, LIST_SEP
 
 
 transform_log = lambda x: np.log2(x + 1)
@@ -25,16 +25,25 @@ def make_valid_term(term: str) -> str:
     return term.replace(',', '')
 
 
-def convert2sci(num):
+def convert2sci(num: float) -> str:
     return '{:.0e}'.format(num)
 
 
-def convert2str(info: str | list | dict | None):
+def convert_to_str(info: str | list | dict | None) -> str:
     if isinstance(info, list):
-        return ', '.join([convert2str(i) for i in info])
+        return LIST_SEP.join([convert_to_str(i) for i in info])
     if isinstance(info, dict):
-        return ', '.join(f"{convert2str(k)}: {convert2str(v)}" for k, v in info.items())
-    return str(info)    
+        return LIST_SEP.join(f'{convert_to_str(k)}: {convert_to_str(v)}' for k, v in info.items())
+    return str(info)
+
+
+def convert_from_str(info: str) -> list | float | str:
+    if LIST_SEP in info:
+        return [convert_from_str(i) for i in info.split(LIST_SEP)]
+    try:
+        return float(info)
+    except:
+        return info
 
 
 def define_task(cell_type: str = None, lineage: str = None):
@@ -103,18 +112,32 @@ def save_csv(data: list[dict] | pd.DataFrame, title: str, output_path: str, keep
 
 
 def load_background_scores(background: str, cache_path: str = None):
+    background = make_valid_filename(background).lower()
     if cache_path and os.path.exists(f'{cache_path}/{background}.yml'):
         print(f'Loading background {background} from cache...')
-        with open(f'{cache_path}/{make_valid_filename(background).lower()}.yml', 'r') as file:
+        with open(f'{cache_path}/{background}.yml', 'r') as file:
             return yaml.load(file, Loader=yaml.FullLoader)
     return []
 
 
 def save_background_scores(background_scores: list[float], background: str, cache_path: str = None):
     if cache_path:
+        background = make_valid_filename(background).lower()
         print(f'Saving background {background} in cache...')
-        with open(f'{cache_path}/{make_valid_filename(background).lower()}.yml', 'w') as file:
+        with open(f'{cache_path}/{background}.yml', 'w') as file:
             yaml.dump(background_scores, file)
+
+
+def export_gene_sets(gene_sets: dict[str, list[str]], output_path: str, by_set: bool = True) -> None:
+    df = pd.DataFrame(dict([(k, pd.Series(v)) for k, v in gene_sets.items()]))
+
+    if not os.path.exists(output_path):
+        os.mkdir(output_path)
+
+    df.to_csv(f'{output_path}/gene_sets.csv', index=False)
+    if by_set:
+        for col in df.columns:
+            pd.DataFrame(df[col]).dropna().to_csv(f'{output_path}/{make_valid_filename(col)}.csv', index=False)
 
 
 def summarise_result(target, set_name, original_gene_set, gene_set, top_genes, set_size, feature_selection, predictor, metric, cross_validation, repeats, seed, pathway_score, background_scores: list[float], p_value):
@@ -136,7 +159,7 @@ def summarise_result(target, set_name, original_gene_set, gene_set, top_genes, s
         'background_score_mean': np.mean(background_scores),
         'p_value': convert2sci(p_value),
     }
-    return {key: convert2str(value) for key, value in result.items()}
+    return {key: convert_to_str(value) for key, value in result.items()}
 
 
 def read_results(title: str, output_path: str, index_col=None) -> pd.DataFrame | None:
@@ -152,13 +175,18 @@ def get_preprocessed_data(data: pd.DataFrame | str, output_path: str):
     return data
 
 
-def get_experiment(results: pd.DataFrame | str, output_path: str, set_name: str = None, target: str = None):
+def get_experiment(results: pd.DataFrame | str, output_path: str, set_name: str = None, target: str = None) -> pd.DataFrame | dict:
     if isinstance(results, str):
         results = read_results(results, output_path)
     if set_name and results:
         results = results[results['set_name'] == set_name]
     if target and results:
         results = results[results[TARGET_COL] == target]
+    
+    if set_name and target and results:
+        results = results.iloc[0]
+        return {key: convert_from_str(results[key]) for key in results.index}
+
     return results
 
 
