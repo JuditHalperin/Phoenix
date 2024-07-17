@@ -271,7 +271,7 @@ def plot_all_cell_types_and_trajectories(
         pseudotime: pd.DataFrame,
         output: str = None,
     ):
-    num_plots = cell_types is not None + pseudotime is not None
+    num_plots = int(cell_types is not None) + int(pseudotime is not None)
     plt.figure(figsize=(6.5 * num_plots, 5), dpi=200)
 
     if cell_types is not None:

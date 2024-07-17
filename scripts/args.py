@@ -68,15 +68,17 @@ def parse_run_args() -> argparse.Namespace:
 
 def process_run_args(args):
     args.expression = read_csv(args.expression)
-    args.cell_types = read_csv(args.cell_types).loc[args.expression.index].rename(columns=[CELL_TYPE_COL]) if args.cell_types else None
+    args.cell_types = read_csv(args.cell_types).loc[args.expression.index] if args.cell_types else None
+    if args.cell_types is not None:
+        args.cell_types.rename(columns={args.cell_types.columns[0]: CELL_TYPE_COL}, inplace=True)
     args.pseudotime = read_csv(args.pseudotime).loc[args.expression.index] if args.pseudotime else None
     
-    try:
+    if os.path.exists(args.reduction):
         args.reduction = read_csv(args.reduction).loc[args.expression.index]
-    except:
+    else:
         args.reduction = args.reduction.lower().replace('-', '').replace('_', '').replace(' ', '')
     
-    if args.pathway_database:
+    if args.pathway_database  is not None:
         args.pathway_database = args.pathway_database.lower()
         args.pathway_database = DATABASES if args.pathway_database == ALL_DATABASES else [args.pathway_database]
     else:
@@ -102,11 +104,11 @@ def process_run_args(args):
 
 
 def validate_run_args(args):
-    assert args.cell_types or args.pseudotime, 'Provide at least `cell_types` or `pseudotime`'
-    assert ALL_CELLS not in args.cell_types[CELL_TYPE_COL].tolist(), f'`cell_types` cannot contain a cell-type called `{ALL_CELLS}`'
+    assert args.cell_types is not None or args.pseudotime is not None, 'Provide at least `cell_types` or `pseudotime`'
+    assert args.cell_types is None or ALL_CELLS not in args.cell_types[CELL_TYPE_COL].tolist(), f'`cell_types` cannot contain a cell-type called `{ALL_CELLS}`'
     assert isinstance(args.reduction, pd.DataFrame) or args.reduction in REDUCTION_METHODS
-    assert args.pathway_database or args.custom_pathways, 'Provide at least `pathway_database` or `custom_pathways`'
-    assert not args.pathway_database or all([db in DATABASES for db in args.pathway_database])
+    assert args.pathway_database is not None or args.custom_pathways is not None, 'Provide at least `pathway_database` or `custom_pathways`'
+    assert args.pathway_database is None or all([db in DATABASES for db in args.pathway_database])
     assert args.classifier in CLASSIFIERS
     assert args.regressor in REGRESSORS
     assert args.classification_metric in CLASSIFICATION_METRICS.keys()

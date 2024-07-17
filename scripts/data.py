@@ -1,3 +1,4 @@
+import warnings
 import pandas as pd
 import numpy as np
 import scanpy as sc
@@ -10,7 +11,9 @@ sc.settings.verbosity = 0
 def preprocess(expression: pd.DataFrame, preprocessed: bool, num_genes: int = NUM_GENES) -> pd.DataFrame:
     print('Running single-cell preprocessing...')
 
-    adata = sc.AnnData(expression)
+    with warnings.catch_warnings():
+        warnings.filterwarnings('ignore', category=UserWarning)
+        adata = sc.AnnData(expression)
 
     if not preprocessed:
         sc.pp.filter_cells(adata, min_genes=100)
@@ -73,8 +76,8 @@ def preprocess_data(
         raise NotImplementedError('`exclude_lineages` is not supported yet')
 
     # Update all inputs
-    cell_types = cell_types.loc[expression.index] if cell_types else None
-    pseudotime = pseudotime.loc[expression.index] if pseudotime else None
+    cell_types = cell_types.loc[expression.index] if cell_types is not None else None
+    pseudotime = pseudotime.loc[expression.index] if pseudotime is not None else None
     reduction = reduction.loc[expression.index]
 
     # Save preprocessed data

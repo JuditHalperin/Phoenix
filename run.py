@@ -123,13 +123,14 @@ def run_gene_set_batch(
 
     logger = f'Batch {batch}: ' if batch else ''
     for i, (set_name, original_gene_set) in enumerate(gene_sets.items()):
-        print(f'{logger}Pathway {i + 1}/{len(gene_sets)}: {set_name}')
 
         gene_set = intersect_genes(original_gene_set, expression.columns)
         if not gene_set:
-            print('Skipped')
+            print(f'{logger}Pathway {i + 1}/{len(gene_sets)}: {set_name} - skipping...')
             continue
-        
+
+        print(f'{logger}Pathway {i + 1}/{len(gene_sets)}: {set_name}')
+
         set_size = define_set_size(len(gene_set), set_fraction, min_set_size)
         task_args = {
             'expression': expression, 'gene_set': gene_set,
@@ -214,14 +215,23 @@ def run_tool(
         results = []
         thread_objects = []
 
-        batch_size = define_batch_size(len(gene_sets), threads)
-        for batch, batch_gene_sets in enumerate(get_gene_set_batches(gene_sets, batch_size)):
-            thread = threading.Thread(target=lambda batch=batch, gene_sets=batch_gene_sets, batch_args=batch_args: results.append(run_gene_set_batch(batch, gene_sets, **batch_args)))
-            thread.start()
-            thread_objects.append(thread)
+        try:
 
-        for thread in thread_objects:
-            thread.join()
+            batch_size = define_batch_size(len(gene_sets), threads)
+            for batch, batch_gene_sets in enumerate(get_gene_set_batches(gene_sets, batch_size)):
+                thread = threading.Thread(target=lambda batch=batch, gene_sets=batch_gene_sets, batch_args=batch_args: results.append(run_gene_set_batch(batch=batch + 1, gene_sets=gene_sets, **batch_args)))
+                thread.start()
+                thread_objects.append(thread)
+
+            for thread in thread_objects:
+                thread.join()
+
+        except Exception as e:
+            print(e)
+            for thread in thread_objects:
+                thread.join(timeout=1)
+                if thread.is_alive():
+                    thread.stop()
 
         classification_results, regression_results = [batch[0] for batch in results], [batch[1] for batch in results]
 
@@ -236,4 +246,4 @@ def run_tool(
 
 if __name__ == '__main__':
     args = get_run_args()
-    run_tool(**args)
+    run_tool(**vars(args))

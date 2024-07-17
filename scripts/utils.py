@@ -64,7 +64,7 @@ def define_set_size(set_len: int, set_fraction: float, min_set_size: int) -> int
 
 
 def define_batch_size(gene_set_len: int, threads: int) -> int:
-    return np.ceil(gene_set_len / threads)
+    return int(np.ceil(gene_set_len / threads))
 
 
 def get_gene_set_batches(gene_sets: list[str], batch_size: int) -> list[dict[str, list[str]]]:
@@ -93,6 +93,7 @@ def remove_outliers(values: list[float]) -> list[float]:
 
 
 def read_csv(path: str, index_col: int = 0) -> pd.DataFrame:
+    print(f'Reading file at {path}...')
     try:
         return pd.read_csv(path, index_col=index_col)
     except FileNotFoundError:
@@ -106,8 +107,9 @@ def read_csv(path: str, index_col: int = 0) -> pd.DataFrame:
 
 
 def save_csv(data: list[dict] | pd.DataFrame, title: str, output_path: str, keep_index: bool = True) -> None:
-    if not data: return
+    if data is None: return
     data = pd.DataFrame(data) if not isinstance(data, pd.DataFrame) else data
+    # TODO: if already exists
     data.to_csv(os.path.join(output_path, f'{make_valid_filename(title)}.csv'), index=keep_index)
 
 

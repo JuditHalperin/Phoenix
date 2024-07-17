@@ -6,7 +6,6 @@ from scripts.utils import make_valid_term
 
 
 def read_pathway(path: str) -> dict[str, list[str]]:
-    print('Reading custom pathways...')
     df = read_csv(path, index_col=False)
     return {column: df[column].dropna().tolist() for column in df.columns}
 
