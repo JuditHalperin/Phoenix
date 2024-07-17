@@ -70,10 +70,12 @@ def process_run_args(args):
     args.expression = read_csv(args.expression)
     args.cell_types = read_csv(args.cell_types).loc[args.expression.index].rename(columns=[CELL_TYPE_COL]) if args.cell_types else None
     args.pseudotime = read_csv(args.pseudotime).loc[args.expression.index] if args.pseudotime else None
+    
     try:
         args.reduction = read_csv(args.reduction).loc[args.expression.index]
     except:
         args.reduction = args.reduction.lower().replace('-', '').replace('_', '').replace(' ', '')
+    
     if args.pathway_database:
         args.pathway_database = args.pathway_database.lower()
         args.pathway_database = DATABASES if args.pathway_database == ALL_DATABASES else [args.pathway_database]
@@ -81,15 +83,21 @@ def process_run_args(args):
         args.pathway_database = []
     args.custom_pathways = args.custom_pathways if args.custom_pathways else []
     args.organism = args.organism.lower()
+    
     args.classifier = args.classifier.upper()
     args.regressor = args.regressor.upper()
     args.classification_metric = args.classification_metric.lower().replace(' ', '_')
     args.regression_metric = args.regression_metric.lower().replace(' ', '_')
     args.feature_selection = args.feature_selection.upper()
+
+    if not os.path.exists(args.output):
+        os.mkdir(args.output)
     args.output = get_full_path(args.output)
+
     args.cache = os.path.join(args.output, 'cache')
     if not os.path.exists(args.cache):
         os.mkdir(args.cache)
+
     return args
 
 

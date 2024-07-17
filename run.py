@@ -206,6 +206,7 @@ def run_tool(
         'cross_validation': cross_validation, 'repeats': repeats, 'seed': seed, 'cache': cache,
     }
 
+    print('Running experiments...')
     if not threads:
         classification_results, regression_results = run_gene_set_batch(gene_sets=gene_sets, **batch_args)
 
@@ -225,9 +226,11 @@ def run_tool(
         classification_results, regression_results = [batch[0] for batch in results], [batch[1] for batch in results]
 
     # Results
+    print('Saving results...')
     save_csv(classification_results, 'cell_type_classification', output, keep_index=False)
     save_csv(regression_results, 'pseudotime_regression', output, keep_index=False)
 
+    print('Plotting results...')
     plot(output, expression, reduction, cell_types, pseudotime, classification_results, regression_results)
 
 

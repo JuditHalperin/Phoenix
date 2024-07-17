@@ -8,6 +8,8 @@ sc.settings.verbosity = 0
 
 
 def preprocess(expression: pd.DataFrame, preprocessed: bool, num_genes: int = NUM_GENES) -> pd.DataFrame:
+    print('Running single-cell preprocessing...')
+
     adata = sc.AnnData(expression)
 
     if not preprocessed:
@@ -25,6 +27,8 @@ def preprocess(expression: pd.DataFrame, preprocessed: bool, num_genes: int = NU
 
 
 def reduce_dimension(expression: pd.DataFrame, reduction_method: str) -> pd.DataFrame:
+    print('Reducing single-cell dimensionality...')
+
     adata = sc.AnnData(expression)
 
     sc.tl.pca(adata)

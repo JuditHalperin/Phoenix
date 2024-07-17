@@ -6,11 +6,13 @@ from scripts.utils import make_valid_term
 
 
 def read_pathway(path: str) -> dict[str, list[str]]:
+    print('Reading custom pathways...')
     df = read_csv(path, index_col=False)
     return {column: df[column].dropna().tolist() for column in df.columns}
 
 
 def retrieve_pathway(id: str, organism: str) -> dict[str, list[str]]:
+    # print('...')
     raise NotImplementedError('Pathway ID is not supported yet')
 
 
@@ -85,6 +87,7 @@ def get_gene_sets(pathway_database: list[str], custom_pathways: list[str], organ
     gene_sets = {}
 
     for database in pathway_database:
+        print(f'Retrieving pathways from {database}...')
         retrieval = globals()[f'retrieve_all_{database}_pathways']
         gene_sets.update(retrieval(organism))
 
