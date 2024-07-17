@@ -1,8 +1,8 @@
 import os, datetime
-import pandas as pd
 import gseapy as gp
+from bioservices.kegg import KEGG
 from scripts.args import read_csv
-from scripts.utils import make_valid_term, make_valid_filename
+from scripts.utils import make_valid_term
 
 
 def read_pathway(path: str) -> dict[str, list[str]]:
@@ -51,7 +51,29 @@ def retrieve_all_go_pathways(organism: str, pathway_type: str = None) -> dict[st
 
 
 def retrieve_all_kegg_pathways(organism: str) -> dict[str, list[str]]:
-    raise NotImplementedError('KEGG is not supported yet')
+    # try:
+    #     organism = KEGG_ORGS(organism)
+    # except:
+    #     raise RuntimeError(f'Organism {organism} is not supported by KEGG annotations yet')
+
+    # k = KEGG()
+    # pathway_list = k.list('pathway', organism)
+    # pathway_list = pathway_list.split('\n')
+
+    # pathways = {}
+    # for pathway in pathway_list:
+    #     try:
+    #         kegg_id = pathway.split('\t')[0].strip()
+    #         pathway_info = k.parse(k.get(kegg_id))
+    #         name = pathway_info['NAME'][0].split(' - ')[0]
+    #         symbols = [gene.split(';')[0].strip() for gene in pathway_info['GENE'].values()]
+    #         pathways[name] = symbols
+    #     except:
+    #         pass
+
+    # return pathways
+
+    pass
 
 
 def retrieve_all_msigdb_pathways(organism: str) -> dict[str, list[str]]:
@@ -76,15 +98,3 @@ def get_gene_sets(pathway_database: list[str], custom_pathways: list[str], organ
     
     gene_sets = {make_valid_term(key): value for key, value in gene_sets.items()}
     return gene_sets
-    
-        
-def export_gene_sets(gene_sets: dict[str, list[str]], out_path: str, by_set: bool = True) -> None:
-    df = pd.DataFrame(dict([(k, pd.Series(v)) for k, v in gene_sets.items()]))
-
-    if not os.path.exists(out_path):
-        os.mkdir(out_path)
-
-    df.to_csv(f'{out_path}/gene_sets.csv', index=False)
-    if by_set:
-        for col in df.columns:
-            pd.DataFrame(df[col]).dropna().to_csv(f'{out_path}/{make_valid_filename(col)}.csv', index=False)
