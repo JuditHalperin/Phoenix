@@ -8,8 +8,9 @@ from scripts.utils import save_csv, transform_log, re_transform_log
 sc.settings.verbosity = 0
 
 
-def preprocess(expression: pd.DataFrame, preprocessed: bool, num_genes: int = NUM_GENES) -> pd.DataFrame:
-    print('Running single-cell preprocessing...')
+def preprocess(expression: pd.DataFrame, preprocessed: bool, num_genes: int = NUM_GENES, verbose: bool = True) -> pd.DataFrame:
+    if verbose:
+        print('Running single-cell preprocessing...')
 
     with warnings.catch_warnings():
         warnings.filterwarnings('ignore', category=UserWarning)

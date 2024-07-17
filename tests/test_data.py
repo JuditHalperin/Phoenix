@@ -13,7 +13,7 @@ class DataTest(Test):
         expression = self.generate_data(num_genes=10, mean=5, std=1)
         lowly_expressed = ['Gene3', 'Gene6']
         expression[lowly_expressed] = 1
-        expression = preprocess(expression, preprocessed=True, num_genes=8)
+        expression = preprocess(expression, preprocessed=True, num_genes=8, verbose=False)
         for gene in lowly_expressed:
             assert gene not in expression.columns
 
