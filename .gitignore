@@ -163,3 +163,4 @@ cython_debug/
 
 # Temp files
 tmp_*
+Exp*
