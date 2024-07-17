@@ -1,10 +1,11 @@
 import unittest
 import pandas as pd
+from tests.interface import Test
 from run import run_task
 from scripts.consts import CELL_TYPE_COL, ALL_CELLS, CLASSIFICATION_METRIC, REGRESSION_METRIC, FEATURE_SELECTION, SEED, THRESHOLD
 
 
-class TaskRunTest(unittest.TestCase):
+class TaskRunTest(Test):
 
     def setUp(self) -> None:
 
@@ -89,7 +90,7 @@ class TaskRunTest(unittest.TestCase):
             bad_gene_set = ['Gene4']
             p_value = run_task(gene_set=bad_gene_set, **task_args)[0]
             self.assertGreaterEqual(p_value, THRESHOLD)
-
+        
 
 if __name__ == '__main__':
     unittest.main()

@@ -1,8 +1,9 @@
 import unittest
-from scripts.utils import define_set_size, define_batch_size, get_gene_set_batches
+from tests.interface import Test
+from scripts.utils import define_set_size, define_batch_size, get_gene_set_batches, convert_to_str, convert_from_str
 
 
-class UtilTest(unittest.TestCase):
+class UtilTest(Test):
     
     def test_set_size_definition(self):
         self.assertEqual(define_set_size(20, 0.5, 15), 15)
@@ -31,6 +32,14 @@ class UtilTest(unittest.TestCase):
         self.assertEqual(len(gene_set_batches), 3)
         self.assertEqual([len(batch) for batch in gene_set_batches], [2, 2, 2])
         self.assertEqual(list(gene_set_batches[-1].keys()), ['set5', 'set6'])
+
+    def test_str_conversion(self):
+        self.assertEqual(convert_to_str(2.2), '2.2')
+        self.assertEqual(convert_to_str([1, 2]), '1, 2')
+        self.assertEqual(convert_to_str({'1': 11, '2': [22, 222]}), '1: 11, 2: 22, 222')
+
+        self.assertEqual(convert_from_str('2.2'), 2.2)
+        self.assertEqual(convert_from_str('1, 2'), [1, 2])
 
 
 if __name__ == '__main__':

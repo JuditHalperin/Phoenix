@@ -1,11 +1,12 @@
 import unittest
 import pandas as pd
 import numpy as np
+from tests.interface import Test
 from scripts.prediction import get_target, get_data, train, compare_scores
 from scripts.consts import CELL_TYPE_COL, ALL_CELLS, CLASSIFIERS, CLASSIFIER_ARGS, REGRESSORS, REGRESSOR_ARGS, THRESHOLD
 
 
-class TrainDataTest(unittest.TestCase):
+class TrainDataTest(Test):
 
     def setUp(self):
 
@@ -222,7 +223,7 @@ class TrainDataTest(unittest.TestCase):
         self.assertEqual(selected_genes[-1], 'Gene4')  # does not change across pseudotime order
 
 
-class TrainingTest(unittest.TestCase):
+class TrainingTest(Test):
     
     def setUp(self):
 
@@ -307,7 +308,7 @@ class TrainingTest(unittest.TestCase):
                 self.assertGreaterEqual(good_score2, bad_score)
 
 
-class ScoreComparisonTest(unittest.TestCase):
+class ScoreComparisonTest(Test):
     
     def test_score_comparison(self):
         background_scores = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6]

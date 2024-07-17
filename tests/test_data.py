@@ -1,28 +1,13 @@
 import unittest
 import pandas as pd
-import numpy as np
+from tests.interface import Test
 from scripts.data import intersect_genes, get_top_sum_pathways, get_column_unique_pathways, preprocess
 
 
-class DataTest(unittest.TestCase):
+class DataTest(Test):
 
     def setUp(self):
         self.all_genes = ['Gene1', 'Gene2', 'Gene3', 'Gene4', 'Gene5', 'Gene6', 'Gene7', 'Gene8']
-
-    def generate_data(
-            self,
-            num_genes = 100,
-            num_cells = 50,
-            mean = 5,
-            std = 1,
-        ) -> pd.DataFrame:
-        data = np.random.lognormal(mean, std, size=(num_cells, num_genes))
-        data = np.log1p(data)
-        return pd.DataFrame(
-            data,
-            columns=[f'Gene{i}' for i in range(num_genes)],
-            index=[f'Cell{i}' for i in range(num_cells)]
-        )
 
     def test_preprocessing(self):
         expression = self.generate_data(num_genes=10, mean=5, std=1)
