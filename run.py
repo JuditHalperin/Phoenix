@@ -117,7 +117,7 @@ def run_gene_set_batch(
         seed: int,
         cache: str,
         batch: int = None,
-    ) -> tuple[list, list]:
+    ) -> tuple[list[dict[str, str]], list[dict[str, str]]]:
 
     classification_results, regression_results = [], []
 
@@ -140,6 +140,7 @@ def run_gene_set_batch(
         }
 
         # Cell-type classification
+        # TODO: use random order in loops
         for cell_type in get_cell_types(cell_types):
             p_value, pathway_score, background_scores, top_genes = run_task(
                 predictor=classifier, metric=classification_metric,
@@ -219,7 +220,8 @@ def run_tool(
 
             batch_size = define_batch_size(len(gene_sets), threads)
             for batch, batch_gene_sets in enumerate(get_gene_set_batches(gene_sets, batch_size)):
-                thread = threading.Thread(target=lambda batch=batch, gene_sets=batch_gene_sets, batch_args=batch_args: results.append(run_gene_set_batch(batch=batch + 1, gene_sets=gene_sets, **batch_args)))
+                thread = threading.Thread(target=lambda batch=batch, gene_sets=batch_gene_sets, batch_args=batch_args:
+                                          results.append(run_gene_set_batch(batch=batch + 1, gene_sets=gene_sets, **batch_args)))
                 thread.start()
                 thread_objects.append(thread)
 
@@ -233,7 +235,10 @@ def run_tool(
                 if thread.is_alive():
                     thread.stop()
 
-        classification_results, regression_results = [batch[0] for batch in results], [batch[1] for batch in results]
+        classification_results, regression_results = [], []
+        for batch_result in results:
+            classification_results.extend(batch_result[0])
+            regression_results.extend(batch_result[1])
 
     # Results
     print('Saving results...')
