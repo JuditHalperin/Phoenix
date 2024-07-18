@@ -38,7 +38,7 @@ def convert_to_str(info: str | list | dict | None) -> str:
 
 
 def convert_from_str(info: str) -> list | float | str:
-    if LIST_SEP in info:
+    if isinstance(info, str) and LIST_SEP in info:
         return [convert_from_str(i) for i in info.split(LIST_SEP)]
     try:
         return float(info)
@@ -182,12 +182,12 @@ def get_preprocessed_data(data: pd.DataFrame | str, output_path: str):
 def get_experiment(results: pd.DataFrame | str, output_path: str, set_name: str = None, target: str = None) -> pd.DataFrame | dict:
     if isinstance(results, str):
         results = read_results(results, output_path)
-    if set_name and results:
+    if set_name and results is not None:
         results = results[results['set_name'] == set_name]
-    if target and results:
+    if target and results is not None:
         results = results[results[TARGET_COL] == target]
     
-    if set_name and target and results:
+    if set_name and target and results is not None:
         results = results.iloc[0]
         return {key: convert_from_str(results[key]) for key in results.index}
 

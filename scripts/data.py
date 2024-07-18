@@ -149,4 +149,4 @@ def get_all_column_unique_pathways(data, size: int, threshold: float):
 
 
 def sum_gene_expression(gene_set_expression: pd.DataFrame) -> pd.Series:
-    return transform_log(re_transform_log(gene_set_expression).sum(axis=1)).astype(pd.Series)
+    return transform_log(re_transform_log(gene_set_expression).sum(axis=1))

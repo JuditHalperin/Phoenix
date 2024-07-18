@@ -124,17 +124,16 @@ def _plot_expression_across_pseudotime(
     """
     pseudotime = pseudotime[~pseudotime[lineage].isna()]
     expression = expression.loc[pseudotime.index]
-    expression['pseudotime'] = pseudotime[lineage]
 
     expression['pseudotime_bin'] = pd.cut(pseudotime[lineage], bins=min(bins, len(pseudotime)), labels=False)
     expression = expression.groupby('pseudotime_bin').mean()
 
-    data_long = expression.melt(id_vars=[lineage], var_name='genes', value_name='expression')
+    data_long = expression.reset_index().melt(id_vars='pseudotime_bin', var_name='gene', value_name='expression')
 
     sns.set_theme(style='whitegrid')
     palette = sns.color_palette('plasma', as_cmap=True)
 
-    sns.boxplot(data=data_long, x=lineage, y='expression', hue=lineage, palette=palette, width=0.6, legend=None)
+    sns.boxplot(data=data_long, x='pseudotime_bin', y='expression', hue='pseudotime_bin', palette=palette, width=0.6, legend=None)
 
     plt.xticks([])
     plt.xlabel(f"{lineage}'s pseudo-time bins")
@@ -204,11 +203,11 @@ def _plot_gene_set_expression(
         cells: list[str] = None,
         rm_outliers: bool = True,
     ):
-    cells = cells if cells else expression.index
+    cells = cells if cells is not None else expression.index
     gene_expression = sum_gene_expression(expression.loc[cells, gene_set])
-    clean_expression = remove_outliers(gene_expression) if rm_outliers else gene_expression
+    clean_expression = remove_outliers(gene_expression) if rm_outliers else gene_expression.tolist()
     plt.scatter(reduction.iloc[:, 0], reduction.iloc[:, 1], s=10, c=BACKGROUND_COLOR)
-    plt.scatter(reduction.iloc[:, 0], reduction.iloc[:, 1], s=10, c=gene_expression, cmap=plt.cm.Blues, vmin=min(clean_expression), vmax=max(clean_expression))
+    plt.scatter(reduction.loc[cells].iloc[:, 0], reduction.loc[cells].iloc[:, 1], s=10, c=gene_expression, cmap=plt.cm.Blues, vmin=min(clean_expression), vmax=max(clean_expression))
     plt.colorbar(label='Pathway expression sum')    
     plt.title(set_name)
 
