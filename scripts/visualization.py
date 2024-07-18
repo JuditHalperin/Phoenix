@@ -164,7 +164,7 @@ def _plot_pseudotime(
         title: bool = False
     ):
     plt.scatter(reduction.iloc[:, 0], reduction.iloc[:, 1], s=10, c=BACKGROUND_COLOR)
-    trajectories = [trajectory] if trajectory else pseudotime.columns
+    trajectories = [trajectory] if trajectory else pseudotime.columns.tolist()
     for trajectory in trajectories:
         plt.scatter(reduction.iloc[:, 0], reduction.iloc[:, 1], s=10, c=pseudotime[trajectory], cmap=plt.cm.plasma)
     if title: plt.title(f'{trajectory} Trajectory' if trajectory else 'Trajectories')
