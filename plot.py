@@ -21,4 +21,4 @@ def plot_tool(
 
 if __name__ == '__main__':
     args = get_plot_args()
-    plot_tool(**args)
+    plot_tool(**vars(args))
