@@ -121,7 +121,7 @@ def get_cell_types(cell_types: pd.DataFrame) -> list[str]:
 
 
 def get_lineages(pseudotime: pd.DataFrame) -> list[str]:
-    lineage_list = pseudotime.columns if pseudotime is not None else []
+    lineage_list = pseudotime.columns.tolist() if pseudotime is not None else []
     random.shuffle(lineage_list)
     return lineage_list
 
