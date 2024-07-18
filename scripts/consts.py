@@ -90,7 +90,7 @@ INTEREST_COLOR = 'red'
 LIST_SEP = ', '
 
 # Defaults
-NUM_GENES = 8000
+NUM_GENES = 5000
 REDUCTION = 'umap'
 DB = 'ALL'
 CLASSIFIER = 'RF'
