@@ -146,6 +146,9 @@ def parse_plot_args() -> argparse.Namespace:
 
 
 def process_plot_args(args):
+    args.cell_type = args.cell_type if args.cell_type else []
+    args.lineage = args.lineage if args.lineage else []
+    args.pathway = args.pathway if args.pathway else []
     args.output = get_full_path(args.output)
     return args
 
