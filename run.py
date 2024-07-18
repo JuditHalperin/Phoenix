@@ -140,7 +140,6 @@ def run_gene_set_batch(
         }
 
         # Cell-type classification
-        # TODO: use random order in loops
         for cell_type in get_cell_types(cell_types):
             p_value, pathway_score, background_scores, top_genes = run_task(
                 predictor=classifier, metric=classification_metric,
@@ -217,7 +216,6 @@ def run_tool(
         thread_objects = []
 
         try:
-
             batch_size = define_batch_size(len(gene_sets), threads)
             for batch, batch_gene_sets in enumerate(get_gene_set_batches(gene_sets, batch_size)):
                 thread = threading.Thread(target=lambda batch=batch, gene_sets=batch_gene_sets, batch_args=batch_args:

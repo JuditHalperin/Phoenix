@@ -1,4 +1,4 @@
-import warnings
+import warnings, random
 import pandas as pd
 import numpy as np
 import scanpy as sc
@@ -114,12 +114,12 @@ def intersect_genes(gene_set: list[str], all_genes: list[str], required_len: int
     return []
 
 
-def get_cell_types(cell_types):
-    return (cell_types[CELL_TYPE_COL].unique().tolist() + [ALL_CELLS]) if cell_types is not None else [] 
+def get_cell_types(cell_types: pd.DataFrame) -> list[str]:
+    return random.shuffle(cell_types[CELL_TYPE_COL].unique().tolist() + [ALL_CELLS]) if cell_types is not None else [] 
 
 
-def get_lineages(pseudotime):
-    return pseudotime.columns if pseudotime is not None else []
+def get_lineages(pseudotime: pd.DataFrame) -> list[str]:
+    return random.shuffle(pseudotime.columns) if pseudotime is not None else []
 
 
 def get_top_sum_pathways(data, ascending: bool, size: int) -> list[str]:
