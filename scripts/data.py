@@ -115,11 +115,15 @@ def intersect_genes(gene_set: list[str], all_genes: list[str], required_len: int
 
 
 def get_cell_types(cell_types: pd.DataFrame) -> list[str]:
-    return random.shuffle(cell_types[CELL_TYPE_COL].unique().tolist() + [ALL_CELLS]) if cell_types is not None else [] 
+    cell_type_list = (cell_types[CELL_TYPE_COL].unique().tolist() + [ALL_CELLS]) if cell_types is not None else []
+    random.shuffle(cell_type_list)
+    return cell_type_list
 
 
 def get_lineages(pseudotime: pd.DataFrame) -> list[str]:
-    return random.shuffle(pseudotime.columns) if pseudotime is not None else []
+    lineage_list = pseudotime.columns if pseudotime is not None else []
+    random.shuffle(lineage_list)
+    return lineage_list
 
 
 def get_top_sum_pathways(data, ascending: bool, size: int) -> list[str]:
