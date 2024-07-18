@@ -100,7 +100,7 @@ def _plot_expression_across_cell_types(
     data_long = expression.melt(id_vars=[CELL_TYPE_COL], var_name='genes', value_name='expression')
 
     sns.set_theme(style='whitegrid')
-    color_mapping = get_color_mapping(cell_types.unique()) if cell_type == ALL_CELLS else {cell_type: INTEREST_COLOR, OTHER_CELLS: BACKGROUND_COLOR}
+    color_mapping = get_color_mapping(cell_types[CELL_TYPE_COL].unique().tolist()) if cell_type == ALL_CELLS else {cell_type: INTEREST_COLOR, OTHER_CELLS: BACKGROUND_COLOR}
 
     sns.violinplot(data=data_long, x=CELL_TYPE_COL, y='expression', hue=CELL_TYPE_COL, palette=color_mapping, width=0.8)
     sns.stripplot(data=data_long, x=CELL_TYPE_COL, y='expression', hue=CELL_TYPE_COL, color='black', alpha=0.2, size=1, jitter=0.08, zorder=1)  # linewidth=0.5
@@ -180,7 +180,7 @@ def _plot_cell_types(
     ):
     if cell_type != ALL_CELLS:
         cell_types.loc[cell_types[CELL_TYPE_COL] != cell_type][CELL_TYPE_COL] = OTHER_CELLS
-    color_mapping = get_color_mapping(cell_types.unique()) if cell_type == ALL_CELLS else {cell_type: INTEREST_COLOR, OTHER_CELLS: BACKGROUND_COLOR}
+    color_mapping = get_color_mapping(cell_types[CELL_TYPE_COL].unique().tolist()) if cell_type == ALL_CELLS else {cell_type: INTEREST_COLOR, OTHER_CELLS: BACKGROUND_COLOR}
     sns.scatterplot(data=reduction, x=reduction.columns[0], y=reduction.columns[1], hue=CELL_TYPE_COL, palette=color_mapping, s=15, edgecolor='none')
     plt.legend(title='')
     if title: plt.title(cell_type)
