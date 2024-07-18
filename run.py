@@ -156,7 +156,7 @@ def run_gene_set_batch(
         for lineage in get_lineages(pseudotime):
             p_value, pathway_score, background_scores, top_genes = run_task(
                 predictor=regressor, metric=regression_metric,
-                pseudotime=pseudotime, lineage=lineage
+                pseudotime=pseudotime, lineage=lineage,
                 **task_args
             )
             regression_results.append(summarise_result(
@@ -212,14 +212,19 @@ def run_tool(
         classification_results, regression_results = run_gene_set_batch(gene_sets=gene_sets, **batch_args)
 
     else:
-        results = []
+        classification_results, regression_results = [], []
         thread_objects = []
 
         try:
             batch_size = define_batch_size(len(gene_sets), threads)
             for batch, batch_gene_sets in enumerate(get_gene_set_batches(gene_sets, batch_size)):
-                thread = threading.Thread(target=lambda batch=batch, gene_sets=batch_gene_sets, batch_args=batch_args:
-                                          results.append(run_gene_set_batch(batch=batch + 1, gene_sets=gene_sets, **batch_args)))
+                
+                def get_batch_results(batch, batch_gene_sets):
+                    classification_batch, regression_batch = run_gene_set_batch(batch=batch, gene_sets=batch_gene_sets, **batch_args)
+                    classification_results.extend(classification_batch)
+                    regression_results.extend(regression_batch)
+
+                thread = threading.Thread(target=get_batch_results, args=(batch + 1, batch_gene_sets))
                 thread.start()
                 thread_objects.append(thread)
 
@@ -227,16 +232,11 @@ def run_tool(
                 thread.join()
 
         except Exception as e:
-            print(e)
             for thread in thread_objects:
                 thread.join(timeout=1)
                 if thread.is_alive():
                     thread.stop()
-
-        classification_results, regression_results = [], []
-        for batch_result in results:
-            classification_results.extend(batch_result[0])
-            regression_results.extend(batch_result[1])
+            raise Exception(e)
 
     # Results
     print('Saving results...')
