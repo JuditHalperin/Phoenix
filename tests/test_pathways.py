@@ -3,10 +3,6 @@ from tests.interface import Test
 from scripts.pathways import get_kegg_organism, retrieve_all_kegg_pathways, retrieve_all_go_pathways, retrieve_all_msigdb_pathways
 
 
-class PathwayTest(Test):
-    pass
-
-
 class KeggTest(Test):
     
     def test_organism_name(self):
