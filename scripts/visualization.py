@@ -8,6 +8,9 @@ from scripts.utils import save_plot, get_experiment, get_preprocessed_data, remo
 from scripts.consts import THRESHOLD, TARGET_COL, CLASSIFICATION_METRICS, ALL_CELLS, OTHER_CELLS, BACKGROUND_COLOR, INTEREST_COLOR, CELL_TYPE_COL
 
 
+sns.set_theme(style='white')
+
+
 def plot_p_values(
         heatmap_data: pd.DataFrame,
         cluster_rows: bool = False,
@@ -35,6 +38,7 @@ def plot_p_values(
     heatmap.set_xticklabels(heatmap.get_xticklabels(), rotation=90, ha='right')
     
     plt.title(title)
+    plt.xlabel('')
     save_plot(f'p_values_{title}', output)
 
 
@@ -69,7 +73,7 @@ def _plot_prediction_scores(
     }
     
     if by_freq:
-        plt.hist(bins=50, **plot_args)
+        plt.hist(bins=50 if len(np.unique(background_scores)) > 50 else None, **plot_args)
         plt.ylabel('Frequency')
     else:
         sns.kdeplot(fill=True, **plot_args)
@@ -94,19 +98,18 @@ def _plot_expression_across_cell_types(
     pass copy
     """
     if cell_type != ALL_CELLS:
-        cell_types.loc[cell_types[CELL_TYPE_COL] != cell_type][CELL_TYPE_COL] = OTHER_CELLS
+        cell_types.loc[cell_types[CELL_TYPE_COL] != cell_type, CELL_TYPE_COL] = OTHER_CELLS
     
     expression[CELL_TYPE_COL] = cell_types[CELL_TYPE_COL]
     data_long = expression.melt(id_vars=[CELL_TYPE_COL], var_name='genes', value_name='expression')
 
-    sns.set_theme(style='whitegrid')
     color_mapping = get_color_mapping(cell_types[CELL_TYPE_COL].unique().tolist()) if cell_type == ALL_CELLS else {cell_type: INTEREST_COLOR, OTHER_CELLS: BACKGROUND_COLOR}
 
     sns.violinplot(data=data_long, x=CELL_TYPE_COL, y='expression', hue=CELL_TYPE_COL, palette=color_mapping, width=0.8)
-    sns.stripplot(data=data_long, x=CELL_TYPE_COL, y='expression', hue=CELL_TYPE_COL, color='black', alpha=0.2, size=1, jitter=0.08, zorder=1)  # linewidth=0.5
+    sns.stripplot(data=data_long, x=CELL_TYPE_COL, y='expression', hue=CELL_TYPE_COL, palette='dark:black', alpha=0.2, size=1, jitter=0.08, zorder=1)  # linewidth=0.5
 
     plt.ylabel('Expression')
-    plt.xlabel('Cell Types')
+    plt.xlabel('')
     plt.xticks(rotation=90)
     plt.ylim(bottom=0)
     plt.title(title)
@@ -130,13 +133,12 @@ def _plot_expression_across_pseudotime(
 
     data_long = expression.reset_index().melt(id_vars='pseudotime_bin', var_name='gene', value_name='expression')
 
-    sns.set_theme(style='whitegrid')
     palette = sns.color_palette('plasma', as_cmap=True)
 
     sns.boxplot(data=data_long, x='pseudotime_bin', y='expression', hue='pseudotime_bin', palette=palette, width=0.6, legend=None)
 
     plt.xticks([])
-    plt.xlabel(f"{lineage}'s pseudo-time bins")
+    plt.xlabel('Pseudotime bins')
     plt.ylabel('Expression')
     plt.title(title)
 
@@ -165,9 +167,11 @@ def _plot_pseudotime(
     ):
     plt.scatter(reduction.iloc[:, 0], reduction.iloc[:, 1], s=10, c=BACKGROUND_COLOR)
     trajectories = [trajectory] if trajectory else pseudotime.columns.tolist()
-    for trajectory in trajectories:
-        plt.scatter(reduction.iloc[:, 0], reduction.iloc[:, 1], s=10, c=pseudotime[trajectory], cmap=plt.cm.plasma)
+    for lineage in trajectories:
+        plt.scatter(reduction.iloc[:, 0], reduction.iloc[:, 1], s=10, c=pseudotime[lineage], cmap=plt.cm.plasma)
     if title: plt.title(f'{trajectory} Trajectory' if trajectory else 'Trajectories')
+    plt.xlabel(reduction.columns[0])
+    plt.ylabel(reduction.columns[1])
     plt.colorbar(label='Pseudotime')
 
 
@@ -178,11 +182,11 @@ def _plot_cell_types(
         title: bool = False
     ):
     if cell_type != ALL_CELLS:
-        cell_types.loc[cell_types[CELL_TYPE_COL] != cell_type][CELL_TYPE_COL] = OTHER_CELLS
+        cell_types.loc[cell_types[CELL_TYPE_COL] != cell_type, CELL_TYPE_COL] = OTHER_CELLS
     color_mapping = get_color_mapping(cell_types[CELL_TYPE_COL].unique().tolist()) if cell_type == ALL_CELLS else {cell_type: INTEREST_COLOR, OTHER_CELLS: BACKGROUND_COLOR}
     sns.scatterplot(data=reduction, x=reduction.columns[0], y=reduction.columns[1], hue=cell_types[CELL_TYPE_COL], palette=color_mapping, s=15, edgecolor='none')
     plt.legend(title='')
-    if title: plt.title(cell_type)
+    if title: plt.title(cell_type if cell_type != ALL_CELLS else 'Cell-types')
 
 
 def _plot_target_data(
@@ -192,7 +196,7 @@ def _plot_target_data(
         target_type: str,
     ):
     assert target_type in ['cell_types', 'pseudotime']
-    globals()[f'_plot_{target_type}'](reduction, target_data, target)
+    globals()[f'_plot_{target_type}'](reduction, target_data.copy(), target)
 
 
 def _plot_gene_set_expression(
@@ -206,9 +210,13 @@ def _plot_gene_set_expression(
     cells = cells if cells is not None else expression.index
     gene_expression = sum_gene_expression(expression.loc[cells, gene_set])
     clean_expression = remove_outliers(gene_expression) if rm_outliers else gene_expression.tolist()
+    
     plt.scatter(reduction.iloc[:, 0], reduction.iloc[:, 1], s=10, c=BACKGROUND_COLOR)
     plt.scatter(reduction.loc[cells].iloc[:, 0], reduction.loc[cells].iloc[:, 1], s=10, c=gene_expression, cmap=plt.cm.Blues, vmin=min(clean_expression), vmax=max(clean_expression))
-    plt.colorbar(label='Pathway expression sum')    
+    
+    plt.colorbar(label='Pathway expression sum')
+    plt.xlabel(reduction.columns[0])
+    plt.ylabel(reduction.columns[1])
     plt.title(set_name)
 
 
@@ -259,9 +267,14 @@ def plot_experiment(
     plt.subplot(2, 2, 4)
     _plot_target_data(reduction, target_data, target, target_type)
     
-    title = f'Predicting {target} using {set_name}'
-    plt.title(title)
-    save_plot(title, output)    
+    if target_type == 'pseudotime':
+        target_name = "'s pseudotime"
+    elif target == ALL_CELLS:
+        target_name = 'Identities'
+    else:
+        target_name = "'s identity"
+    plt.suptitle(f'Predicting {target} {target_name} using {set_name}')
+    save_plot(f'predicting {target} using {set_name}', output)    
 
 
 def plot_all_cell_types_and_trajectories(
@@ -314,19 +327,22 @@ def plot(
             continue
 
         data = results.pivot(index='set_name', columns=TARGET_COL, values='p_value')
-        data = data.reindex(index=results['set_name'].unique(), columns=results[TARGET_COL].unique())
 
-        pathways = []
-        size = total_size // data.shape[1]
-        for target in data.columns:
-            if target != ALL_CELLS:
-                pathway_names = get_column_unique_pathways(data, target, size, threshold)
-                pathways.extend(pathway_names)
-                for pathway_name in pathway_names:
-                    plot_experiment(output, target, pathway_name, target_type, results, target_data, expression, reduction)
-        pathways.extend(get_top_sum_pathways(data, ascending=False, size=3))
-        
-        if data.shape[0] <= total_size:
+        if data.shape[0] <= total_size:  # plot all pathways
             pathways = data.index
+            for target in data.columns:
+                for pathway_name in pathways:
+                    plot_experiment(output, target, pathway_name, target_type, results, target_data, expression, reduction)
 
+        else:  # plot interesting pathways
+            pathways = []
+            size = total_size // data.shape[1]
+            for target in data.columns:
+                if target != ALL_CELLS:
+                    pathway_names = get_column_unique_pathways(data, target, size, threshold)
+                    pathways.extend(pathway_names)
+                    for pathway_name in pathway_names:
+                        plot_experiment(output, target, pathway_name, target_type, results, target_data, expression, reduction)
+            pathways.extend(get_top_sum_pathways(data, ascending=False, size=3))
+        
         plot_p_values(data.loc[pathways], title=f'{target_type} Prediction', output=output)

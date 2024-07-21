@@ -18,7 +18,7 @@ def get_full_path(path: str) -> str:
 
 
 def make_valid_filename(filename: str) -> str:
-    return re.sub(r'[^A-Za-z0-9_]+', '', filename.replace(' ', '_'))
+    return re.sub(r'[^A-Za-z0-9_]+', '', filename.replace(' ', '_')).lower()
 
 
 def make_valid_term(term: str) -> str:
@@ -79,7 +79,7 @@ def get_color_mapping(cell_types: list[str]) -> dict[str, str]:
     """
     cell_types: unique
     """
-    color_palette = sns.color_palette('Set1', n_colors=len(cell_types))
+    color_palette = sns.color_palette('Paired', n_colors=len(cell_types))
     return {cell_type: color_palette[i] for i, cell_type in enumerate(cell_types)}
 
 
