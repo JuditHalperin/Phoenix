@@ -1,8 +1,119 @@
-import os, datetime
+import os, requests, datetime
 import gseapy as gp
 from bioservices.kegg import KEGG
 from scripts.args import read_csv
 from scripts.utils import make_valid_term
+
+
+### KEGG Annotations ###
+
+
+common_organisms = {
+    'human': 'hsa',
+    'mouse': 'mmu',
+    'zebrafish': 'dre',
+    'fish': 'dre',
+    'empedobacter brevis': 'ebv',
+}
+
+organisms_url = "http://rest.kegg.jp/list/organism"
+
+
+def get_kegg_organism(organism):
+
+    if organism in common_organisms.keys():
+        return common_organisms[organism]
+
+    response = requests.get(organisms_url)
+    organisms = response.text.split("\n")
+
+    for i in organisms:
+        parts = i.split("\t")
+        if len(parts) > 2 and organism in parts[2].lower():
+            return parts[1]
+
+    return None
+
+
+def retrieve_all_kegg_pathways(organism: str, subset: int = False) -> dict[str, list[str]]:
+
+    organism = get_kegg_organism(organism)
+    if not organism:
+        raise RuntimeError(f'Organism {organism} is not supported by KEGG annotations')
+
+    k = KEGG()
+    pathway_list = k.list('pathway', organism)
+
+    pathway_list = pathway_list.split('\n')
+
+    if subset:
+        pathway_list = pathway_list[:subset]
+
+    pathways = {}
+    for pathway in pathway_list:
+        try:
+            kegg_id = pathway.split('\t')[0].strip()
+            pathway_info = k.parse(k.get(kegg_id))
+            name = pathway_info['NAME'][0].split(' - ')[0]
+            symbols = [gene.split(';')[0].strip() for gene in pathway_info['GENE'].values()]
+            pathways[name] = symbols
+        except:
+            pass
+
+    return pathways
+
+
+### GO Annotations ###
+
+
+def get_go_db(db):
+    if db.lower().replace('_', ' ') in ['molecular function', 'mf']:
+        return 'GO_Molecular_Function'
+    elif db.lower().replace('_', ' ') in ['biological process', 'bp']:
+        return 'GO_Biological_Process'
+    elif db.lower().replace('_', ' ') in ['cellular component', 'cc']:
+        return 'GO_Cellular_Component'
+    raise ValueError(f'Invalid GO database {db}')
+
+
+def get_library(db, organism):
+    db = get_go_db(db)
+    all_libraries = gp.get_library_name(organism=organism)
+
+    curr_year = datetime.datetime.now().year
+    for year in range(curr_year, 2018, -1):
+        newest_db = [lib for lib in all_libraries if f'{db}_{year}' == lib]
+        if newest_db:
+            return newest_db[0]
+    raise RuntimeError('No available GO databsae')
+    
+
+def get_go_pathways(db, organism):
+    library = get_library(db, organism)
+    pathways = gp.get_library(library, organism=organism)
+    return pathways
+
+
+def retrieve_all_go_pathways(organism: str, pathway_type: str = None) -> dict[str, list[str]]:
+    
+    pathway_types = [pathway_type] if pathway_type else ['bp', 'mf', 'cc']
+    pathways = {}
+    for pathway_type in pathway_types:
+        pathways.update(get_go_pathways(pathway_type, organism))
+
+    pathways = {key.split(' (GO')[0]: value for key, value in pathways.items()}
+    return pathways
+
+
+### MSigDB Annotations ###
+
+
+def retrieve_all_msigdb_pathways(organism: str) -> dict[str, list[str]]:
+    # assert hs or mm
+    raise NotImplementedError('MSigBD is not supported yet')
+
+
+### Pathway Retrieval ###
 
 
 def read_pathway(path: str) -> dict[str, list[str]]:
@@ -13,73 +124,6 @@ def read_pathway(path: str) -> dict[str, list[str]]:
 def retrieve_pathway(id: str, organism: str) -> dict[str, list[str]]:
     # print('...')
     raise NotImplementedError('Pathway ID is not supported yet')
-
-
-def retrieve_all_go_pathways(organism: str, pathway_type: str = None) -> dict[str, list[str]]:
-    
-    def get_go_db(db):
-        if db.lower().replace('_', ' ') in ['molecular function', 'mf']:
-            return 'GO_Molecular_Function'
-        elif db.lower().replace('_', ' ') in ['biological process', 'bp']:
-            return 'GO_Biological_Process'
-        elif db.lower().replace('_', ' ') in ['cellular component', 'cc']:
-            return 'GO_Cellular_Component'
-        raise ValueError(f'Invalid GO database {db}')
-
-    def get_library(db, organism):
-        db = get_go_db(db)
-        all_libraries = gp.get_library_name(organism=organism)
-
-        curr_year = datetime.datetime.now().year
-        for year in range(curr_year, 2018, -1):
-            newest_db = [lib for lib in all_libraries if f'{db}_{year}' == lib]
-            if newest_db:
-                return newest_db[0]
-        raise RuntimeError('No available GO databsae')
-     
-    def get_go_pathways(db, organism):
-        library = get_library(db, organism)
-        pathways = gp.get_library(library, organism=organism)
-        return pathways
-
-    pathway_types = [pathway_type] if pathway_type else ['bp', 'mf', 'cc']
-    pathways = {}
-    for pathway_type in pathway_types:
-        pathways.update(get_go_pathways(pathway_type, organism))
-
-    pathways = {key.split(' (GO')[0]: value for key, value in pathways.items()}
-    return pathways
-
-
-def retrieve_all_kegg_pathways(organism: str) -> dict[str, list[str]]:
-    # try:
-    #     organism = KEGG_ORGS(organism)
-    # except:
-    #     raise RuntimeError(f'Organism {organism} is not supported by KEGG annotations yet')
-
-    # k = KEGG()
-    # pathway_list = k.list('pathway', organism)
-    # pathway_list = pathway_list.split('\n')
-
-    # pathways = {}
-    # for pathway in pathway_list:
-    #     try:
-    #         kegg_id = pathway.split('\t')[0].strip()
-    #         pathway_info = k.parse(k.get(kegg_id))
-    #         name = pathway_info['NAME'][0].split(' - ')[0]
-    #         symbols = [gene.split(';')[0].strip() for gene in pathway_info['GENE'].values()]
-    #         pathways[name] = symbols
-    #     except:
-    #         pass
-
-    # return pathways
-
-    pass
-
-
-def retrieve_all_msigdb_pathways(organism: str) -> dict[str, list[str]]:
-    # assert hs or mm
-    raise NotImplementedError('mSigBD is not supported yet')
 
 
 def get_gene_sets(pathway_database: list[str], custom_pathways: list[str], organism: str) -> dict[str, list[str]]:
