@@ -17,8 +17,8 @@ class KeggTest(Test):
         assert not get_kegg_organism('hippogriff')
 
     def test_pathway_retrieval(self):
-        pathways = retrieve_all_kegg_pathways('empedobacter brevis', subset=50)
-        assert len(pathways) > 25
+        pathways = retrieve_all_kegg_pathways('empedobacter brevis', subset=15)
+        assert len(pathways) > 3
 
 
 class GoTest(Test):

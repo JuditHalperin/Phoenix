@@ -42,21 +42,20 @@ def retrieve_all_kegg_pathways(organism: str, subset: int = False) -> dict[str, 
         raise RuntimeError(f'Organism {organism} is not supported by KEGG annotations')
 
     k = KEGG()
-    pathway_list = k.list('pathway', organism)
-
-    pathway_list = pathway_list.split('\n')
+    k.organism = organism
+    pathway_list = k.pathwayIds
 
     if subset:
         pathway_list = pathway_list[:subset]
 
     pathways = {}
-    for pathway in pathway_list:
+    for kegg_id in pathway_list:
         try:
-            kegg_id = pathway.split('\t')[0].strip()
             pathway_info = k.parse(k.get(kegg_id))
             name = pathway_info['NAME'][0].split(' - ')[0]
-            symbols = [gene.split(';')[0].strip() for gene in pathway_info['GENE'].values()]
-            pathways[name] = symbols
+            symbols = [gene.split(';')[0].strip() for gene in pathway_info['GENE'].values() if ';' in gene]
+            if symbols and name:
+                pathways[name] = symbols
         except:
             pass
 
