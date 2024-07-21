@@ -2,6 +2,7 @@ import argparse, os
 import pandas as pd
 from scripts.consts import *
 from scripts.utils import read_csv, get_full_path
+from scripts.pathways import get_msigdb_organism
 
 
 def parse_run_args() -> argparse.Namespace:
@@ -28,8 +29,8 @@ def parse_run_args() -> argparse.Namespace:
     # Pathway annotations
     parser.add_argument('--organism', type=str, required=True,
                         help='')
-    parser.add_argument('--pathway_database', type=str, default=None,
-                        help='db name or all')
+    parser.add_argument('--pathway_database', type=str, nargs='*',
+                        help='db name')
     parser.add_argument('--custom_pathways', type=str, nargs='*',
                         help='path or ids')
 
@@ -78,13 +79,15 @@ def process_run_args(args):
     else:
         args.reduction = args.reduction.lower().replace('-', '').replace('_', '').replace(' ', '')
     
-    if args.pathway_database  is not None:
-        args.pathway_database = args.pathway_database.lower()
-        args.pathway_database = DATABASES if args.pathway_database == ALL_DATABASES else [args.pathway_database]
+    args.organism = args.organism.lower()
+    if args.pathway_database is not None:
+        args.pathway_database = [db.lower() for db in args.pathway_database]
+        if 'msigdb' in args.pathway_database and len(args.pathway_database) > 1 and get_msigdb_organism(args.organism):
+            args.pathway_database = ['msigdb']
+            print(f'MSigDB already includes the other annotation databases for {args.organism} - automatically removing other annotations')
     else:
         args.pathway_database = []
     args.custom_pathways = args.custom_pathways if args.custom_pathways else []
-    args.organism = args.organism.lower()
     
     args.classifier = args.classifier.upper()
     args.regressor = args.regressor.upper()

@@ -15,7 +15,6 @@ SIZES = [1, 2, 3 ,4 ,5, 6, 7, 8, 9, 10, 15, 20, 35, 50, 75, 100, 120, 140, 160, 
 REDUCTION_METHODS = ['pca', 'umap', 'tsne']
 
 DATABASES = ['go', 'kegg', 'msigdb']
-ALL_DATABASES = 'all'
 
 CLASSIFIERS = {
     'Reg': LogisticRegression,
