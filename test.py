@@ -1,8 +1,9 @@
 import unittest, warnings
+from scripts.utils import show_runtime
 
 
-if __name__ == '__main__':
-
+@show_runtime
+def test_all():
     loader = unittest.TestLoader()
     runner = unittest.TextTestRunner()
 
@@ -13,3 +14,7 @@ if __name__ == '__main__':
         warnings.filterwarnings('ignore', category=UserWarning, message='Features .* are constant')
 
         runner.run(suite)
+
+
+if __name__ == '__main__':
+    test_all()
