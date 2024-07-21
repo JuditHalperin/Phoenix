@@ -1,4 +1,4 @@
-import os, requests, datetime
+import os, requests, datetime, warnings
 import gseapy as gp
 from bioservices.kegg import KEGG
 from scripts.args import read_csv
@@ -37,12 +37,17 @@ def get_kegg_organism(organism):
 
 def retrieve_all_kegg_pathways(organism: str, subset: int = False) -> dict[str, list[str]]:
 
-    organism = get_kegg_organism(organism)
-    if not organism:
+    # If organism is supported by MSigDB use it as it is much faster
+    if get_msigdb_organism(organism):
+        pathways = retrieve_all_msigdb_pathways(organism)
+        return {name.replace('KEGG_', ''): pathway for name, pathway in pathways.items() if 'KEGG' in name}
+
+    kegg_organism = get_kegg_organism(organism)
+    if not kegg_organism:
         raise RuntimeError(f'Organism {organism} is not supported by KEGG annotations')
 
     k = KEGG()
-    k.organism = organism
+    k.organism = kegg_organism
     pathway_list = k.pathwayIds
 
     if subset:
@@ -107,9 +112,57 @@ def retrieve_all_go_pathways(organism: str, pathway_type: str = None) -> dict[st
 ### MSigDB Annotations ###
 
 
+msigdb_categories = {
+    'Hs': ['h'] + [f'c{i}' for i in range(1, 9)],
+    'Ms': ['mh', 'm1', 'm2', 'm3', 'm5', 'm8']
+}
+
+
+def get_msigdb():
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore')
+        return gp.Msigdb()
+
+
+def get_msigdb_organism(organism: str) -> str:
+    if organism.lower() in ['human', 'hs', 'homo sapiens']:
+        return 'Hs'
+    elif organism.lower() in ['mouse', 'mm', 'mus musculus']:
+        return 'Mm'
+    return None        
+
+
+def get_category(category: str) -> str:
+    category = category.lower()
+    if '.' not in category:
+        category = f'{category}.all'
+    return category
+
+
+def get_latest_ver(msig, organism):
+    versions = msig.list_dbver()
+    versions = versions[versions['Name'].str.contains(organism)]
+    return versions['Name'].iloc[-1]
+
+
+def get_msigdb_category(msig, category, organism):
+    return msig.get_gmt(
+        category=get_category(category),
+        dbver=get_latest_ver(msig, organism)
+    )
+
+
 def retrieve_all_msigdb_pathways(organism: str) -> dict[str, list[str]]:
-    # assert hs or mm
-    raise NotImplementedError('MSigBD is not supported yet')
+    msigdb_organism = get_msigdb_organism(organism)
+    if not msigdb_organism:
+        raise RuntimeError(f'Organism {organism} is not supported by MSigBD annotations - provide either `human` or `mouse`')
+    
+    msig = get_msigdb()
+
+    pathways = {}
+    for category in msigdb_categories[msigdb_organism]:
+        pathways.update(get_msigdb_category(msig, category, msigdb_organism))
+    return pathways
 
 
 ### Pathway Retrieval ###

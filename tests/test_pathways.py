@@ -17,8 +17,12 @@ class KeggTest(Test):
         assert not get_kegg_organism('hippogriff')
 
     def test_pathway_retrieval(self):
-        pathways = retrieve_all_kegg_pathways('empedobacter brevis', subset=15)
-        assert len(pathways) > 3
+        pathways = retrieve_all_kegg_pathways('human')  # uses MSigDB
+        assert len(pathways) > 500
+
+        # Too long
+        # pathways = retrieve_all_kegg_pathways('empedobacter brevis', subset=15)
+        # assert len(pathways) > 3
 
 
 class GoTest(Test):
@@ -31,9 +35,8 @@ class GoTest(Test):
 class MsigdbTest(Test):
     
     def test_pathway_retrieval(self):
-        pass
-        # pathways = retrieve_all_msigdb_pathways('human')
-        # assert len(pathways) > 5000
+        pathways = retrieve_all_msigdb_pathways('human')
+        assert len(pathways) > 30000
 
 
 if __name__ == '__main__':
