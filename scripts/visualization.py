@@ -5,7 +5,7 @@ import seaborn as sns
 from scipy.cluster import hierarchy
 from scripts.data import get_column_unique_pathways, get_top_sum_pathways, sum_gene_expression
 from scripts.utils import save_plot, get_experiment, get_preprocessed_data, remove_outliers, get_color_mapping, convert2sci
-from scripts.consts import THRESHOLD, TARGET_COL, CLASSIFICATION_METRICS, ALL_CELLS, OTHER_CELLS, BACKGROUND_COLOR, INTEREST_COLOR, CELL_TYPE_COL
+from scripts.consts import THRESHOLD, TARGET_COL, CLASSIFICATION_METRICS, ALL_CELLS, OTHER_CELLS, BACKGROUND_COLOR, INTEREST_COLOR, CELL_TYPE_COL, MAP_SIZE
 
 
 sns.set_theme(style='white')
@@ -30,7 +30,7 @@ def plot_p_values(
         heatmap_data = heatmap_data.iloc[row_order, :]
 
     plt.figure(figsize=(9, 6), dpi=200)
-    heatmap = sns.heatmap(heatmap_data, cmap='Reds', cbar=False, vmin=0)  # annot=True, fmt='.2f'
+    heatmap = sns.heatmap(heatmap_data, cmap='Reds', cbar=False, vmin=0, xticklabels=True, yticklabels=heatmap_data.shape[0] < MAP_SIZE)  # annot=True, fmt='.2f'
 
     plt.colorbar(heatmap.collections[0], label='-log10(p-value)')
     plt.yticks(np.arange(len(heatmap_data.index)) + 0.5, heatmap_data.index, rotation=0, fontsize=8, ha='right')
@@ -306,7 +306,6 @@ def plot(
         classification_results: pd.DataFrame | str = 'cell_type_classification',
         regression_results: pd.DataFrame | str = 'pseudotime_regression',
         threshold: float = THRESHOLD,
-        total_size: int = 30,
     ):
     """
     result table or file title
@@ -328,7 +327,7 @@ def plot(
 
         data = results.pivot(index='set_name', columns=TARGET_COL, values='p_value')
 
-        if data.shape[0] <= total_size:  # plot all pathways
+        if data.shape[0] <= MAP_SIZE:  # plot all pathways
             pathways = data.index
             for target in data.columns:
                 for pathway_name in pathways:
@@ -336,7 +335,7 @@ def plot(
 
         else:  # plot interesting pathways
             pathways = []
-            size = total_size // data.shape[1]
+            size = MAP_SIZE // data.shape[1]
             for target in data.columns:
                 if target != ALL_CELLS:
                     pathway_names = get_column_unique_pathways(data, target, size, threshold)
@@ -344,5 +343,7 @@ def plot(
                     for pathway_name in pathway_names:
                         plot_experiment(output, target, pathway_name, target_type, results, target_data, expression, reduction)
             pathways.extend(get_top_sum_pathways(data, ascending=False, size=3))
+
+            plot_p_values(data, cluster_rows=True, title=f'{target_type} Prediction - All Pathways', output=output)
         
         plot_p_values(data.loc[pathways], title=f'{target_type} Prediction', output=output)
