@@ -1,12 +1,14 @@
 import random, inspect
 import numpy as np
 import pandas as pd
+from statsmodels.stats.multitest import multipletests
 from sklearn.preprocessing import StandardScaler, MinMaxScaler, LabelEncoder
 from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn.feature_selection import SelectKBest, f_classif, f_regression
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from scipy.stats import ttest_1samp
 from scripts.consts import METRICS, ALL_CELLS, SEED, CELL_TYPE_COL
+from scripts.utils import convert2sci
 
 
 def get_target(
@@ -128,3 +130,8 @@ def compare_scores(pathway_score: float, background_scores: list[float]) -> floa
     alternative = 'less'  # background is less than pathway
     p_value = ttest_1samp(background_scores, pathway_score, alternative=alternative)[1]
     return p_value if not np.isnan(p_value) else 1.0
+
+
+def adjust_p_value(p_values):
+    adjusted_p_values = multipletests(p_values, method='fdr_bh')[1]
+    return [convert2sci(p) for p in adjusted_p_values]

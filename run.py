@@ -1,10 +1,9 @@
 import threading
 import pandas as pd
-import numpy as np
 from scripts.args import get_run_args
 from scripts.data import preprocess_data, intersect_genes, get_cell_types, get_lineages
 from scripts.pathways import get_gene_sets
-from scripts.prediction import get_data, train, compare_scores
+from scripts.prediction import get_data, train, compare_scores, adjust_p_value
 from scripts.consts import CLASSIFIERS, REGRESSORS, CLASSIFIER_ARGS, REGRESSOR_ARGS
 from scripts.utils import define_background, define_set_size, define_batch_size, get_gene_set_batches, load_background_scores, save_background_scores, summarise_result, save_csv
 from scripts.visualization import plot
@@ -237,6 +236,11 @@ def run_tool(
                 if thread.is_alive():
                     thread.stop()
             raise Exception(e)
+
+    # Multiple comparison correction
+    print('Correcting p-values...')
+    classification_results['fdr'] = adjust_p_value(classification_results['p_value'].values)
+    regression_results['fdr'] = adjust_p_value(regression_results['p_value'].values)
 
     # Results
     print('Saving results...')

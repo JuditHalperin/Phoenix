@@ -57,7 +57,7 @@ def _plot_prediction_scores(
     plt.axvline(
         x=experiment['pathway_score'],
         color=INTEREST_COLOR,
-        label=f'{set_name}: {np.round(experiment["pathway_score"], 3)}, p={convert2sci(experiment["p_value"])}',
+        label=f'{set_name}: {np.round(experiment["pathway_score"], 3)}, p={convert2sci(experiment["fdr"])}',
         linestyle='--'
     )
 
@@ -325,7 +325,7 @@ def plot(
         if target_data is None or results is None:
             continue
 
-        data = results.pivot(index='set_name', columns=TARGET_COL, values='p_value')
+        data = results.pivot(index='set_name', columns=TARGET_COL, values='fdr')
 
         if data.shape[0] <= MAP_SIZE:  # plot all pathways
             pathways = data.index
