@@ -2,7 +2,6 @@ import argparse, os
 import pandas as pd
 from scripts.consts import *
 from scripts.utils import read_csv, get_full_path
-from scripts.pathways import get_msigdb_organism
 
 
 def parse_run_args() -> argparse.Namespace:
@@ -82,6 +81,7 @@ def process_run_args(args):
     args.organism = args.organism.lower()
     if args.pathway_database is not None:
         args.pathway_database = [db.lower() for db in args.pathway_database]
+        from scripts.pathways import get_msigdb_organism
         if 'msigdb' in args.pathway_database and len(args.pathway_database) > 1 and get_msigdb_organism(args.organism):
             args.pathway_database = ['msigdb']
             print(f'MSigDB already includes the other annotation databases for {args.organism} - automatically removing other annotations')
