@@ -45,6 +45,32 @@ class TrainDataTest(Test):
         pseudotime_target = get_target(pseudotime=self.pseudotime, lineage=1, scale=True)
         self.assertEqual(pseudotime_target.tolist(), [0.0, 0.5, 1.0])
 
+    def test_data_without_selection(self):
+        # Test case where using cell_types and cell_type
+        X, _, features = get_data(
+            self.expression,
+            features=self.expression.columns, 
+            cell_types=self.cell_types,
+            cell_type='TypeA',
+            set_size=None,
+            feature_selection=None
+        )
+
+        self.assertEqual(X.shape, self.expression.shape)
+        self.assertListEqual(features, self.expression.columns.tolist())
+
+        X, _, features = get_data(
+            self.expression,
+            features=self.expression.columns, 
+            cell_types=self.cell_types,
+            cell_type='TypeA',
+            set_size=self.expression.shape[1],  # all
+            feature_selection='RF'
+        )
+
+        self.assertEqual(X.shape, self.expression.shape)
+        self.assertListEqual(features, self.expression.columns.tolist())
+
     def test_cell_type_data_with_anova(self):
         # Test case where using cell_types and cell_type
         cell_dim = self.expression.shape[0]
@@ -115,7 +141,7 @@ class TrainDataTest(Test):
 
         for cell_type in ['All', 'TypeA', 'TypeB']:
 
-            set_size = self.expression.shape[1]
+            set_size = self.expression.shape[1] - 1
             X, y, selected_genes = get_data(
                 self.expression,
                 features=self.expression.columns, 
@@ -132,20 +158,21 @@ class TrainDataTest(Test):
             # RandomForestClassifier orders features by importance:
             self.assertTrue(selected_genes[0] in ['Gene5', 'Gene2']) 
             self.assertTrue(selected_genes[1] in ['Gene5', 'Gene2'])
-            self.assertTrue(selected_genes[-1] == 'Gene4') 
+            self.assertTrue('Gene4' not in selected_genes) 
 
+            set_size = self.expression.shape[1] - 2
             X, y, selected_genes = get_data(
                 self.expression,
                 features=[g for g in self.expression.columns if g != 'Gene2'], 
                 cell_types=self.cell_types,
                 cell_type=cell_type,
-                set_size=set_size,  # bigger than feature size
+                set_size=set_size,
                 feature_selection='RF'
             )
 
-            self.assertEqual(len(selected_genes), set_size - 1)
+            self.assertEqual(len(selected_genes), set_size)
             self.assertTrue(selected_genes[0] == 'Gene5') 
-            self.assertTrue(selected_genes[-1] == 'Gene4') 
+            self.assertTrue('Gene4' not in selected_genes) 
 
     def test_pseudotime_data_with_anova(self):
         # Test case where using pseudotime and lineage
@@ -187,7 +214,7 @@ class TrainDataTest(Test):
     def test_pseudotime_data_with_rf(self):
         # Test case where using pseudotime and lineage
 
-        set_size = self.expression.shape[1]
+        set_size = self.expression.shape[1] - 1
 
         lineage = 1
         cell_dim = self.pseudotime[lineage].dropna().shape[0]
@@ -220,7 +247,7 @@ class TrainDataTest(Test):
         self.assertEqual(len(y), cell_dim)
         self.assertEqual(len(selected_genes), set_size)
         self.assertEqual(selected_genes[0], 'Gene1')  # changes across each pseudotime step
-        self.assertEqual(selected_genes[-1], 'Gene4')  # does not change across pseudotime order
+        self.assertTrue('Gene4' not in selected_genes)  # does not change across pseudotime order
 
 
 class TrainingTest(Test):

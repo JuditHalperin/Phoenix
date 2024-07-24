@@ -74,7 +74,6 @@ def run_task(
         'expression': expression,
         'predictor': predictor,
         'metric': metric,
-        'set_size': set_size,
         'cross_validation': cross_validation,
         'cell_types': cell_types,
         'pseudotime': pseudotime,
@@ -83,14 +82,18 @@ def run_task(
     }
 
     # Pathway of interest
-    pathway_score, top_genes = get_prediction_score(seed=seed, gene_set=gene_set, feature_selection=feature_selection, **prediction_args)
+    pathway_score, top_genes = get_prediction_score(
+        seed=seed, gene_set=gene_set, feature_selection=feature_selection,
+        set_size=set_size if feature_selection else None,
+        **prediction_args
+    )
 
     # Background
     background = define_background(set_size, repeats, cell_type, lineage)
     background_scores = load_background_scores(background, cache)
     if not background_scores:
         for i in range(repeats):
-            background_scores.append(get_prediction_score(seed=i, **prediction_args)[0])
+            background_scores.append(get_prediction_score(seed=i, set_size=set_size, **prediction_args)[0])
         save_background_scores(background_scores, background, cache)
 
     # Compare scores

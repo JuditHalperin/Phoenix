@@ -93,7 +93,7 @@ def process_run_args(args):
     args.regressor = args.regressor.upper()
     args.classification_metric = args.classification_metric.lower().replace(' ', '_')
     args.regression_metric = args.regression_metric.lower().replace(' ', '_')
-    args.feature_selection = args.feature_selection.upper()
+    args.feature_selection = args.feature_selection.upper() if args.feature_selection else None
 
     if not os.path.exists(args.output):
         os.mkdir(args.output)
@@ -116,7 +116,7 @@ def validate_run_args(args):
     assert args.regressor in REGRESSORS
     assert args.classification_metric in CLASSIFICATION_METRICS.keys()
     assert args.regression_metric in REGRESSION_METRICS.keys()
-    assert args.feature_selection in FEATURE_SELECTION_METHODS
+    assert not args.feature_selection or args.feature_selection in FEATURE_SELECTION_METHODS
     assert 1 <= args.cross_validation <= 10
     assert args.repeats > 1
     assert args.seed > 0
