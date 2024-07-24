@@ -11,6 +11,7 @@ from scripts.consts import METRICS, ALL_CELLS, SEED, CELL_TYPE_COL
 from scripts.utils import convert2sci, show_runtime
 
 
+@show_runtime
 def get_target(
         cell_types: pd.DataFrame = None,
         pseudotime: pd.DataFrame = None,
@@ -30,6 +31,7 @@ def get_target(
     return cell_types[CELL_TYPE_COL] == cell_type
 
 
+@show_runtime
 def get_data(
         expression: pd.DataFrame,
         features: list[str] = None,

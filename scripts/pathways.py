@@ -2,7 +2,7 @@ import os, requests, datetime, warnings
 import gseapy as gp
 from bioservices.kegg import KEGG
 from scripts.args import read_csv
-from scripts.utils import make_valid_term
+from scripts.utils import make_valid_term, show_runtime
 
 
 ### KEGG Annotations ###
@@ -178,6 +178,7 @@ def retrieve_pathway(id: str, organism: str) -> dict[str, list[str]]:
     raise NotImplementedError('Pathway ID is not supported yet')
 
 
+@show_runtime
 def get_gene_sets(pathway_database: list[str], custom_pathways: list[str], organism: str) -> dict[str, list[str]]:
     gene_sets = {}
 
