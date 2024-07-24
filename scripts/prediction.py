@@ -1,4 +1,4 @@
-import random, inspect
+import random, inspect, warnings
 import numpy as np
 import pandas as pd
 from statsmodels.stats.multitest import multipletests
@@ -134,7 +134,9 @@ def train(
 
 def compare_scores(pathway_score: float, background_scores: list[float]) -> float:
     alternative = 'less'  # background is less than pathway
-    p_value = ttest_1samp(background_scores, pathway_score, alternative=alternative)[1]
+    with warnings.catch_warnings():
+        warnings.filterwarnings('ignore', category=RuntimeWarning, message='Precision loss occurred in moment calculation')
+        p_value = ttest_1samp(background_scores, pathway_score, alternative=alternative)[1]
     return p_value if not np.isnan(p_value) else 1.0
 
 

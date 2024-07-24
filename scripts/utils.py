@@ -114,7 +114,7 @@ def save_csv(data: list[dict] | pd.DataFrame, title: str, output_path: str, keep
     data.to_csv(os.path.join(output_path, f'{make_valid_filename(title)}.csv'), index=keep_index)
 
 
-def load_background_scores(background: str, cache_path: str = None, verbose: bool = False):
+def load_background_scores(background: str, cache_path: str = None, verbose: bool = True):
     background = make_valid_filename(background).lower()
     if cache_path and os.path.exists(f'{cache_path}/{background}.yml'):
         if verbose:
@@ -124,7 +124,7 @@ def load_background_scores(background: str, cache_path: str = None, verbose: boo
     return []
 
 
-def save_background_scores(background_scores: list[float], background: str, cache_path: str = None, verbose: bool = False):
+def save_background_scores(background_scores: list[float], background: str, cache_path: str = None, verbose: bool = True):
     if cache_path:
         background = make_valid_filename(background).lower()
         if verbose:

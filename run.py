@@ -117,6 +117,7 @@ def run_gene_set_batch(
         cross_validation: int,
         repeats: int,
         seed: int,
+        output: str,
         cache: str,
         batch: int = None,
     ) -> tuple[list[dict[str, str]], list[dict[str, str]]]:
@@ -167,6 +168,10 @@ def run_gene_set_batch(
                 cross_validation, repeats, seed, pathway_score, background_scores, p_value
             ))
 
+    if batch:
+        save_csv(classification_results, f'cell_type_classification_batch{batch}', output, keep_index=False)
+        save_csv(regression_results, f'pseudotime_regression_batch{batch}', output, keep_index=False)
+
     return classification_results, regression_results
 
 
@@ -206,7 +211,7 @@ def run_tool(
         'expression': expression, 'cell_types': cell_types, 'pseudotime': pseudotime,
         'feature_selection': feature_selection, 'set_fraction': set_fraction, 'min_set_size': min_set_size,
         'classifier': classifier, 'regressor': regressor, 'classification_metric': classification_metric, 'regression_metric': regression_metric,
-        'cross_validation': cross_validation, 'repeats': repeats, 'seed': seed, 'cache': cache,
+        'cross_validation': cross_validation, 'repeats': repeats, 'seed': seed, 'output': output, 'cache': cache,
     }
 
     print('Running experiments...')
