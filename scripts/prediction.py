@@ -58,8 +58,9 @@ def get_data(
     X = expression.loc[cells, features]
     X = StandardScaler().fit_transform(X) if scale_features else X
 
-    if not set_size or set_size > len(features):
-        set_size = len(features)
+    # Select all features
+    if not set_size or set_size >= len(features):
+        return X, y, features
 
     # Select best features using either ANOVA or RF
     if feature_selection:
@@ -99,6 +100,8 @@ def train(
         seed: int = SEED,
     ) -> float:
 
+    if 'n_jobs' in inspect.signature(predictor).parameters:
+        predictor_args['n_jobs'] = -1  # all processes
     if 'random_state' in inspect.signature(predictor).parameters:
         predictor_args['random_state'] = seed
     if balanced_weights and 'class_weight' in inspect.signature(predictor).parameters:
