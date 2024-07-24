@@ -261,7 +261,7 @@ def plot_experiment(
     # Gene set expression upon reduction
     plt.subplot(2, 2, 3)
     cells = expression.index if target_type == 'cell_types' else target_data[target].dropna().index
-    _plot_gene_set_expression(expression, reduction, experiment['gene_set'], cells=cells)
+    _plot_gene_set_expression(expression, reduction, experiment['top_genes'], cells=cells)
     
     # Target data upon reduction
     plt.subplot(2, 2, 4)

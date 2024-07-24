@@ -149,8 +149,8 @@ def summarise_result(target, set_name, original_gene_set, gene_set, top_genes, s
     result = {
         TARGET_COL: target,
         'set_name': set_name,
-        'original_gene_set': original_gene_set,
-        'gene_set': gene_set,
+        # 'original_gene_set': original_gene_set,
+        # 'gene_set': gene_set,
         'top_genes': top_genes,
         'set_size': set_size,
         'feature_selection': feature_selection,
