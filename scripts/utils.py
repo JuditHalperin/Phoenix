@@ -55,6 +55,7 @@ def define_task(cell_type: str = None, lineage: str = None):
 
 
 def define_background(set_size: int, repeats: int, cell_type: str = None, lineage: str = None):
+    # TODO: add info such as model name
     return f'{define_task(cell_type, lineage)}_size{set_size}_repeats{repeats}'
 
 
@@ -210,7 +211,9 @@ def show_runtime(func):
         result = func(*args, **kwargs)
         end_time = time.time()
         elapsed_time = end_time - start_time
-        minutes, seconds = divmod(int(elapsed_time), 60)
-        print(f'Running {func.__name__} took {f"{minutes:02d}:{seconds:02d}"} minutes to run.')
+        minutes, seconds = divmod(int(elapsed_time), 60)        
+        if seconds > 5:
+            info = f" on data with shape {kwargs.get('X').shape} using {kwargs.get('predictor').__name__}" if kwargs.get('X') is not None and kwargs.get('predictor') is not None else ""
+            print(f'Running {func.__name__}{info} took {f"{minutes:02d}:{seconds:02d}"} minutes to run.')
         return result
     return wrapper

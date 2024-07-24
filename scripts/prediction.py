@@ -8,7 +8,7 @@ from sklearn.feature_selection import SelectKBest, f_classif, f_regression
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from scipy.stats import ttest_1samp
 from scripts.consts import METRICS, ALL_CELLS, SEED, CELL_TYPE_COL
-from scripts.utils import convert2sci
+from scripts.utils import convert2sci, show_runtime
 
 
 def get_target(
@@ -88,6 +88,7 @@ def get_data(
     return X[:, random.Random(seed).sample(list(range(X.shape[1])), set_size)], y, None
 
 
+@show_runtime
 def train(
         X, y,
         predictor,
