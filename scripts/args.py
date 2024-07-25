@@ -61,7 +61,7 @@ def parse_run_args() -> argparse.Namespace:
                         help='')
     
     # Output
-    parser.add_argument('--processes', type=int, default=None,
+    parser.add_argument('--processes', type=int, default=0,
                         help='')
     parser.add_argument('--output', type=str, required=True,
                         help='')
@@ -160,6 +160,7 @@ def parse_run_batch_args() -> argparse.Namespace:
 
     parser.add_argument('--output', type=str, required=True, help='')
     parser.add_argument('--cache', type=str, required=True, help='')
+    parser.add_argument('--tmp', type=str, required=True, help='')
 
     return parser.parse_args()
 
@@ -168,18 +169,21 @@ def process_run_batch_args(args):
     args.expression = get_preprocessed_data('expression', args.output)
     args.cell_types = get_preprocessed_data('cell_types', args.output)
     args.pseudotime = get_preprocessed_data('pseudotime', args.output)
-    gene_sets = read_gene_sets(args.output)
+
+    gene_sets = read_gene_sets(os.path.join(args.output, 'gene_sets.csv'))
     args.batch_gene_sets = get_gene_set_batch(gene_sets, args.batch, args.batch_size)
-    if args.batch is None:
-        args.tmp = None
-    else:
+    del args.batch_size
+
+    if args.batch is not None:
         args.output = args.tmp
+        del args.tmp
+
     return args
 
 
 def get_run_batch_args():
     args = parse_run_batch_args()
-    args = process_plot_args(args)
+    args = process_run_batch_args(args)
     return args
 
 

@@ -65,6 +65,8 @@ def define_set_size(set_len: int, set_fraction: float, min_set_size: int) -> int
 
 
 def define_batch_size(gene_set_len: int, processes: int) -> int:
+    if not processes:
+        return gene_set_len
     return int(np.ceil(gene_set_len / processes))
 
 
@@ -91,12 +93,12 @@ def get_gene_set_batch(gene_sets: dict[str, list[str]], batch: int | None = None
 def get_batch_run_cmd(processes: int | None, **kwargs) -> str:
 
     batch_args = ' '.join([f'--{k}={v}' for k, v in kwargs.items()])
-    batch_args += '--batch $SLURM_ARRAY_TASK_ID' if processes else ''
-    python_cmd = f'python scripts/run_batch.py {batch_args}'
+    batch_args += ' --batch \$SLURM_ARRAY_TASK_ID' if processes else ''
+    python_cmd = f'python run_batch.py {batch_args}'
   
     if processes:
         report_path = kwargs.get('tmp')
-        return f'sbatch --job-name=OurNewTool --array=1-{processes} --output={report_path}/job_%A_%a.out --error={report_path}/job_%A_%a.err --wrap=\"{python_cmd}\"'
+        return f'sbatch --job-name=OurNewTool --mem=1G --time=0:30:0 --array=1-{processes} --output={report_path}/job_%A_%a.out --error={report_path}/job_%A_%a.err --wrap=\"{python_cmd}\"'
 
     return python_cmd
 
@@ -118,8 +120,9 @@ def remove_outliers(values: list[float]) -> list[float]:
     return [i for i in values if i >= lower_bound and i <= upper_bound]
 
 
-def read_csv(path: str, index_col: int = 0) -> pd.DataFrame:
-    print(f'Reading file at {path}...')
+def read_csv(path: str, index_col: int = 0, verbose: bool = False) -> pd.DataFrame:
+    if verbose:
+        print(f'Reading file at {path}...')
     try:
         return pd.read_csv(path, index_col=index_col)
     except FileNotFoundError:
@@ -159,7 +162,7 @@ def save_background_scores(background_scores: list[float], background: str, cach
 
 
 def read_gene_sets(output_path: str) -> dict[str, list[str]]:
-    df = read_results('gene_sets', output_path, index_col=False)
+    df = read_csv(output_path, index_col=False)
     return {column: df[column].dropna().tolist() for column in df.columns}
 
 
@@ -176,12 +179,10 @@ def save_gene_sets(gene_sets: dict[str, list[str]], output_path: str, by_set: bo
             pd.DataFrame(df[col]).dropna().to_csv(f'{output_path}/{make_valid_filename(col)}.csv', index=False)
 
 
-def summarise_result(target, set_name, original_gene_set, gene_set, top_genes, set_size, feature_selection, predictor, metric, cross_validation, repeats, seed, pathway_score, background_scores: list[float], p_value):
+def summarise_result(target, set_name, top_genes, set_size, feature_selection, predictor, metric, cross_validation, repeats, seed, pathway_score, background_scores: list[float], p_value):
     result = {
         TARGET_COL: target,
         'set_name': set_name,
-        # 'original_gene_set': original_gene_set,
-        # 'gene_set': gene_set,
         'top_genes': top_genes,
         'set_size': set_size,
         'feature_selection': feature_selection,

@@ -119,20 +119,14 @@ def run_gene_set_batch(
         batch: int = None,
     ) -> None:
     """
-    output: main output path for a single batch and temp out path for many batches
+    output: main output path for a single batch and temp output path for many batches
     batch: number between 1 and `processes`, or None for a single batch
     """
 
     classification_results, regression_results = [], []
 
     logger = f'Batch {batch}: ' if batch else ''
-    for i, (set_name, original_gene_set) in enumerate(batch_gene_sets.items()):
-
-        gene_set = intersect_genes(original_gene_set, expression.columns)
-        if len(gene_set) < SIZES[0] or len(gene_set) > SIZES[-1]:
-            print(f'{logger}Pathway {i + 1}/{len(batch_gene_sets)}: {set_name} - skipping...')
-            continue
-
+    for i, (set_name, gene_set) in enumerate(batch_gene_sets.items()):
         print(f'{logger}Pathway {i + 1}/{len(batch_gene_sets)}: {set_name}')
 
         set_size = define_set_size(len(gene_set), set_fraction, min_set_size)
@@ -151,8 +145,7 @@ def run_gene_set_batch(
                 **task_args
             )
             classification_results.append(summarise_result(
-                cell_type, set_name, original_gene_set, gene_set, top_genes,
-                set_size, feature_selection, classifier, classification_metric,
+                cell_type, set_name, top_genes, set_size, feature_selection, classifier, classification_metric,
                 cross_validation, repeats, seed, pathway_score, background_scores, p_value
             ))
         
@@ -164,8 +157,7 @@ def run_gene_set_batch(
                 **task_args
             )
             regression_results.append(summarise_result(
-                lineage, set_name, original_gene_set, gene_set, top_genes,
-                set_size, feature_selection, regressor, regression_metric,
+                lineage, set_name, top_genes, set_size, feature_selection, regressor, regression_metric,
                 cross_validation, repeats, seed, pathway_score, background_scores, p_value
             ))
 

@@ -1,5 +1,5 @@
 import subprocess
-from scripts.run_batch import run_gene_set_batch
+from run_batch import run_gene_set_batch
 from scripts.args import get_run_args
 from scripts.data import preprocess_data
 from scripts.pathways import get_gene_sets
@@ -48,7 +48,7 @@ def run_tool(
         'output': output, 'cache': cache, 'tmp': tmp,
     }
 
-    cmd = get_batch_run_cmd(processes, batch_args)
+    cmd = get_batch_run_cmd(processes, **batch_args)
     subprocess.run(cmd, shell=True)
 
 
