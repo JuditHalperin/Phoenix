@@ -1,10 +1,8 @@
 import subprocess
-from run_batch import run_gene_set_batch
 from scripts.args import get_run_args
 from scripts.data import preprocess_data
 from scripts.pathways import get_gene_sets
-from scripts.prediction import  adjust_p_value
-from scripts.utils import define_batch_size, get_gene_set_batches, save_csv, get_batch_run_cmd
+from scripts.utils import define_batch_size, get_batch_run_cmd, aggregate_results
 from scripts.visualization import plot
 
 
@@ -51,16 +49,7 @@ def run_tool(
     cmd = get_batch_run_cmd(processes, **batch_args)
     subprocess.run(cmd, shell=True)
 
-
-    # Multiple comparison correction
-    # print('Correcting p-values...')
-    # classification_results['fdr'] = adjust_p_value(classification_results['p_value'].values)
-    # regression_results['fdr'] = adjust_p_value(regression_results['p_value'].values)
-
-    # # Results
-    # print('Saving results...')
-    # save_csv(classification_results, 'cell_type_classification', output, keep_index=False)
-    # save_csv(regression_results, 'pseudotime_regression', output, keep_index=False)
+    aggregate_results(output, tmp)
 
     # print('Plotting results...')
     # plot(output, expression, reduction, cell_types, pseudotime, classification_results, regression_results)

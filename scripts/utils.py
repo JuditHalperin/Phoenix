@@ -2,8 +2,10 @@ import re, os, yaml, time
 from functools import wraps
 import pandas as pd
 import numpy as np
+import dask.dataframe as dd
 import matplotlib.pyplot as plt
 import seaborn as sns
+from statsmodels.stats.multitest import multipletests
 from scripts.consts import SIZES, TARGET_COL, LIST_SEP
 
 
@@ -142,7 +144,7 @@ def save_csv(data: list[dict] | pd.DataFrame, title: str, output_path: str, keep
     data.to_csv(os.path.join(output_path, f'{make_valid_filename(title)}.csv'), index=keep_index)
 
 
-def load_background_scores(background: str, cache_path: str = None, verbose: bool = True):
+def load_background_scores(background: str, cache_path: str = None, verbose: bool = False):
     background = make_valid_filename(background).lower()
     if cache_path and os.path.exists(f'{cache_path}/{background}.yml'):
         if verbose:
@@ -152,7 +154,7 @@ def load_background_scores(background: str, cache_path: str = None, verbose: boo
     return []
 
 
-def save_background_scores(background_scores: list[float], background: str, cache_path: str = None, verbose: bool = True):
+def save_background_scores(background_scores: list[float], background: str, cache_path: str = None, verbose: bool = False):
     if cache_path:
         background = make_valid_filename(background).lower()
         if verbose:
@@ -204,6 +206,22 @@ def read_results(title: str, output_path: str, index_col=None) -> pd.DataFrame |
         return read_csv(os.path.join(output_path, f'{make_valid_filename(title)}.csv'), index_col=index_col)
     except:
         return None
+
+
+def adjust_p_value(p_values):
+    adjusted_p_values = multipletests(p_values, method='fdr_bh')[1]
+    return [convert2sci(p) for p in adjusted_p_values]
+
+
+def aggregate_results(output: str, tmp: str):
+
+    def aggregate_result(result_type: str):
+        ddf = dd.read_csv(os.path.join(tmp, f'{result_type}_batch*.csv'))
+        ddf['fdr'] = adjust_p_value(ddf['p_value'].values)
+        ddf.to_csv(os.path.join(output, f'{result_type}.csv'), single_file=True, index=False)
+        return ddf
+    
+    return aggregate_result('cell_type_classification'), aggregate_result('pseudotime_regression')
 
 
 def get_preprocessed_data(data: pd.DataFrame | str, output_path: str):
