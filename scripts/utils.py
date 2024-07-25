@@ -98,7 +98,7 @@ def get_batch_run_cmd(processes: int | None, **kwargs) -> str:
   
     if processes:
         report_path = kwargs.get('tmp')
-        return f'sbatch --job-name=OurNewTool --mem=1G --time=0:30:0 --array=1-{processes} --output={report_path}/job_%A_%a.out --error={report_path}/job_%A_%a.err --wrap=\"{python_cmd}\"'
+        return f'sbatch --job-name=OurNewTool --mem=1G --time=4:0:0 --array=1-{processes} --output={report_path}/job_%A_%a.out --error={report_path}/job_%A_%a.err --wrap=\"{python_cmd}\"'
 
     return python_cmd
 

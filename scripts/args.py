@@ -128,6 +128,7 @@ def validate_run_args(args):
     assert args.repeats > 1
     assert args.seed > 0
     assert 0 < args.set_fraction <= 1
+    assert args.processes < 1000
 
 
 def get_run_args():
@@ -176,7 +177,7 @@ def process_run_batch_args(args):
 
     if args.batch is not None:
         args.output = args.tmp
-        del args.tmp
+    del args.tmp
 
     return args
 
