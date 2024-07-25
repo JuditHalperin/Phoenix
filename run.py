@@ -4,7 +4,7 @@ from scripts.args import get_run_args
 from scripts.data import preprocess_data, intersect_genes, get_cell_types, get_lineages
 from scripts.pathways import get_gene_sets
 from scripts.prediction import get_data, train, compare_scores, adjust_p_value
-from scripts.consts import CLASSIFIERS, REGRESSORS, CLASSIFIER_ARGS, REGRESSOR_ARGS
+from scripts.consts import CLASSIFIERS, REGRESSORS, CLASSIFIER_ARGS, REGRESSOR_ARGS, SIZES
 from scripts.utils import define_background, define_set_size, define_batch_size, get_gene_set_batches, load_background_scores, save_background_scores, summarise_result, save_csv
 from scripts.visualization import plot
 
@@ -128,7 +128,7 @@ def run_gene_set_batch(
     for i, (set_name, original_gene_set) in enumerate(gene_sets.items()):
 
         gene_set = intersect_genes(original_gene_set, expression.columns)
-        if not gene_set:
+        if len(gene_set) < SIZES[0] or len(gene_set) > SIZES[-1]:
             print(f'{logger}Pathway {i + 1}/{len(gene_sets)}: {set_name} - skipping...')
             continue
 

@@ -10,7 +10,7 @@ from xgboost import XGBClassifier, XGBRegressor
 from sklearn.metrics import accuracy_score, balanced_accuracy_score, f1_score, mean_absolute_error, mean_squared_error
 
 
-SIZES = [1, 2, 3 ,4 ,5, 6, 7, 8, 9, 10, 15, 20, 35, 50, 75, 100, 120, 140, 160, 180, 200, 225, 250, 275, 300, 350, 400]
+SIZES = [5, 6, 7, 8, 9, 10, 15, 20, 35, 50, 75, 100, 120, 140, 160, 180, 200, 225, 250, 275, 300, 350, 400]
 
 REDUCTION_METHODS = ['pca', 'umap', 'tsne']
 
