@@ -64,8 +64,8 @@ def define_set_size(set_len: int, set_fraction: float, min_set_size: int) -> int
     return max((x for x in SIZES if x <= set_size), default=None)
 
 
-def define_batch_size(gene_set_len: int, threads: int) -> int:
-    return int(np.ceil(gene_set_len / threads))
+def define_batch_size(gene_set_len: int, processes: int) -> int:
+    return int(np.ceil(gene_set_len / processes))
 
 
 def get_gene_set_batches(gene_sets: list[str], batch_size: int) -> list[dict[str, list[str]]]:
@@ -74,6 +74,31 @@ def get_gene_set_batches(gene_sets: list[str], batch_size: int) -> list[dict[str
         set_names = list(gene_sets.keys())[batch_start:min(batch_start + batch_size, len(gene_sets))]
         gene_set_batches.append({set_name: gene_sets[set_name] for set_name in set_names})
     return gene_set_batches
+
+
+def get_gene_set_batch(gene_sets: dict[str, list[str]], batch: int | None = None, batch_size: int | None = None) -> dict[str, list[str]]:
+    """
+    batch: number between 1 and `processes`, or None for a single batch
+    """
+    if batch is None:
+        return gene_sets
+    batch_start = (batch - 1) * batch_size
+    batch_end = min(batch_start + batch_size, len(gene_sets))
+    set_names = list(gene_sets.keys())[batch_start:batch_end]
+    return {set_name: gene_sets[set_name] for set_name in set_names}
+
+
+def get_batch_run_cmd(processes: int | None, **kwargs) -> str:
+
+    batch_args = ' '.join([f'--{k}={v}' for k, v in kwargs.items()])
+    batch_args += '--batch $SLURM_ARRAY_TASK_ID' if processes else ''
+    python_cmd = f'python scripts/run_batch.py {batch_args}'
+  
+    if processes:
+        report_path = kwargs.get('tmp')
+        return f'sbatch --job-name=OurNewTool --array=1-{processes} --output={report_path}/job_%A_%a.out --error={report_path}/job_%A_%a.err --wrap=\"{python_cmd}\"'
+
+    return python_cmd
 
 
 def get_color_mapping(cell_types: list[str]) -> dict[str, str]:
@@ -133,13 +158,19 @@ def save_background_scores(background_scores: list[float], background: str, cach
             yaml.dump(background_scores, file)
 
 
-def export_gene_sets(gene_sets: dict[str, list[str]], output_path: str, by_set: bool = True) -> None:
+def read_gene_sets(path: str) -> dict[str, list[str]]:
+    df = read_csv(path, index_col=False)
+    return {column: df[column].dropna().tolist() for column in df.columns}
+
+
+def save_gene_sets(gene_sets: dict[str, list[str]], output_path: str, by_set: bool = False) -> None:
     df = pd.DataFrame(dict([(k, pd.Series(v)) for k, v in gene_sets.items()]))
 
     if not os.path.exists(output_path):
         os.mkdir(output_path)
 
     df.to_csv(f'{output_path}/gene_sets.csv', index=False)
+
     if by_set:
         for col in df.columns:
             pd.DataFrame(df[col]).dropna().to_csv(f'{output_path}/{make_valid_filename(col)}.csv', index=False)

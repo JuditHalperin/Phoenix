@@ -1,7 +1,10 @@
 import argparse, os
 import pandas as pd
 from scripts.consts import *
-from scripts.utils import read_csv, get_full_path
+from scripts.utils import read_csv, get_full_path, get_preprocessed_data, read_gene_sets, get_gene_set_batch, define_batch_size
+
+
+### Run ###
 
 
 def parse_run_args() -> argparse.Namespace:
@@ -58,7 +61,7 @@ def parse_run_args() -> argparse.Namespace:
                         help='')
     
     # Output
-    parser.add_argument('--threads', type=int, default=None,
+    parser.add_argument('--processes', type=int, default=None,
                         help='')
     parser.add_argument('--output', type=str, required=True,
                         help='')
@@ -103,6 +106,10 @@ def process_run_args(args):
     if not os.path.exists(args.cache):
         os.mkdir(args.cache)
 
+    args.tmp = os.path.join(args.output, 'tmp')
+    if args.processes and not os.path.exists(args.tmp):
+        os.mkdir(args.tmp)
+
     return args
 
 
@@ -121,7 +128,6 @@ def validate_run_args(args):
     assert args.repeats > 1
     assert args.seed > 0
     assert 0 < args.set_fraction <= 1
-    assert not args.threads or args.threads >= 1
 
 
 def get_run_args():
@@ -129,6 +135,55 @@ def get_run_args():
     args = process_run_args(args)
     validate_run_args(args)
     return args
+
+
+### Batch run ###
+
+
+def parse_run_batch_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument('--batch', type=int, default=None, help='')
+    parser.add_argument('--batch_size', type=int, default=None, help='')
+
+    parser.add_argument('--feature_selection', type=str, required=True, help='')
+    parser.add_argument('--set_fraction', type=float, required=True, help='')
+    parser.add_argument('--min_set_size', type=int, required=True, help='')
+
+    parser.add_argument('--classifier', type=str, required=True, help='')
+    parser.add_argument('--regressor', type=str, required=True, help='')
+    parser.add_argument('--classification_metric', type=str, required=True, help='')
+    parser.add_argument('--regression_metric', type=str, required=True, help='')
+    parser.add_argument('--cross_validation', type=int, required=True, help='')
+    parser.add_argument('--repeats', type=int, required=True, help='')
+    parser.add_argument('--seed', type=int, required=True, help='')
+
+    parser.add_argument('--output', type=str, required=True, help='')
+    parser.add_argument('--cache', type=str, required=True, help='')
+
+    return parser.parse_args()
+
+
+def process_run_batch_args(args):
+    args.expression = get_preprocessed_data('expression', args.output)
+    args.cell_types = get_preprocessed_data('cell_types', args.output)
+    args.pseudotime = get_preprocessed_data('pseudotime', args.output)
+    gene_sets = read_gene_sets(args.output)
+    args.batch_gene_sets = get_gene_set_batch(gene_sets, args.batch, args.batch_size)
+    if args.batch is None:
+        args.tmp = None
+    else:
+        args.output = args.tmp
+    return args
+
+
+def get_run_batch_args():
+    args = parse_run_batch_args()
+    args = process_plot_args(args)
+    return args
+
+
+### Plot ###
 
 
 def parse_plot_args() -> argparse.Namespace:

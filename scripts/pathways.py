@@ -1,8 +1,9 @@
 import os, requests, datetime, warnings
 import gseapy as gp
 from bioservices.kegg import KEGG
-from scripts.args import read_csv
-from scripts.utils import make_valid_term, show_runtime
+from scripts.data import intersect_genes
+from scripts.consts import SIZES
+from scripts.utils import make_valid_term, read_gene_sets, save_gene_sets, show_runtime
 
 
 ### KEGG Annotations ###
@@ -168,18 +169,13 @@ def retrieve_all_msigdb_pathways(organism: str) -> dict[str, list[str]]:
 ### Pathway Retrieval ###
 
 
-def read_pathway(path: str) -> dict[str, list[str]]:
-    df = read_csv(path, index_col=False)
-    return {column: df[column].dropna().tolist() for column in df.columns}
-
-
 def retrieve_pathway(id: str, organism: str) -> dict[str, list[str]]:
     # print('...')
     raise NotImplementedError('Pathway ID is not supported yet')
 
 
 @show_runtime
-def get_gene_sets(pathway_database: list[str], custom_pathways: list[str], organism: str) -> dict[str, list[str]]:
+def get_gene_sets(pathway_database: list[str], custom_pathways: list[str], organism: str, all_genes: list[str], output: str) -> dict[str, list[str]]:
     gene_sets = {}
 
     for database in pathway_database:
@@ -190,10 +186,16 @@ def get_gene_sets(pathway_database: list[str], custom_pathways: list[str], organ
     for pathway in custom_pathways: 
         # Read gene sets
         if os.path.exists(pathway):
-            gene_sets.update(read_pathway(pathway))
+            gene_sets.update(read_gene_sets(pathway))
         # Retrieve gene set from database by ID
         else:
             gene_sets.update(retrieve_pathway(pathway, organism))
     
-    gene_sets = {make_valid_term(key): value for key, value in gene_sets.items()}
+    # Filter gene annotations based on size
+    gene_sets = {make_valid_term(set_name): intersect_genes(gene_set, all_genes) for set_name, gene_set in gene_sets.items()}
+    gene_sets = {set_name: gene_set for set_name, gene_set in gene_sets.items() if len(gene_set) >= SIZES[0] and len(gene_set) <= SIZES[-1]}
+
+    # Save
+    save_gene_sets(gene_sets, output)
+
     return gene_sets
