@@ -158,8 +158,8 @@ def save_background_scores(background_scores: list[float], background: str, cach
             yaml.dump(background_scores, file)
 
 
-def read_gene_sets(path: str) -> dict[str, list[str]]:
-    df = read_csv(path, index_col=False)
+def read_gene_sets(output_path: str) -> dict[str, list[str]]:
+    df = read_results('gene_sets', output_path, index_col=False)
     return {column: df[column].dropna().tolist() for column in df.columns}
 
 
