@@ -215,6 +215,10 @@ def adjust_p_value(p_values):
 def aggregate_results(output: str, tmp: str):
 
     def aggregate_result(result_type: str):
+        df = read_results(result_type, output)
+        if df:
+            return df
+        
         ddf = dd.read_csv(os.path.join(tmp, f'{result_type}_batch*.csv'))
         df = ddf.compute()
         df['fdr'] = adjust_p_value(df['p_value'])
