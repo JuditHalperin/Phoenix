@@ -209,15 +209,17 @@ def read_results(title: str, output_path: str, index_col=None) -> pd.DataFrame |
 
 
 def adjust_p_value(p_values):
-    adjusted_p_values = multipletests(p_values, method='fdr_bh')[1]
-    return [convert2sci(p) for p in adjusted_p_values]
+    return multipletests(p_values, method='fdr_bh')[1]
 
 
 def aggregate_results(output: str, tmp: str):
 
     def aggregate_result(result_type: str):
         ddf = dd.read_csv(os.path.join(tmp, f'{result_type}_batch*.csv'))
-        ddf['fdr'] = adjust_p_value(ddf['p_value'].values)
+        df = ddf.compute()
+        df['fdr'] = adjust_p_value(df['p_value'])
+        df['fdr'] = df['fdr'].apply(convert2sci)
+        ddf = dd.from_pandas(df, npartitions=1)
         ddf.to_csv(os.path.join(output, f'{result_type}.csv'), single_file=True, index=False)
         return ddf
     
