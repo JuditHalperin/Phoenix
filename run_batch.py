@@ -32,7 +32,7 @@ def get_prediction_score(
         feature_selection=feature_selection,
         seed=seed,
     )
-    
+
     is_regression = pseudotime is not None
     predictor = REGRESSORS[predictor] if is_regression else CLASSIFIERS[predictor]
     predictor_args = REGRESSOR_ARGS[predictor] if is_regression else CLASSIFIER_ARGS[predictor]
@@ -156,6 +156,7 @@ def run_gene_set_batch(
                 pseudotime=pseudotime, lineage=lineage,
                 **task_args
             )
+
             regression_results.append(summarise_result(
                 lineage, set_name, top_genes, set_size, feature_selection, regressor, regression_metric,
                 cross_validation, repeats, seed, pathway_score, background_scores, p_value

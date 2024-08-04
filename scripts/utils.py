@@ -1,5 +1,6 @@
-import re, os, yaml, time
+import re, os, yaml, time, glob
 from functools import wraps
+from argparse import Namespace
 import pandas as pd
 import numpy as np
 import dask.dataframe as dd
@@ -20,7 +21,7 @@ def get_full_path(path: str) -> str:
 
 
 def make_valid_filename(filename: str) -> str:
-    return re.sub(r'[^A-Za-z0-9_]+', '', filename.replace(' ', '_')).lower()
+    return re.sub(r'[^A-Za-z0-9_.]+', '', filename.replace(' ', '_')).lower()[:100]
 
 
 def make_valid_term(term: str) -> str:
@@ -92,18 +93,62 @@ def get_gene_set_batch(gene_sets: dict[str, list[str]], batch: int | None = None
     return {set_name: gene_sets[set_name] for set_name in set_names}
 
 
+def parse_missing_args(args):
+    args_dict = vars(args)
+    updated_args = {k: (None if v == 'None' else v) for k, v in args_dict.items()}
+    return Namespace(**updated_args)
+
+
 def get_batch_run_cmd(processes: int | None, **kwargs) -> str:
 
     batch_args = ' '.join([f'--{k}={v}' for k, v in kwargs.items()])
     batch_args += ' --batch \$SLURM_ARRAY_TASK_ID' if processes else ''
-    python_cmd = f'python run_batch.py {batch_args}'
+    excute_cmd = f'python run_batch.py {batch_args}'
   
     if processes:
         report_path = kwargs.get('tmp')
-        return f'sbatch --job-name=OurNewTool --mem=1G --time=4:0:0 --array=1-{processes} --output={report_path}/job_%A_%a.out --error={report_path}/job_%A_%a.err --wrap=\"{python_cmd}\"'
+        # TODO: determine params by dataset size
+        return f'sbatch --job-name=batch_run --mem=10G --time=15:0:0 --array=1-{processes} --output={report_path}/%A_%a_batch_run.out --error={report_path}/%A_%a_batch_run.err --wrap=\"{excute_cmd}\"'
 
-    return python_cmd
+    return excute_cmd
 
+
+def get_aggregation_cmd(output: str, tmp: str | None, job_id: int, process: int) -> str:
+    aggregate_cmd = (
+        f"python -c 'from run import summarize; "
+        rf"summarize(\"{output}\", \"{tmp}\")'"
+    )
+    report_path = tmp if tmp else output
+    sbatch_cmd = (
+        f"sbatch --job-name=aggregation "
+        f"--mem=10G --time=1:0:0 "
+        f"--output={report_path}/%j_aggregation.out "
+        f"--error={report_path}/%j_aggregation.err "
+        f"--wrap=\"{aggregate_cmd}\" "
+    )
+    if job_id:
+        sbatch_cmd += f"--dependency=afterok:{','.join([f'{job_id}_{p + 1}' for p in range(process)])} "
+    return sbatch_cmd
+
+
+# def get_cmd(func: str, args: dict[str, str], script: str, processes: int, sbatch: bool = False, mem: str = '1G', time: str = '0:30:0', report_path: str = None, last_job_id: str = None):
+
+#     args = ', '.join([rf'{k}={repr(v)}' if isinstance(v, str) else rf'{k}={v}' for k, v in args.items()])
+#     python_cmd = (
+#         f"python -c 'from scripts.{script} import {func}; "
+#         rf"{func}({args})'"
+#     )
+#     if not sbatch:
+#         return python_cmd
+    
+#     report_info = '%j' if not processes else r'%A_%a'
+#     sbatch_cmd = (
+#         f"sbatch --job-name={func} --mem={mem} --time={time} "
+#         f"--output={report_path}/{report_info}_{func}.out "
+#         f"--error={report_path}/{report_info}_{func}.err "
+#         f"--wrap=\"{python_cmd}\" "
+#     )
+   
 
 def get_color_mapping(cell_types: list[str]) -> dict[str, str]:
     """
@@ -122,11 +167,11 @@ def remove_outliers(values: list[float]) -> list[float]:
     return [i for i in values if i >= lower_bound and i <= upper_bound]
 
 
-def read_csv(path: str, index_col: int = 0, verbose: bool = False) -> pd.DataFrame:
+def read_csv(path: str, index_col: int = 0, dtype=None, verbose: bool = False) -> pd.DataFrame:
     if verbose:
         print(f'Reading file at {path}...')
     try:
-        return pd.read_csv(path, index_col=index_col)
+        return pd.read_csv(path, index_col=index_col, dtype=dtype)
     except FileNotFoundError:
         raise FileNotFoundError(f"File not found at path '{path}'")
     except pd.errors.EmptyDataError:
@@ -164,7 +209,7 @@ def save_background_scores(background_scores: list[float], background: str, cach
 
 
 def read_gene_sets(output_path: str) -> dict[str, list[str]]:
-    df = read_csv(output_path, index_col=False)
+    df = read_csv(output_path, index_col=False, dtype=str)
     return {column: df[column].dropna().tolist() for column in df.columns}
 
 
@@ -187,7 +232,7 @@ def summarise_result(target, set_name, top_genes, set_size, feature_selection, p
         'set_name': set_name,
         'top_genes': top_genes,
         'set_size': set_size,
-        'feature_selection': feature_selection,
+        'feature_selection': feature_selection if feature_selection else 'None',
         'predictor': predictor,
         'metric': metric,
         'cross_validation': cross_validation,
@@ -203,8 +248,10 @@ def summarise_result(target, set_name, top_genes, set_size, feature_selection, p
 
 def read_results(title: str, output_path: str, index_col=None) -> pd.DataFrame | None:
     try:
-        return read_csv(os.path.join(output_path, f'{make_valid_filename(title)}.csv'), index_col=index_col)
-    except:
+        title = f'{title}.csv' if '.csv' not in title else title
+        return read_csv(os.path.join(output_path, f'{make_valid_filename(title)}'), index_col=index_col)
+    except Exception as e:
+        print(e)
         return None
 
 
@@ -212,22 +259,58 @@ def adjust_p_value(p_values):
     return multipletests(p_values, method='fdr_bh')[1]
 
 
-def aggregate_results(output: str, tmp: str):
-
-    def aggregate_result(result_type: str):
-        df = read_results(result_type, output)
-        if df:
-            return df
-        
-        ddf = dd.read_csv(os.path.join(tmp, f'{result_type}_batch*.csv'))
-        df = ddf.compute()
-        df['fdr'] = adjust_p_value(df['p_value'])
-        df['fdr'] = df['fdr'].apply(convert2sci)
-        ddf = dd.from_pandas(df, npartitions=1)
-        ddf.to_csv(os.path.join(output, f'{result_type}.csv'), single_file=True, index=False)
-        return ddf
+def aggregate_result(result_type: str, output: str, tmp: str):
+    df = read_results(result_type, output)
+    if df is not None:
+        if 'fdr' not in df.columns:
+            df['fdr'] = adjust_p_value(df['p_value'])
+            df['fdr'] = df['fdr'].apply(convert2sci)
+        return df
     
-    return aggregate_result('cell_type_classification'), aggregate_result('pseudotime_regression')
+    dfs = []
+    for path in glob.glob(os.path.join(tmp, f'{result_type}_batch*.csv')):
+        df = read_results(os.path.basename(path), tmp, index_col=None)
+        if df is not None:
+            dfs.append(df)
+    dfs = pd.concat(dfs, ignore_index=True)
+
+    # ddf = dd.read_csv(os.path.join(tmp, f'{result_type}_batch*.csv'))
+    # df = ddf.compute()
+    # df['fdr'] = adjust_p_value(df['p_value'])
+    # df['fdr'] = df['fdr'].apply(convert2sci)
+    # ddf = dd.from_pandas(df, npartitions=1)
+    # ddf.to_csv(os.path.join(output, f'{result_type}.csv'), single_file=True, index=False)
+    # return ddf
+    dfs['fdr'] = adjust_p_value(dfs['p_value'])
+    dfs['fdr'] = dfs['fdr'].apply(convert2sci)
+    dd.from_pandas(dfs, npartitions=1).to_csv(os.path.join(output, f'{result_type}.csv'), single_file=True, index=False)
+    return dfs
+
+
+
+# def aggregate_results(output: str, tmp: str):
+
+#     def aggregate_result(result_type: str):
+#         df = read_results(result_type, output)
+#         if df is not None:
+#             df['fdr'] = adjust_p_value(df['p_value'])
+#             df['fdr'] = df['fdr'].apply(convert2sci)
+#             return df
+        
+#         ddf = dd.read_csv(os.path.join(tmp, f'{result_type}_batch*.csv'))
+#         df = ddf.compute()
+#         df['fdr'] = adjust_p_value(df['p_value'])
+#         df['fdr'] = df['fdr'].apply(convert2sci)
+#         ddf = dd.from_pandas(df, npartitions=1)
+#         ddf.to_csv(os.path.join(output, f'{result_type}.csv'), single_file=True, index=False)
+#         return ddf
+    
+#     results = aggregate_result('cell_type_classification'), aggregate_result('pseudotime_regression')
+
+#     from scripts.visualization import plot
+#     plot(output)
+
+#     return results
 
 
 def get_preprocessed_data(data: pd.DataFrame | str, output_path: str):

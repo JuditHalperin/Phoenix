@@ -86,7 +86,7 @@ CELL_TYPE_COL = 'cell_type'
 BACKGROUND_COLOR = 'lightgrey'
 INTEREST_COLOR = 'red'
 
-LIST_SEP = ', '
+LIST_SEP = '; '
 
 # Defaults
 NUM_GENES = 5000
@@ -103,4 +103,4 @@ SET_FRACTION = 0.5
 MIN_SET_SIZE = 10
 SEED = 3407
 THRESHOLD = 0.05
-MAP_SIZE = 30
+MAP_SIZE = 50

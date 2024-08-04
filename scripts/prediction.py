@@ -80,6 +80,8 @@ def get_data(
             selected_indices = (-importances).argsort()[:set_size]
             selected_genes = [features[i] for i in selected_indices]
             return X[:, selected_indices], y, selected_genes
+        
+        raise ValueError(f'Unsupported feature selection method {feature_selection}')
 
     # Select first
     if ordered_selection:

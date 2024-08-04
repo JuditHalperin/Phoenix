@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from scipy.cluster import hierarchy
 from scripts.data import get_column_unique_pathways, get_top_sum_pathways, sum_gene_expression
-from scripts.utils import save_plot, get_experiment, get_preprocessed_data, remove_outliers, get_color_mapping, convert2sci
+from scripts.utils import save_plot, get_experiment, get_preprocessed_data, remove_outliers, get_color_mapping, convert2sci, save_csv
 from scripts.consts import THRESHOLD, TARGET_COL, CLASSIFICATION_METRICS, ALL_CELLS, OTHER_CELLS, BACKGROUND_COLOR, INTEREST_COLOR, CELL_TYPE_COL, MAP_SIZE
 
 
@@ -14,6 +14,7 @@ sns.set_theme(style='white')
 def plot_p_values(
         heatmap_data: pd.DataFrame,
         cluster_rows: bool = False,
+        max_value: int = None,
         title: str = '',
         output: str = None,
     ):  
@@ -25,16 +26,18 @@ def plot_p_values(
     heatmap_data = np.log10(heatmap_data ** (-1))
 
     if cluster_rows:
-        row_linkage = hierarchy.linkage(heatmap_data.fillna(0), method='average', metric='euclidean')
+        row_linkage = hierarchy.linkage(heatmap_data.fillna(0).replace([np.inf, -np.inf], 0), method='average', metric='euclidean')
         row_order = hierarchy.dendrogram(row_linkage, no_plot=True)['leaves']
         heatmap_data = heatmap_data.iloc[row_order, :]
 
     plt.figure(figsize=(9, 6), dpi=200)
-    heatmap = sns.heatmap(heatmap_data, cmap='Reds', cbar=False, vmin=0, xticklabels=True, yticklabels=heatmap_data.shape[0] < MAP_SIZE)  # annot=True, fmt='.2f'
+    max_value = max(remove_outliers(heatmap_data.fillna(0).values.flatten().tolist())) if not max_value else max_value
+    heatmap = sns.heatmap(heatmap_data, cmap='Reds', cbar=False, vmin=0, vmax=max_value, xticklabels=True, yticklabels=False)  # annot=True, fmt='.2f'
 
     plt.colorbar(heatmap.collections[0], label='-log10(p-value)')
-    plt.yticks(np.arange(len(heatmap_data.index)) + 0.5, heatmap_data.index, rotation=0, fontsize=8, ha='right')
-    heatmap.set_yticklabels(heatmap_data.index, rotation=0, fontsize=8, ha='right')
+    if heatmap_data.shape[0] <= MAP_SIZE:
+        plt.yticks(np.arange(len(heatmap_data.index)) + 0.5, heatmap_data.index, rotation=0, fontsize=5, ha='right')
+        heatmap.set_yticklabels(heatmap_data.index, rotation=0, fontsize=5, ha='right')
     heatmap.set_xticklabels(heatmap.get_xticklabels(), rotation=90, ha='right')
     
     plt.title(title)
@@ -57,7 +60,7 @@ def _plot_prediction_scores(
     plt.axvline(
         x=experiment['pathway_score'],
         color=INTEREST_COLOR,
-        label=f'{set_name}: {np.round(experiment["pathway_score"], 3)}, p={convert2sci(experiment["fdr"])}',
+        label=f'{set_name[:50]}: {np.round(experiment["pathway_score"], 3)}, p={convert2sci(experiment["fdr"])}',
         linestyle='--'
     )
 
@@ -81,8 +84,8 @@ def _plot_prediction_scores(
 
     metric = experiment['metric']
     plt.xlabel(metric)
-    if metric in CLASSIFICATION_METRICS.keys():
-        plt.xlim(0, 1)
+    # if metric in CLASSIFICATION_METRICS.keys():
+    #     plt.xlim(0, 1)
 
     plt.legend()
     plt.title(title)
@@ -326,6 +329,7 @@ def plot(
             continue
 
         data = results.pivot(index='set_name', columns=TARGET_COL, values='fdr')
+        save_csv(data, f'p_values_{target_type}', output)
 
         if data.shape[0] <= MAP_SIZE:  # plot all pathways
             pathways = data.index
@@ -335,7 +339,7 @@ def plot(
 
         else:  # plot interesting pathways
             pathways = []
-            size = MAP_SIZE // data.shape[1]
+            size = (MAP_SIZE - 3) // data.shape[1]
             for target in data.columns:
                 if target != ALL_CELLS:
                     pathway_names = get_column_unique_pathways(data, target, size, threshold)
@@ -344,6 +348,9 @@ def plot(
                         plot_experiment(output, target, pathway_name, target_type, results, target_data, expression, reduction)
             pathways.extend(get_top_sum_pathways(data, ascending=False, size=3))
 
-            plot_p_values(data, cluster_rows=True, title=f'{target_type} Prediction - All Pathways', output=output)
+            plot_p_values(data, cluster_rows=True, title=f'{target_type} Prediction using All Pathways', output=output)
         
         plot_p_values(data.loc[pathways], title=f'{target_type} Prediction', output=output)
+        
+        del data
+        del results

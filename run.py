@@ -2,8 +2,14 @@ import subprocess
 from scripts.args import get_run_args
 from scripts.data import preprocess_data
 from scripts.pathways import get_gene_sets
-from scripts.utils import define_batch_size, get_batch_run_cmd, aggregate_results
+from scripts.utils import define_batch_size, get_batch_run_cmd, get_aggregation_cmd, aggregate_result
 from scripts.visualization import plot
+
+
+def summarize(output: str, tmp: str):
+    aggregate_result('cell_type_classification', output, tmp)
+    aggregate_result('pseudotime_regression', output, tmp)
+    plot(output)
 
 
 def run_tool(
@@ -47,12 +53,11 @@ def run_tool(
     }
 
     cmd = get_batch_run_cmd(processes, **batch_args)
-    subprocess.run(cmd, shell=True)
+    process = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+    job_id = process.stdout.strip().split()[-1]
 
-    aggregate_results(output, tmp)
-
-    # print('Plotting results...')
-    # plot(output, expression, reduction, cell_types, pseudotime, classification_results, regression_results)
+    cmd = get_aggregation_cmd(output, tmp, job_id, processes)
+    subprocess.run(cmd, shell=True) #, capture_output=True, text=True)
 
 
 if __name__ == '__main__':

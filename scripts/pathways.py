@@ -3,7 +3,7 @@ import gseapy as gp
 from bioservices.kegg import KEGG
 from scripts.data import intersect_genes
 from scripts.consts import SIZES
-from scripts.utils import make_valid_term, read_gene_sets, save_gene_sets, show_runtime
+from scripts.utils import make_valid_term, read_gene_sets, save_gene_sets
 
 
 ### KEGG Annotations ###
@@ -86,7 +86,7 @@ def get_library(db, organism):
     all_libraries = gp.get_library_name(organism=organism)
 
     curr_year = datetime.datetime.now().year
-    for year in range(curr_year, 2018, -1):
+    for year in range(curr_year, 2017, -1):
         newest_db = [lib for lib in all_libraries if f'{db}_{year}' == lib]
         if newest_db:
             return newest_db[0]
@@ -115,7 +115,7 @@ def retrieve_all_go_pathways(organism: str, pathway_type: str = None) -> dict[st
 
 msigdb_categories = {
     'Hs': ['h'] + [f'c{i}' for i in range(1, 9)],
-    'Ms': ['mh', 'm1', 'm2', 'm3', 'm5', 'm8']
+    'Mm': ['mh', 'm1', 'm2', 'm3', 'm5', 'm8']
 }
 
 
@@ -174,7 +174,6 @@ def retrieve_pathway(id: str, organism: str) -> dict[str, list[str]]:
     raise NotImplementedError('Pathway ID is not supported yet')
 
 
-@show_runtime
 def get_gene_sets(pathway_database: list[str], custom_pathways: list[str], organism: str, all_genes: list[str], output: str) -> dict[str, list[str]]:
     gene_sets = {}
 

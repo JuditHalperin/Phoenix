@@ -1,7 +1,7 @@
 import argparse, os
 import pandas as pd
 from scripts.consts import *
-from scripts.utils import read_csv, get_full_path, get_preprocessed_data, read_gene_sets, get_gene_set_batch, define_batch_size
+from scripts.utils import read_csv, get_full_path, get_preprocessed_data, read_gene_sets, get_gene_set_batch, parse_missing_args
 
 
 ### Run ###
@@ -128,11 +128,12 @@ def validate_run_args(args):
     assert args.repeats > 1
     assert args.seed > 0
     assert 0 < args.set_fraction <= 1
-    assert args.processes < 1000
+    assert not args.processes or args.processes >= 0
 
 
 def get_run_args():
     args = parse_run_args()
+    args = parse_missing_args(args)
     args = process_run_args(args)
     validate_run_args(args)
     return args
@@ -184,6 +185,7 @@ def process_run_batch_args(args):
 
 def get_run_batch_args():
     args = parse_run_batch_args()
+    args = parse_missing_args(args)
     args = process_run_batch_args(args)
     return args
 
@@ -224,6 +226,7 @@ def validate_plot_args(args):
 
 def get_plot_args():
     args = parse_plot_args()
+    args = parse_missing_args(args)
     args = process_plot_args(args)
     validate_plot_args(args)
     return args

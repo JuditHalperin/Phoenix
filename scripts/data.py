@@ -18,7 +18,9 @@ def preprocess(expression: pd.DataFrame, preprocessed: bool, num_genes: int = NU
 
     if not preprocessed:
         sc.pp.filter_cells(adata, min_genes=100)
-        sc.pp.filter_genes(adata, min_cells=3)
+        sc.pp.filter_genes(adata, min_cells=5)
+        sc.pp.filter_genes(adata, min_counts=500)
+        
         sc.pp.normalize_total(adata, target_sum=1e4)
         sc.pp.log1p(adata)
 
@@ -131,12 +133,13 @@ def get_top_sum_pathways(data, ascending: bool, size: int) -> list[str]:
 
 
 def get_column_unique_pathways(data, col: str, size: int, threshold: float) -> list[str]:
-    data = data[(data[col] == data.min(axis=1)) & (data[col] <= threshold)]
-    data = data.loc[data[col].dropna().sort_values(ascending=True).index]
-    to_drop = [col, ALL_CELLS] if ALL_CELLS in data.columns else [col]
-    data['max_diff'] = data.drop(to_drop, axis=1).min(axis=1) - data[col]
-    data = data.sort_values(by='max_diff', ascending=False)
-    return data.head(size).index.tolist()
+    tmp = data.copy()
+    tmp = tmp[(tmp[col] == tmp.min(axis=1)) & (tmp[col] <= threshold)]
+    tmp = tmp.loc[tmp[col].dropna().sort_values(ascending=True).index[:200]]
+    to_drop = [col, ALL_CELLS] if ALL_CELLS in tmp.columns else [col]
+    tmp['max_diff'] = tmp.drop(to_drop, axis=1).min(axis=1) - tmp[col]
+    tmp = tmp.sort_values(by='max_diff', ascending=False)
+    return tmp.head(size).index.tolist()
 
 
 def get_all_column_unique_pathways(data, size: int, threshold: float):
