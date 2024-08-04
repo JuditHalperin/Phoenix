@@ -1,12 +1,4 @@
-
-
-
-def get_gene_set_batches(gene_sets: list[str], batch_size: int) -> list[dict[str, list[str]]]:
-    gene_set_batches = []
-    for batch_start in range(0, len(gene_sets), batch_size):
-        set_names = list(gene_sets.keys())[batch_start:min(batch_start + batch_size, len(gene_sets))]
-        gene_set_batches.append({set_name: gene_sets[set_name] for set_name in set_names})
-    return gene_set_batches
+from scripts.utils import estimate_mem, estimate_time
 
 
 def get_gene_set_batch(gene_sets: dict[str, list[str]], batch: int | None = None, batch_size: int | None = None) -> dict[str, list[str]]:
@@ -21,16 +13,6 @@ def get_gene_set_batch(gene_sets: dict[str, list[str]], batch: int | None = None
     return {set_name: gene_sets[set_name] for set_name in set_names}
 
 
-def _estimate_mem(task_len: int) -> str:
-    # TODO: expand estimation
-    return f'{max(task_len // 7, 3)}G'
-
-
-def _estimate_time(task_len: int) -> str:
-    # TODO: expand estimation
-    return '15:0:0' if task_len > 30 else '2:30:0'
-
-
 def get_batch_run_cmd(processes: int | None, batch_size: int, task_len: int, **kwargs) -> str:
 
     batch_args = ' '.join([f'--{k}={v}' for k, v in kwargs.items()]) + f' --batch_size={batch_size}'
@@ -41,8 +23,8 @@ def get_batch_run_cmd(processes: int | None, batch_size: int, task_len: int, **k
         report_path = kwargs.get('tmp')
         return (
             f'sbatch --job-name=batch_run '
-            f'--mem={_estimate_mem(task_len)} '
-            f'--time={_estimate_time(task_len)} '
+            f'--mem={estimate_mem(task_len)} '
+            f'--time={estimate_time(task_len)} '
             f'--array=1-{processes} '
             f'--output={report_path}/%A_%a_batch_run.out '
             f'--error={report_path}/%A_%a_batch_run.err '
@@ -70,21 +52,44 @@ def get_aggregation_cmd(output: str, tmp: str | None, job_id: int, process: int)
     return sbatch_cmd
 
 
-# def get_cmd(func: str, args: dict[str, str], script: str, processes: int, sbatch: bool = False, mem: str = '1G', time: str = '0:30:0', report_path: str = None, last_job_id: str = None):
+def get_cmd(
+        func: str,
+        args: dict[str, str],
+        script: str,
+        sbatch: bool = False,
+        processes: int = None,
+        array_param: str = 'batch',
+        mem: str = '1G',
+        time: str = '0:30:0',
+        report_path: str = None,
+        previous_job_id: str = None,
+        previous_processes: int = None,
+    ):
 
-#     args = ', '.join([rf'{k}={repr(v)}' if isinstance(v, str) else rf'{k}={v}' for k, v in args.items()])
-#     python_cmd = (
-#         f"python -c 'from scripts.{script} import {func}; "
-#         rf"{func}({args})'"
-#     )
-#     if not sbatch:
-#         return python_cmd
+    args = ', '.join([rf'{k}={repr(v)}' if isinstance(v, str) else rf'{k}={v}' for k, v in args.items()])
+    args += f', {array_param}=\$SLURM_ARRAY_TASK_ID' if processes else ''
     
-#     report_info = '%j' if not processes else r'%A_%a'
-#     sbatch_cmd = (
-#         f"sbatch --job-name={func} --mem={mem} --time={time} "
-#         f"--output={report_path}/{report_info}_{func}.out "
-#         f"--error={report_path}/{report_info}_{func}.err "
-#         f"--wrap=\"{python_cmd}\" "
-#     )
-   
+    python_cmd = (
+        f"python -c 'from scripts.{script} import {func}; "
+        rf"{func}({args})'"
+    )
+    if not sbatch:
+        return python_cmd
+    
+    report_info = '%j' if not processes else r'%A_%a'
+    sbatch_cmd = (
+        f"sbatch --job-name={func} --mem={mem} --time={time} "
+        f"--output={report_path}/{report_info}_{func}.out "
+        f"--error={report_path}/{report_info}_{func}.err "
+        f"--wrap=\"{python_cmd}\" "
+    )
+
+    sbatch_cmd += f'--array=1-{processes} ' if processes else ''
+
+    if previous_job_id:
+        if previous_processes:
+            sbatch_cmd += f"--dependency=afterok:{','.join([f'{previous_job_id}_{p + 1}' for p in range(previous_processes)])} "
+        else:
+            sbatch_cmd += f"--dependency=afterok:{previous_job_id} "
+    
+    return sbatch_cmd

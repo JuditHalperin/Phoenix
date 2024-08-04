@@ -71,6 +71,16 @@ def define_batch_size(gene_set_len: int, processes: int) -> int:
     return int(np.ceil(gene_set_len / processes))
 
 
+def estimate_mem(task_len: int) -> str:
+    # TODO: expand estimation
+    return f'{max(task_len // 7, 3)}G'
+
+
+def estimate_time(task_len: int) -> str:
+    # TODO: expand estimation
+    return '15:0:0' if task_len > 30 else '2:30:0'
+
+
 def parse_missing_args(args):
     args_dict = vars(args)
     updated_args = {k: (None if v == 'None' else v) for k, v in args_dict.items()}
