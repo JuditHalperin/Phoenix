@@ -125,6 +125,8 @@ def run_gene_set_batch(
     output: main output path for a single batch and temp output path for many batches
     batch: number between 1 and `processes`, or None for a single batch
     """
+    if batch_gene_sets is None:
+        pass
 
     classification_results, regression_results = [], []
 
@@ -173,5 +175,4 @@ def run_gene_set_batch(
 
 if __name__ == '__main__':
     args = get_run_batch_args()
-    if args.batch_gene_sets is not None:
-        run_gene_set_batch(**vars(args))
+    run_gene_set_batch(**vars(args))
