@@ -208,7 +208,7 @@ def save_csv(data: list[dict] | pd.DataFrame, title: str, output_path: str, keep
 
 def load_background_scores(background: str, cache_path: str = None, verbose: bool = False):
     background = make_valid_filename(background).lower()
-    if cache_path and os.path.exists(f'{cache_path}/{background}.yml'):
+    if cache_path and os.path.exists(f'{cache_path}/{background}.yml') and os.path.getsize(f'{cache_path}/{background}.yml') > 0:
         if verbose:
             print(f'Loading background {background} from cache...')
         with open(f'{cache_path}/{background}.yml', 'r') as file:
