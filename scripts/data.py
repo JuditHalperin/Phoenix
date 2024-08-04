@@ -68,15 +68,11 @@ def preprocess_data(
     # Filter and normalize
     expression = preprocess(expression, preprocessed)
 
-    # Reduce dimensions
-    if isinstance(reduction, str):
-        reduction = reduce_dimension(expression, reduction)
-
     # Exclude targets
     if cell_types is not None:
         cell_types = cell_types.loc[expression.index]
         missing_cell_types = [cell_type for cell_type in cell_types[CELL_TYPE_COL].unique() if sum(cell_types[CELL_TYPE_COL] == cell_type) < CELL_REPLICATES]
-        exclude_cell_types = [cell_type for cell_type in exclude_cell_types if cell_type in cell_types[CELL_TYPE_COL]]
+        exclude_cell_types = [cell_type for cell_type in exclude_cell_types if cell_type in cell_types[CELL_TYPE_COL]] if exclude_cell_types else []
         exclude_cell_types = list(set(exclude_cell_types + missing_cell_types))
         if exclude_cell_types:
             print(f'Excluding cell types: {", ".join(exclude_cell_types)}')
@@ -85,11 +81,14 @@ def preprocess_data(
 
     if pseudotime is not None:
         pseudotime = pseudotime.loc[expression.index]
-        exclude_lineages = [lineage for lineage in exclude_lineages if lineage in pseudotime.columns]
+        exclude_lineages = [lineage for lineage in exclude_lineages if lineage in pseudotime.columns] if exclude_lineages else []
         if exclude_lineages:
             print(f'Excluding lineages: {", ".join(exclude_lineages)}')
             pseudotime.drop(columns=exclude_lineages)
 
+    # Reduce dimensions
+    if isinstance(reduction, str):
+        reduction = reduce_dimension(expression, reduction)
     reduction = reduction.loc[expression.index]
 
     # Save preprocessed data
