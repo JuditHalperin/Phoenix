@@ -6,6 +6,7 @@ from scripts.consts import CLASSIFIERS, REGRESSORS, CLASSIFIER_ARGS, REGRESSOR_A
 from scripts.utils import define_background, define_set_size
 from scripts.output import load_background_scores, save_background_scores, summarise_result, save_csv
 
+
 def get_prediction_score(
         expression: pd.DataFrame,
         predictor: str,

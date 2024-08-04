@@ -2,7 +2,8 @@ import subprocess
 from scripts.args import get_run_args
 from scripts.data import preprocess_data
 from scripts.pathways import get_gene_sets
-from scripts.utils import define_batch_size, get_batch_run_cmd, get_aggregation_cmd
+from scripts.utils import define_batch_size
+from scripts.computation import get_batch_run_cmd, get_aggregation_cmd
 from scripts.output import aggregate_result
 from scripts.visualization import plot
 from scripts.consts import CELL_TYPE_COL
