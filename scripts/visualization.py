@@ -35,7 +35,7 @@ def plot_p_values(
 
     plt.figure(figsize=(9, 6), dpi=200)
     max_value = max(heatmap_data.fillna(0).values.flatten().tolist()) if not max_value else max_value
-    heatmap = sns.heatmap(heatmap_data, cmap='Reds', cbar=False, vmin=0, vmax=max_value, xticklabels=True, yticklabels=False)  # annot=True, fmt='.2f'
+    heatmap = sns.heatmap(heatmap_data, cmap='Reds', cbar=False, vmin=0, vmax=np.ceil(max_value), xticklabels=True, yticklabels=False)
 
     plt.colorbar(heatmap.collections[0], label='-log10(p-value)')
     if heatmap_data.shape[0] <= MAP_SIZE:
