@@ -3,7 +3,8 @@ import pandas as pd
 import numpy as np
 import scanpy as sc
 from scripts.consts import ALL_CELLS, CELL_TYPE_COL, NUM_GENES, CELL_REPLICATES
-from scripts.utils import save_csv, transform_log, re_transform_log
+from scripts.utils import transform_log, re_transform_log
+from scripts.output import save_csv
 
 sc.settings.verbosity = 0
 

@@ -3,7 +3,8 @@ import gseapy as gp
 from bioservices.kegg import KEGG
 from scripts.data import intersect_genes
 from scripts.consts import SIZES
-from scripts.utils import make_valid_term, read_gene_sets, save_gene_sets
+from scripts.utils import make_valid_term
+from scripts.output import read_gene_sets, save_gene_sets
 
 
 ### KEGG Annotations ###

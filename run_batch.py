@@ -3,8 +3,8 @@ from scripts.args import get_run_batch_args
 from scripts.data import get_cell_types, get_lineages
 from scripts.prediction import get_data, train, compare_scores
 from scripts.consts import CLASSIFIERS, REGRESSORS, CLASSIFIER_ARGS, REGRESSOR_ARGS
-from scripts.utils import define_background, define_set_size, load_background_scores, save_background_scores, summarise_result, save_csv
-
+from scripts.utils import define_background, define_set_size
+from scripts.output import load_background_scores, save_background_scores, summarise_result, save_csv
 
 def get_prediction_score(
         expression: pd.DataFrame,

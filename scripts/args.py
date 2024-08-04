@@ -1,7 +1,8 @@
 import argparse, os
 import pandas as pd
 from scripts.consts import *
-from scripts.utils import read_csv, get_full_path, get_preprocessed_data, read_gene_sets, get_gene_set_batch, parse_missing_args
+from scripts.utils import get_full_path, get_gene_set_batch, parse_missing_args
+from scripts.output import read_csv, get_preprocessed_data, read_gene_sets
 
 
 ### Run ###

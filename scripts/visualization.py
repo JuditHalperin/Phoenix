@@ -5,7 +5,8 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from scipy.cluster import hierarchy
 from scripts.data import get_column_unique_pathways, get_top_sum_pathways, sum_gene_expression
-from scripts.utils import save_plot, get_experiment, get_preprocessed_data, remove_outliers, get_color_mapping, convert2sci, save_csv
+from scripts.utils import remove_outliers, get_color_mapping, convert_to_sci
+from scripts.output import save_plot, get_experiment, get_preprocessed_data, save_csv 
 from scripts.consts import THRESHOLD, TARGET_COL, ALL_CELLS, OTHER_CELLS, BACKGROUND_COLOR, INTEREST_COLOR, CELL_TYPE_COL, MAP_SIZE
 
 
@@ -62,7 +63,7 @@ def _plot_prediction_scores(
     plt.axvline(
         x=experiment['pathway_score'],
         color=INTEREST_COLOR,
-        label=f'{set_name[:30]}: {np.round(experiment["pathway_score"], 3)}, p={convert2sci(experiment["fdr"])}',
+        label=f'{set_name[:30]}: {np.round(experiment["pathway_score"], 3)}, p={convert_to_sci(experiment["fdr"])}',
         linestyle='--'
     )
 
