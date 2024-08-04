@@ -99,16 +99,33 @@ def parse_missing_args(args):
     return Namespace(**updated_args)
 
 
-def get_batch_run_cmd(processes: int | None, **kwargs) -> str:
+def _estimate_mem(task_len: int) -> str:
+    # TODO: expand estimation
+    return f'{max(task_len // 7, 3)}G'
 
-    batch_args = ' '.join([f'--{k}={v}' for k, v in kwargs.items()])
+
+def _estimate_time(task_len: int) -> str:
+    # TODO: expand estimation
+    return '15:0:0' if task_len > 30 else '0:30:0'
+
+
+def get_batch_run_cmd(processes: int | None, batch_size: int, task_len: int, **kwargs) -> str:
+
+    batch_args = ' '.join([f'--{k}={v}' for k, v in kwargs.items()]) + f' --batch_size={batch_size}'
     batch_args += ' --batch \$SLURM_ARRAY_TASK_ID' if processes else ''
     excute_cmd = f'python run_batch.py {batch_args}'
   
     if processes:
         report_path = kwargs.get('tmp')
-        # TODO: determine params by dataset size
-        return f'sbatch --job-name=batch_run --mem=10G --time=15:0:0 --array=1-{processes} --output={report_path}/%A_%a_batch_run.out --error={report_path}/%A_%a_batch_run.err --wrap=\"{excute_cmd}\"'
+        return (
+            f'sbatch --job-name=batch_run '
+            f'--mem={_estimate_mem(task_len)} '
+            f'--time={_estimate_time(task_len)} '
+            f'--array=1-{processes} '
+            f'--output={report_path}/%A_%a_batch_run.out '
+            f'--error={report_path}/%A_%a_batch_run.err '
+            f'--wrap=\"{excute_cmd}\"'
+        )
 
     return excute_cmd
 
