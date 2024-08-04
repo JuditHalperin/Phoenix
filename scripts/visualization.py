@@ -62,7 +62,7 @@ def _plot_prediction_scores(
     plt.axvline(
         x=experiment['pathway_score'],
         color=INTEREST_COLOR,
-        label=f'{set_name[:50]}: {np.round(experiment["pathway_score"], 3)}, p={convert2sci(experiment["fdr"])}',
+        label=f'{set_name[:30]}: {np.round(experiment["pathway_score"], 3)}, p={convert2sci(experiment["fdr"])}',
         linestyle='--'
     )
 

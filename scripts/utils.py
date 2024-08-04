@@ -258,7 +258,7 @@ def summarise_result(target, set_name, top_genes, set_size, feature_selection, p
         'pathway_score': pathway_score,
         'background_scores': background_scores,
         'background_score_mean': np.mean(background_scores),
-        'p_value': convert2sci(p_value),
+        'p_value': p_value,
     }
     return {key: convert_to_str(value) for key, value in result.items()}
 
@@ -281,7 +281,6 @@ def aggregate_result(result_type: str, output: str, tmp: str):
     if df is not None:
         if 'fdr' not in df.columns:
             df['fdr'] = adjust_p_value(df['p_value'])
-            df['fdr'] = df['fdr'].apply(convert2sci)
         return df
     
     dfs = []
@@ -294,12 +293,10 @@ def aggregate_result(result_type: str, output: str, tmp: str):
     # ddf = dd.read_csv(os.path.join(tmp, f'{result_type}_batch*.csv'))
     # df = ddf.compute()
     # df['fdr'] = adjust_p_value(df['p_value'])
-    # df['fdr'] = df['fdr'].apply(convert2sci)
     # ddf = dd.from_pandas(df, npartitions=1)
     # ddf.to_csv(os.path.join(output, f'{result_type}.csv'), single_file=True, index=False)
     # return ddf
     dfs['fdr'] = adjust_p_value(dfs['p_value'])
-    dfs['fdr'] = dfs['fdr'].apply(convert2sci)
     dd.from_pandas(dfs, npartitions=1).to_csv(os.path.join(output, f'{result_type}.csv'), single_file=True, index=False)
     return dfs
 
@@ -311,13 +308,11 @@ def aggregate_result(result_type: str, output: str, tmp: str):
 #         df = read_results(result_type, output)
 #         if df is not None:
 #             df['fdr'] = adjust_p_value(df['p_value'])
-#             df['fdr'] = df['fdr'].apply(convert2sci)
 #             return df
         
 #         ddf = dd.read_csv(os.path.join(tmp, f'{result_type}_batch*.csv'))
 #         df = ddf.compute()
 #         df['fdr'] = adjust_p_value(df['p_value'])
-#         df['fdr'] = df['fdr'].apply(convert2sci)
 #         ddf = dd.from_pandas(df, npartitions=1)
 #         ddf.to_csv(os.path.join(output, f'{result_type}.csv'), single_file=True, index=False)
 #         return ddf
