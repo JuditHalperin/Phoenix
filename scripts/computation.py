@@ -1,3 +1,4 @@
+import os
 from scripts.utils import estimate_mem, estimate_time
 
 
@@ -69,8 +70,9 @@ def get_cmd(
     args = ', '.join([rf'{k}={repr(v)}' if isinstance(v, str) else rf'{k}={v}' for k, v in args.items()])
     args += f', {array_param}=\$SLURM_ARRAY_TASK_ID' if processes else ''
     
+    script = f'scripts.{script}' if not os.path.exists(f'{script}.py') else script
     python_cmd = (
-        f"python -c 'from scripts.{script} import {func}; "
+        f"python -c 'from {script} import {func}; "
         rf"{func}({args})'"
     )
     if not sbatch:
