@@ -1,7 +1,7 @@
 import unittest
 import pandas as pd
 from tests.interface import Test
-from scripts.data import intersect_genes, get_top_sum_pathways, get_column_unique_pathways, preprocess
+from scripts.data import intersect_genes, get_top_sum_pathways, get_column_unique_pathways, preprocess_expression
 
 
 class DataTest(Test):
@@ -13,7 +13,7 @@ class DataTest(Test):
         expression = self.generate_data(num_genes=10, mean=5, std=1)
         lowly_expressed = ['Gene3', 'Gene6']
         expression[lowly_expressed] = 1
-        expression = preprocess(expression, preprocessed=True, num_genes=8, verbose=False)
+        expression = preprocess_expression(expression, preprocessed=True, num_genes=8, verbose=False)
         for gene in lowly_expressed:
             assert gene not in expression.columns
 

@@ -8,7 +8,7 @@ from scripts.utils import save_csv, transform_log, re_transform_log
 sc.settings.verbosity = 0
 
 
-def preprocess(expression: pd.DataFrame, preprocessed: bool, num_genes: int = NUM_GENES, verbose: bool = True) -> pd.DataFrame:
+def preprocess_expression(expression: pd.DataFrame, preprocessed: bool, num_genes: int = NUM_GENES, verbose: bool = True) -> pd.DataFrame:
     if verbose:
         print('Running single-cell preprocessing...')
 
@@ -66,7 +66,7 @@ def preprocess_data(
     """
 
     # Filter and normalize
-    expression = preprocess(expression, preprocessed)
+    expression = preprocess_expression(expression, preprocessed)
 
     # Exclude targets
     if cell_types is not None:
