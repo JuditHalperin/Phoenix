@@ -60,6 +60,7 @@ def run_task(
         cross_validation: int,
         repeats: int,
         seed: int,
+        distribution: str,
         cell_types: pd.DataFrame = None,
         pseudotime: pd.DataFrame = None,
         cell_type: str = None,
@@ -94,7 +95,7 @@ def run_task(
         save_background_scores(background_scores, background, cache)
 
     # Compare scores
-    p_value = compare_scores(pathway_score, background_scores)
+    p_value = compare_scores(pathway_score, background_scores, distribution)
 
     return p_value, pathway_score, background_scores, top_genes
 
@@ -114,6 +115,7 @@ def run_gene_set_batch(
         cross_validation: int,
         repeats: int,
         seed: int,
+        distribution: str,
         output: str,
         cache: str,
         batch: int = None,
@@ -134,7 +136,7 @@ def run_gene_set_batch(
             'expression': expression, 'gene_set': gene_set,
             'set_size': set_size, 'feature_selection': feature_selection,
             'cross_validation': cross_validation, 'repeats': repeats,
-            'seed': seed, 'cache': cache
+            'seed': seed, 'distribution': distribution, 'cache': cache
         }
 
         # Cell-type classification

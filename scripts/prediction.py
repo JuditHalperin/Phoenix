@@ -133,7 +133,7 @@ def train(
     return float(score)
 
 
-def compare_scores(pathway_score: float, background_scores: list[float], distribution: str = 'gamma') -> float:
+def compare_scores(pathway_score: float, background_scores: list[float], distribution: str) -> float:
     # TODO: add param `distribution` to run args
 
     if all([s == pathway_score for s in background_scores]):

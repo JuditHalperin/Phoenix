@@ -34,6 +34,7 @@ def run_tool(
         cross_validation: int,
         repeats: int,
         seed: int,
+        distribution: str,
         processes: int,
         output: str,
         cache: str,
@@ -48,7 +49,7 @@ def run_tool(
     batch_args = {
         'feature_selection': feature_selection, 'set_fraction': set_fraction, 'min_set_size': min_set_size,
         'classifier': classifier, 'regressor': regressor, 'classification_metric': classification_metric, 'regression_metric': regression_metric,
-        'cross_validation': cross_validation, 'repeats': repeats, 'seed': seed,
+        'cross_validation': cross_validation, 'repeats': repeats, 'seed': seed, 'distribution': distribution,
         'output': output, 'cache': cache, 'tmp': tmp,
     }
 

@@ -59,6 +59,8 @@ def parse_run_args() -> argparse.Namespace:
                         help='')
     parser.add_argument('--seed', type=int, default=SEED,
                         help='')
+    parser.add_argument('--distribution', type=str, default=DISTRIBUTIONS[0],
+                        help='')
     
     # Output
     parser.add_argument('--processes', type=int, default=0,
@@ -97,6 +99,7 @@ def process_run_args(args):
     args.classification_metric = args.classification_metric.lower().replace(' ', '_')
     args.regression_metric = args.regression_metric.lower().replace(' ', '_')
     args.feature_selection = args.feature_selection.upper() if args.feature_selection else None
+    args.distribution = args.distribution.lower()
 
     if not os.path.exists(args.output):
         os.mkdir(args.output)
@@ -127,6 +130,7 @@ def validate_run_args(args):
     assert 1 <= args.cross_validation <= 10
     assert args.repeats > 1
     assert args.seed > 0
+    assert args.distribution in DISTRIBUTIONS
     assert 0 < args.set_fraction <= 1
     assert not args.processes or args.processes >= 0
 
@@ -158,6 +162,7 @@ def parse_run_batch_args() -> argparse.Namespace:
     parser.add_argument('--regression_metric', type=str, required=True, help='')
     parser.add_argument('--cross_validation', type=int, required=True, help='')
     parser.add_argument('--repeats', type=int, required=True, help='')
+    parser.add_argument('--distribution', type=str, required=True, help='')
     parser.add_argument('--seed', type=int, required=True, help='')
 
     parser.add_argument('--output', type=str, required=True, help='')
