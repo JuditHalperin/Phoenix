@@ -73,7 +73,7 @@ def preprocess_data(
         reduction = reduce_dimension(expression, reduction)
 
     # Exclude targets
-    if cell_types:
+    if cell_types is not None:
         cell_types = cell_types.loc[expression.index]
         missing_cell_types = [cell_type for cell_type in cell_types[CELL_TYPE_COL].unique() if sum(cell_types[CELL_TYPE_COL] == cell_type) < CELL_REPLICATES]
         exclude_cell_types = [cell_type for cell_type in exclude_cell_types if cell_type in cell_types[CELL_TYPE_COL]]
@@ -83,7 +83,7 @@ def preprocess_data(
             cell_types = cell_types[~cell_types[CELL_TYPE_COL].isin(exclude_cell_types)]
             expression = expression.loc[cell_types.index]
 
-    if pseudotime:
+    if pseudotime is not None:
         pseudotime = pseudotime.loc[expression.index]
         exclude_lineages = [lineage for lineage in exclude_lineages if lineage in pseudotime.columns]
         if exclude_lineages:
