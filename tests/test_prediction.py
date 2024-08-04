@@ -337,11 +337,28 @@ class TrainingTest(Test):
 
 
 class ScoreComparisonTest(Test):
+
+    def setUp(self):
+        self.pos_background_scores = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6]
+        self.neg_background_scores = [-i for i in self.pos_background_scores]
     
-    def test_score_comparison(self):
-        background_scores = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6]
-        assert compare_scores(pathway_score=0.7, background_scores=background_scores, distribution='normal') <= THRESHOLD
-        assert compare_scores(pathway_score=0.2, background_scores=background_scores, distribution='normal') > THRESHOLD
+    def test_pos_score_comparison(self):
+        assert compare_scores(pathway_score=0.7, background_scores=self.pos_background_scores, distribution='normal') <= THRESHOLD
+        assert compare_scores(pathway_score=0.2, background_scores=self.pos_background_scores, distribution='normal') > THRESHOLD
+
+        assert compare_scores(pathway_score=0.7, background_scores=self.pos_background_scores, distribution='gamma') <= THRESHOLD
+        assert compare_scores(pathway_score=0.2, background_scores=self.pos_background_scores, distribution='gamma') > THRESHOLD
+
+        assert compare_scores(pathway_score=0.7, background_scores=self.pos_background_scores, distribution='normal') <= compare_scores(pathway_score=0.7, background_scores=self.pos_background_scores, distribution='gamma')
+
+    def test_neg_score_comparison(self):
+        assert compare_scores(pathway_score=-0.07, background_scores=self.neg_background_scores, distribution='normal') <= THRESHOLD
+        assert compare_scores(pathway_score=-0.5, background_scores=self.neg_background_scores, distribution='normal') > THRESHOLD
+
+        assert compare_scores(pathway_score=-0.01, background_scores=self.neg_background_scores, distribution='gamma') <= THRESHOLD
+        assert compare_scores(pathway_score=-0.5, background_scores=self.neg_background_scores, distribution='gamma') > THRESHOLD
+
+        assert compare_scores(pathway_score=-0.07, background_scores=self.neg_background_scores, distribution='normal') <= compare_scores(pathway_score=-0.07, background_scores=self.neg_background_scores, distribution='gamma')
 
     def test_multiple_corrections(self):
         adjust_p_value([0.0, 0.05, 0.5, 1.0])

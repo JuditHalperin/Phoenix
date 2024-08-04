@@ -39,9 +39,9 @@ class TaskRunTest(Test):
                 'set_size': 1,
                 'feature_selection': FEATURE_SELECTION,
                 'cross_validation': self.cross_validation,
-                'repeats': 10,
+                'repeats': 50,
                 'seed': SEED,
-                'distribution': 'normal',
+                'distribution': 'gamma',
                 'cell_types': self.cell_types,
                 'cell_type': ALL_CELLS,
                 'cache': None  # avoid saving to cache during test
@@ -73,7 +73,7 @@ class TaskRunTest(Test):
                 'cross_validation': self.cross_validation,
                 'repeats': 10,
                 'seed': SEED,
-                'distribution': 'normal',
+                'distribution': 'gamma',
                 'pseudotime': self.pseudotime,
                 'lineage': 1,
                 'cache': None  # avoid saving to cache during test
