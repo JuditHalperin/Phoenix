@@ -2,7 +2,7 @@ import warnings, random
 import pandas as pd
 import numpy as np
 import scanpy as sc
-from scripts.consts import ALL_CELLS, CELL_TYPE_COL, NUM_GENES
+from scripts.consts import ALL_CELLS, CELL_TYPE_COL, NUM_GENES, CELL_REPLICATES
 from scripts.utils import save_csv, transform_log, re_transform_log
 
 sc.settings.verbosity = 0
@@ -73,14 +73,23 @@ def preprocess_data(
         reduction = reduce_dimension(expression, reduction)
 
     # Exclude targets
-    if exclude_cell_types:
-        raise NotImplementedError('`exclude_cell_types` is not supported yet')
-    if exclude_lineages:
-        raise NotImplementedError('`exclude_lineages` is not supported yet')
+    if cell_types:
+        cell_types = cell_types.loc[expression.index]
+        missing_cell_types = [cell_type for cell_type in cell_types[CELL_TYPE_COL].unique() if sum(cell_types[CELL_TYPE_COL] == cell_type) < CELL_REPLICATES]
+        exclude_cell_types = [cell_type for cell_type in exclude_cell_types if cell_type in cell_types[CELL_TYPE_COL]]
+        exclude_cell_types = list(set(exclude_cell_types + missing_cell_types))
+        if exclude_cell_types:
+            print(f'Excluding cell types: {", ".join(exclude_cell_types)}')
+            cell_types = cell_types[~cell_types[CELL_TYPE_COL].isin(exclude_cell_types)]
+            expression = expression.loc[cell_types.index]
 
-    # Update all inputs
-    cell_types = cell_types.loc[expression.index] if cell_types is not None else None
-    pseudotime = pseudotime.loc[expression.index] if pseudotime is not None else None
+    if pseudotime:
+        pseudotime = pseudotime.loc[expression.index]
+        exclude_lineages = [lineage for lineage in exclude_lineages if lineage in pseudotime.columns]
+        if exclude_lineages:
+            print(f'Excluding lineages: {", ".join(exclude_lineages)}')
+            pseudotime.drop(columns=exclude_lineages)
+
     reduction = reduction.loc[expression.index]
 
     # Save preprocessed data

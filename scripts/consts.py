@@ -90,6 +90,7 @@ LIST_SEP = '; '
 
 # Defaults
 NUM_GENES = 5000
+CELL_REPLICATES = 15  # TODO: add param
 REDUCTION = 'umap'
 DB = 'ALL'
 CLASSIFIER = 'RF'
