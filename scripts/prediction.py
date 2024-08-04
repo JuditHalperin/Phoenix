@@ -136,7 +136,10 @@ def train(
 def compare_scores(pathway_score: float, background_scores: list[float], distribution: str = 'gamma') -> float:
     # TODO: add param `distribution` to run args
 
-    if distribution == 'normal':
+    if all([s == pathway_score for s in background_scores]):
+        p_value = np.NaN
+
+    elif distribution == 'normal':
         alternative = 'less'  # background is less than pathway
         with warnings.catch_warnings():
             warnings.filterwarnings('ignore', category=RuntimeWarning, message='Precision loss occurred in moment calculation')
@@ -146,7 +149,7 @@ def compare_scores(pathway_score: float, background_scores: list[float], distrib
         shape, loc, scale = stats.gamma.fit(background_scores)
         cdf_value = stats.gamma.cdf(pathway_score, shape, loc, scale)
         p_value = 1 - cdf_value
-
+        
     else:
         raise ValueError('Unsupported distribution type. Use `normal` or `gamma`')
 
