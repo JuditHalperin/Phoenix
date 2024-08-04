@@ -2,7 +2,8 @@ import unittest
 import pandas as pd
 import numpy as np
 from tests.interface import Test
-from scripts.prediction import get_target, get_data, train, compare_scores, adjust_p_value
+from scripts.prediction import get_target, get_data, train, compare_scores
+from scripts.utils import adjust_p_value
 from scripts.consts import CELL_TYPE_COL, ALL_CELLS, CLASSIFIERS, CLASSIFIER_ARGS, REGRESSORS, REGRESSOR_ARGS, THRESHOLD
 
 
@@ -339,8 +340,8 @@ class ScoreComparisonTest(Test):
     
     def test_score_comparison(self):
         background_scores = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6]
-        assert compare_scores(pathway_score=0.7, background_scores=background_scores) <= THRESHOLD
-        assert compare_scores(pathway_score=0.2, background_scores=background_scores) > THRESHOLD
+        assert compare_scores(pathway_score=0.7, background_scores=background_scores, distribution='normal') <= THRESHOLD
+        assert compare_scores(pathway_score=0.2, background_scores=background_scores, distribution='normal') > THRESHOLD
 
     def test_multiple_corrections(self):
         adjust_p_value([0.0, 0.05, 0.5, 1.0])

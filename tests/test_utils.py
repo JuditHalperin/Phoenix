@@ -35,11 +35,11 @@ class UtilTest(Test):
 
     def test_str_conversion(self):
         self.assertEqual(convert_to_str(2.2), '2.2')
-        self.assertEqual(convert_to_str([1, 2]), '1, 2')
-        self.assertEqual(convert_to_str({'1': 11, '2': [22, 222]}), '1: 11, 2: 22, 222')
+        self.assertEqual(convert_to_str([1, 2]), '1; 2')
+        self.assertEqual(convert_to_str({'1': 11, '2': [22, 222]}), '1: 11; 2: 22; 222')
 
         self.assertEqual(convert_from_str('2.2'), 2.2)
-        self.assertEqual(convert_from_str('1, 2'), [1, 2])
+        self.assertEqual(convert_from_str('1; 2'), [1, 2])
 
 
 if __name__ == '__main__':

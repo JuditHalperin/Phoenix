@@ -1,7 +1,7 @@
 import unittest
 import pandas as pd
 from tests.interface import Test
-from run import run_task
+from run_batch import run_task
 from scripts.consts import CELL_TYPE_COL, ALL_CELLS, CLASSIFICATION_METRIC, REGRESSION_METRIC, FEATURE_SELECTION, SEED, THRESHOLD
 
 
@@ -41,6 +41,7 @@ class TaskRunTest(Test):
                 'cross_validation': self.cross_validation,
                 'repeats': 10,
                 'seed': SEED,
+                'distribution': 'normal',
                 'cell_types': self.cell_types,
                 'cell_type': ALL_CELLS,
                 'cache': None  # avoid saving to cache during test
@@ -72,6 +73,7 @@ class TaskRunTest(Test):
                 'cross_validation': self.cross_validation,
                 'repeats': 10,
                 'seed': SEED,
+                'distribution': 'normal',
                 'pseudotime': self.pseudotime,
                 'lineage': 1,
                 'cache': None  # avoid saving to cache during test
