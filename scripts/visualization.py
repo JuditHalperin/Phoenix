@@ -1,3 +1,4 @@
+import sys
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -5,10 +6,11 @@ import seaborn as sns
 from scipy.cluster import hierarchy
 from scripts.data import get_column_unique_pathways, get_top_sum_pathways, sum_gene_expression
 from scripts.utils import save_plot, get_experiment, get_preprocessed_data, remove_outliers, get_color_mapping, convert2sci, save_csv
-from scripts.consts import THRESHOLD, TARGET_COL, CLASSIFICATION_METRICS, ALL_CELLS, OTHER_CELLS, BACKGROUND_COLOR, INTEREST_COLOR, CELL_TYPE_COL, MAP_SIZE
+from scripts.consts import THRESHOLD, TARGET_COL, ALL_CELLS, OTHER_CELLS, BACKGROUND_COLOR, INTEREST_COLOR, CELL_TYPE_COL, MAP_SIZE
 
 
 sns.set_theme(style='white')
+sys.setrecursionlimit(10000)
 
 
 def plot_p_values(
@@ -31,7 +33,7 @@ def plot_p_values(
         heatmap_data = heatmap_data.iloc[row_order, :]
 
     plt.figure(figsize=(9, 6), dpi=200)
-    max_value = max(remove_outliers(heatmap_data.fillna(0).values.flatten().tolist())) if not max_value else max_value
+    max_value = max(heatmap_data.fillna(0).values.flatten().tolist()) if not max_value else max_value
     heatmap = sns.heatmap(heatmap_data, cmap='Reds', cbar=False, vmin=0, vmax=max_value, xticklabels=True, yticklabels=False)  # annot=True, fmt='.2f'
 
     plt.colorbar(heatmap.collections[0], label='-log10(p-value)')
@@ -82,11 +84,7 @@ def _plot_prediction_scores(
         sns.kdeplot(fill=True, **plot_args)
         plt.ylabel('Density')
 
-    metric = experiment['metric']
-    plt.xlabel(metric)
-    # if metric in CLASSIFICATION_METRICS.keys():
-    #     plt.xlim(0, 1)
-
+    plt.xlabel(experiment['metric'])
     plt.legend()
     plt.title(title)
 
