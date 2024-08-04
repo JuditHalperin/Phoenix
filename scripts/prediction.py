@@ -146,9 +146,12 @@ def compare_scores(pathway_score: float, background_scores: list[float], distrib
             p_value = stats.ttest_1samp(background_scores, pathway_score, alternative=alternative)[1]
 
     elif distribution == 'gamma':
-        shape, loc, scale = stats.gamma.fit(background_scores)
-        cdf_value = stats.gamma.cdf(pathway_score, shape, loc, scale)
-        p_value = 1 - cdf_value
+        try:
+            shape, loc, scale = stats.gamma.fit(background_scores)
+            cdf_value = stats.gamma.cdf(pathway_score, shape, loc, scale)
+            p_value = 1 - cdf_value
+        except stats._warnings_errors.FitError:
+            p_value = np.NaN
         
     else:
         raise ValueError('Unsupported distribution type. Use `normal` or `gamma`')
