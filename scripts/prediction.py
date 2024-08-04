@@ -5,7 +5,7 @@ from sklearn.preprocessing import StandardScaler, MinMaxScaler, LabelEncoder
 from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn.feature_selection import SelectKBest, f_classif, f_regression
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
-from scipy.stats import ttest_1samp
+import scipy.stats as stats
 from scripts.consts import METRICS, ALL_CELLS, SEED, CELL_TYPE_COL
 from scripts.utils import show_runtime
 
@@ -133,9 +133,21 @@ def train(
     return float(score)
 
 
-def compare_scores(pathway_score: float, background_scores: list[float]) -> float:
-    alternative = 'less'  # background is less than pathway
-    with warnings.catch_warnings():
-        warnings.filterwarnings('ignore', category=RuntimeWarning, message='Precision loss occurred in moment calculation')
-        p_value = ttest_1samp(background_scores, pathway_score, alternative=alternative)[1]
+def compare_scores(pathway_score: float, background_scores: list[float], distribution: str = 'gamma') -> float:
+    # TODO: add param `distribution` to run args
+
+    if distribution == 'normal':
+        alternative = 'less'  # background is less than pathway
+        with warnings.catch_warnings():
+            warnings.filterwarnings('ignore', category=RuntimeWarning, message='Precision loss occurred in moment calculation')
+            p_value = stats.ttest_1samp(background_scores, pathway_score, alternative=alternative)[1]
+
+    elif distribution == 'gamma':
+        shape, loc, scale = stats.gamma.fit(background_scores, floc=0)
+        cdf_value = stats.gamma.cdf(pathway_score, shape, loc, scale)
+        p_value = 1 - cdf_value
+
+    else:
+        raise ValueError('Unsupported distribution type. Use `normal` or `gamma`')
+
     return p_value if not np.isnan(p_value) else 1.0
