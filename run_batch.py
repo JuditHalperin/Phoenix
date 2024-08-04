@@ -172,4 +172,5 @@ def run_gene_set_batch(
 
 if __name__ == '__main__':
     args = get_run_batch_args()
-    run_gene_set_batch(**vars(args))
+    if args.batch_gene_sets is not None:
+        run_gene_set_batch(**vars(args))

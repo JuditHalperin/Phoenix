@@ -106,7 +106,7 @@ def _estimate_mem(task_len: int) -> str:
 
 def _estimate_time(task_len: int) -> str:
     # TODO: expand estimation
-    return '15:0:0' if task_len > 30 else '0:30:0'
+    return '15:0:0' if task_len > 30 else '1:30:0'
 
 
 def get_batch_run_cmd(processes: int | None, batch_size: int, task_len: int, **kwargs) -> str:
