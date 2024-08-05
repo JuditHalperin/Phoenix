@@ -20,12 +20,14 @@ def plot_p_values(
         max_value: int = None,
         title: str = '',
         output: str = None,
-    ):  
+    ):
+    
     if cluster_rows:
         heatmap_data = heatmap_data.loc[np.unique(heatmap_data.index)]
 
     heatmap_data.index = [i[:50] for i in heatmap_data.index]
 
+    heatmap_data.replace(0, heatmap_data[heatmap_data != 0].stack().min() / 10, inplace=True)
     heatmap_data = np.log10(heatmap_data ** (-1))
 
     if cluster_rows:
