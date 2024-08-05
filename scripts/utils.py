@@ -4,7 +4,7 @@ from argparse import Namespace
 import numpy as np
 import seaborn as sns
 from statsmodels.stats.multitest import multipletests
-from scripts.consts import SIZES, LIST_SEP
+from scripts.consts import SIZES, LIST_SEP, CELL_TYPE_COL
 
 
 transform_log = lambda x: np.log2(x + 1)
@@ -69,6 +69,10 @@ def define_batch_size(gene_set_len: int, processes: int) -> int:
     if not processes:
         return gene_set_len
     return int(np.ceil(gene_set_len / processes))
+
+
+def define_task_length(cell_types, pseudotime) -> int:
+    return len(cell_types[CELL_TYPE_COL].unique()) + pseudotime.shape[1]
 
 
 def estimate_mem(task_len: int) -> str:
