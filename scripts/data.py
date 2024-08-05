@@ -82,6 +82,7 @@ def preprocess_data(
 
     if pseudotime is not None:
         pseudotime = pseudotime.loc[expression.index]
+        # TODO: remove if too few cells
         exclude_lineages = [lineage for lineage in exclude_lineages if lineage in pseudotime.columns] if exclude_lineages else []
         if exclude_lineages:
             print(f'Excluding lineages: {", ".join(exclude_lineages)}')
@@ -138,12 +139,12 @@ def get_lineages(pseudotime: pd.DataFrame) -> list[str]:
 
 
 def get_top_sum_pathways(data, ascending: bool, size: int) -> list[str]:
-    return data.dropna(axis=0).sum(axis=1).sort_values(ascending=ascending).head(size).index.tolist()
+    return data.copy().dropna(axis=0).sum(axis=1).sort_values(ascending=ascending).head(size).index.tolist()
 
 
 def get_column_unique_pathways(data, col: str, size: int, threshold: float) -> list[str]:
     tmp = data.copy()
-    tmp = tmp[(tmp[col] == tmp.min(axis=1)) & (tmp[col] <= threshold)]
+    tmp = tmp[(tmp[col] == tmp.min(axis=1)) & (tmp[col] <= threshold if threshold else 1)]
     tmp = tmp.loc[tmp[col].dropna().sort_values(ascending=True).index[:200]]
     to_drop = [col, ALL_CELLS] if ALL_CELLS in tmp.columns else [col]
     tmp['max_diff'] = tmp.drop(to_drop, axis=1).min(axis=1) - tmp[col]
