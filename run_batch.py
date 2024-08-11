@@ -66,6 +66,7 @@ def run_task(
         pseudotime: pd.DataFrame = None,
         cell_type: str = None,
         lineage: str = None,
+        trim_background: bool = True,
         cache: str = None
     ):
 
@@ -90,7 +91,8 @@ def run_task(
     if not background_scores:
         for i in range(repeats):
             background_scores.append(get_prediction_score(seed=i, **prediction_args)[0])
-        background_scores = [s for s in background_scores if s > min(background_scores) and s < max(background_scores)]
+        if trim_background:
+            background_scores = [s for s in background_scores if s > min(background_scores) and s < max(background_scores)]
         save_background_scores(background_scores, background, cache)
 
     # Compare scores

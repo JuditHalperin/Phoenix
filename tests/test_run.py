@@ -44,6 +44,7 @@ class TaskRunTest(Test):
                 'distribution': 'gamma',
                 'cell_types': self.cell_types,
                 'cell_type': ALL_CELLS,
+                'trim_background': False,
                 'cache': None  # avoid saving to cache during test
             }
             
@@ -76,6 +77,7 @@ class TaskRunTest(Test):
                 'distribution': 'gamma',
                 'pseudotime': self.pseudotime,
                 'lineage': 1,
+                'trim_background': False,
                 'cache': None  # avoid saving to cache during test
             }
             
