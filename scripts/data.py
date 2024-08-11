@@ -2,7 +2,7 @@ import warnings, random
 import pandas as pd
 import numpy as np
 import scanpy as sc
-from scripts.consts import ALL_CELLS, CELL_TYPE_COL, NUM_GENES, CELL_REPLICATES
+from scripts.consts import ALL_CELLS, CELL_TYPE_COL, NUM_GENES, CELL_PERCENT
 from scripts.utils import transform_log, re_transform_log
 from scripts.output import save_csv
 
@@ -57,26 +57,29 @@ def preprocess_data(
         cell_types: pd.DataFrame,
         pseudotime: pd.DataFrame,
         reduction: pd.DataFrame | str,
-        preprocessed: bool,
-        exclude_cell_types: list[str],
-        exclude_lineages: list[str],
-        output: str
+        preprocessed: bool = False,
+        min_cell_percent: float = CELL_PERCENT,
+        exclude_cell_types: list[str] = [],
+        exclude_lineages: list[str] = [],
+        output: str = None,
+        verbose: bool = True,
     ):
     """
     preprocessed: whether expression data are already filtered and log-normalized. In this case neither cell filtering nor normalization is applied, only gene filtering if necessary
     """
 
     # Filter and normalize
-    expression = preprocess_expression(expression, preprocessed)
+    expression = preprocess_expression(expression, preprocessed, verbose=verbose)
 
     # Exclude targets
     if cell_types is not None:
         cell_types = cell_types.loc[expression.index]
-        missing_cell_types = [cell_type for cell_type in cell_types[CELL_TYPE_COL].unique() if sum(cell_types[CELL_TYPE_COL] == cell_type) < CELL_REPLICATES]
-        exclude_cell_types = [cell_type for cell_type in exclude_cell_types if cell_type in cell_types[CELL_TYPE_COL]] if exclude_cell_types else []
-        exclude_cell_types = list(set(exclude_cell_types + missing_cell_types))
+        rare_cell_types = [cell_type for cell_type in cell_types[CELL_TYPE_COL].unique() if sum(cell_types[CELL_TYPE_COL] == cell_type) / cell_types.shape[0] * 100 < min_cell_percent]
+        exclude_cell_types = [cell_type for cell_type in exclude_cell_types if cell_type in cell_types[CELL_TYPE_COL].tolist()] if exclude_cell_types else []
+        exclude_cell_types = list(set(exclude_cell_types + rare_cell_types))
         if exclude_cell_types:
-            print(f'Excluding cell types: {", ".join(exclude_cell_types)}')
+            if verbose:
+                print(f'Excluding cell types: {", ".join(exclude_cell_types)}')
             cell_types = cell_types[~cell_types[CELL_TYPE_COL].isin(exclude_cell_types)]
             expression = expression.loc[cell_types.index]
 
@@ -85,7 +88,8 @@ def preprocess_data(
         # TODO: remove if too few cells
         exclude_lineages = [lineage for lineage in exclude_lineages if lineage in pseudotime.columns] if exclude_lineages else []
         if exclude_lineages:
-            print(f'Excluding lineages: {", ".join(exclude_lineages)}')
+            if verbose:
+                print(f'Excluding lineages: {", ".join(exclude_lineages)}')
             pseudotime.drop(columns=exclude_lineages)
 
     # Reduce dimensions
@@ -94,10 +98,11 @@ def preprocess_data(
     reduction = reduction.loc[expression.index]
 
     # Save preprocessed data
-    save_csv(expression, 'expression', output)
-    save_csv(cell_types, 'cell_types', output)
-    save_csv(pseudotime, 'pseudotime', output)
-    save_csv(reduction, 'reduction', output)
+    if output:
+        save_csv(expression, 'expression', output)
+        save_csv(cell_types, 'cell_types', output)
+        save_csv(pseudotime, 'pseudotime', output)
+        save_csv(reduction, 'reduction', output)
 
     return expression, cell_types, pseudotime, reduction
 
