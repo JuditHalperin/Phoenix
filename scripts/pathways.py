@@ -175,7 +175,7 @@ def retrieve_pathway(id: str, organism: str) -> dict[str, list[str]]:
     raise NotImplementedError('Pathway ID is not supported yet')
 
 
-def get_gene_sets(pathway_database: list[str], custom_pathways: list[str], organism: str, all_genes: list[str], output: str) -> dict[str, list[str]]:
+def get_gene_sets(pathway_database: list[str], custom_pathways: list[str], organism: str, all_genes: list[str], min_set_size: int, output: str) -> dict[str, list[str]]:
     gene_sets = {}
 
     for database in pathway_database:
@@ -193,7 +193,7 @@ def get_gene_sets(pathway_database: list[str], custom_pathways: list[str], organ
     
     # Filter gene annotations based on size
     gene_sets = {make_valid_term(set_name): [g for g in intersect_genes(gene_set, all_genes) if g != ''] for set_name, gene_set in gene_sets.items()}
-    gene_sets = {set_name: gene_set for set_name, gene_set in gene_sets.items() if len(gene_set) >= SIZES[0] and len(gene_set) <= SIZES[-1]}
+    gene_sets = {set_name: gene_set for set_name, gene_set in gene_sets.items() if len(gene_set) >= max(min_set_size, SIZES[0]) and len(gene_set) <= SIZES[-1]}  # TODO: smaller than min size
 
     # Save
     save_gene_sets(gene_sets, output)

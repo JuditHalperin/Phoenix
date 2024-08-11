@@ -48,7 +48,7 @@ def run_tool(
         preprocessed=preprocessed, exclude_cell_types=exclude_cell_types, exclude_lineages=exclude_lineages,
         output=output
     )
-    gene_sets = get_gene_sets(pathway_database, custom_pathways, organism, expression.columns, output)
+    gene_sets = get_gene_sets(pathway_database, custom_pathways, organism, expression.columns, min_set_size, output)
     batch_size = define_batch_size(len(gene_sets), processes)
     print(f'Running experiments for {len(gene_sets)} gene annotations with batch size of {batch_size}...')
 
