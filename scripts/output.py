@@ -22,8 +22,11 @@ def read_csv(path: str, index_col: int = 0, dtype=None, verbose: bool = False) -
         raise RuntimeError(f"An unexpected error occurred while reading '{path}': {str(e)}")
 
 
-def save_csv(data: list[dict] | pd.DataFrame, title: str, output_path: str, keep_index: bool = True) -> None:
+def save_csv(data: list[dict] | pd.DataFrame | None, title: str, output_path: str, keep_index: bool = True) -> None:
     if data is None: return
+    if isinstance(data, list):
+        if not data: return
+
     data = pd.DataFrame(data) if not isinstance(data, pd.DataFrame) else data
     # TODO: if already exists
     data.to_csv(os.path.join(output_path, f'{make_valid_filename(title)}.csv'), index=keep_index)
@@ -90,8 +93,7 @@ def read_results(title: str, output_path: str, index_col=None) -> pd.DataFrame |
     try:
         title = f'{title}.csv' if '.csv' not in title else title
         return read_csv(os.path.join(output_path, f'{make_valid_filename(title)}'), index_col=index_col)
-    except Exception as e:
-        print(e)
+    except:
         return None
 
 
@@ -106,6 +108,7 @@ def aggregate_result(result_type: str, output: str, tmp: str):
     if df is not None:
         if 'fdr' not in df.columns:
             df['fdr'] = adjust_p_value(df['p_value'])
+            # TODO: save?
         return df
     
     dfs = []
@@ -113,6 +116,9 @@ def aggregate_result(result_type: str, output: str, tmp: str):
         df = read_results(os.path.basename(path), tmp, index_col=None)
         if df is not None:
             dfs.append(df)
+
+    if not dfs:
+        return None
     dfs = pd.concat(dfs, ignore_index=True)
 
     dfs['fdr'] = adjust_p_value(dfs['p_value'])
