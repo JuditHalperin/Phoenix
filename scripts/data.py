@@ -74,12 +74,12 @@ def preprocess_data(
     # Exclude targets
     if cell_types is not None:
         cell_types = cell_types.loc[expression.index]
-        rare_cell_types = [cell_type for cell_type in cell_types[CELL_TYPE_COL].unique() if sum(cell_types[CELL_TYPE_COL] == cell_type) / cell_types.shape[0] * 100 < min_cell_percent]
+        rare_cell_types = [cell_type for cell_type in cell_types[CELL_TYPE_COL].unique() if (cell_types[CELL_TYPE_COL] == cell_type).sum() / cell_types.shape[0] * 100 < min_cell_percent]
         exclude_cell_types = [cell_type for cell_type in exclude_cell_types if cell_type in cell_types[CELL_TYPE_COL].tolist()] if exclude_cell_types else []
         exclude_cell_types = list(set(exclude_cell_types + rare_cell_types))
         if exclude_cell_types:
             if verbose:
-                print(f'Excluding cell types: {", ".join(exclude_cell_types)}')
+                print(f'Excluding cell types: {", ".join(exclude_cell_types)}...')
             cell_types = cell_types[~cell_types[CELL_TYPE_COL].isin(exclude_cell_types)]
             expression = expression.loc[cell_types.index]
 
@@ -89,7 +89,7 @@ def preprocess_data(
         exclude_lineages = [lineage for lineage in exclude_lineages if lineage in pseudotime.columns] if exclude_lineages else []
         if exclude_lineages:
             if verbose:
-                print(f'Excluding lineages: {", ".join(exclude_lineages)}')
+                print(f'Excluding lineages: {", ".join(exclude_lineages)}...')
             pseudotime.drop(columns=exclude_lineages)
 
     # Reduce dimensions
