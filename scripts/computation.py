@@ -1,4 +1,4 @@
-import os
+import os, subprocess
 from scripts.utils import estimate_mem, estimate_time
 
 
@@ -95,3 +95,23 @@ def get_cmd(
             sbatch_cmd += f"--dependency=afterok:{previous_job_id} "
     
     return sbatch_cmd
+
+
+def execute_cmd(cmd, title: str, processes: int = None):
+    process = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+    job_id = process.stdout.strip().split()[-1]
+    msg = f'Executing {title} as job {job_id}' + (f'({processes} processes)' if processes else '')
+    print(msg)
+    return job_id
+
+
+def run_setup_cmd(args: dict, report: str, func: str = 'setup') -> str:
+    cmd = get_cmd(
+        func=func,
+        args=args,
+        script='run_new',
+        sbatch=True,
+        mem='5G',
+        report_path=report,
+    )
+    return execute_cmd(cmd, func)

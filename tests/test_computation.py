@@ -16,7 +16,7 @@ class BatchTest(Test):
         self.assertEqual(get_gene_set_batch(self.gene_sets, batch=1, batch_size=4), {'set1': ['gene1'], 'set2': ['gene2'], 'set3': ['gene3'], 'set4': ['gene4']})
 
 
-class CmdTest(unittest.TestCase):
+class CmdTest(Test):
 
     def test_non_sbatch_command(self):
         cmd = get_cmd(
@@ -88,7 +88,7 @@ class CmdTest(unittest.TestCase):
             processes=5,
             report_path='/path/to/report',
             previous_job_id='12345',
-            previous_processes=5
+            previous_processes=3
         )
         expected_cmd = (
             "sbatch --job-name=my_function --mem=1G --time=0:30:0 "
@@ -96,7 +96,7 @@ class CmdTest(unittest.TestCase):
             "--error=/path/to/report/%A_%a_my_function.err "
             "--wrap=\"python -c 'from scripts.my_script import my_function; my_function(arg1='value1', arg2=2, batch=\$SLURM_ARRAY_TASK_ID)'\" "
             "--array=1-5 "
-            "--dependency=afterok:12345_1,12345_2,12345_3,12345_4,12345_5 "
+            "--dependency=afterok:12345_1,12345_2,12345_3 "
         )
         self.assertEqual(cmd, expected_cmd)
 
