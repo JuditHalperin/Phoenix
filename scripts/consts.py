@@ -8,6 +8,7 @@ from sklearn.neural_network import MLPClassifier, MLPRegressor
 from lightgbm import LGBMClassifier, LGBMRegressor
 from xgboost import XGBClassifier, XGBRegressor
 from sklearn.metrics import accuracy_score, balanced_accuracy_score, f1_score, mean_absolute_error, mean_squared_error
+from scripts.metric import weighted_metric_using_icf, compute_f1, compute_recall
 
 
 SIZES = [5, 6, 7, 8, 9, 10, 15, 20, 35, 50, 75, 100, 120, 140, 160, 180, 200, 225, 250, 275, 300, 350, 400]
@@ -65,10 +66,13 @@ REGRESSOR_ARGS = {
 
 CLASSIFICATION_METRICS = {
     'accuracy': accuracy_score,
-    'balanced_accuracy': balanced_accuracy_score,
+    'accuracy_balanced': balanced_accuracy_score,
+    'f1': lambda y_true, y_pred: f1_score(y_true, y_pred, average='binary'),
     'f1_weighted': lambda y_true, y_pred: f1_score(y_true, y_pred, average='weighted'),
     'f1_macro': lambda y_true, y_pred: f1_score(y_true, y_pred, average='macro'),
     'f1_micro': lambda y_true, y_pred: f1_score(y_true, y_pred, average='micro'),
+    'f1_weighted_icf': lambda y_true, y_pred: weighted_metric_using_icf(y_true, y_pred, compute_f1),
+    'recall_weighted_icf': lambda y_true, y_pred: weighted_metric_using_icf(y_true, y_pred, compute_recall),
 }
 REGRESSION_METRICS = {
     'neg_mean_absolute_error': lambda y_true, y_pred: -1 * mean_absolute_error(y_true, y_pred),
@@ -91,16 +95,16 @@ LIST_SEP = '; '
 
 # Defaults
 NUM_GENES = 5000
-CELL_REPLICATES = 15  # TODO: add param
+CELL_PERCENT = 5  # TODO: add param
 REDUCTION = 'umap'
 DB = 'ALL'
 CLASSIFIER = 'RF'
 REGRESSOR = 'RF'
-CLASSIFICATION_METRIC = 'f1_weighted'
+CLASSIFICATION_METRIC = 'f1_weighted_icf'
 REGRESSION_METRIC = 'neg_mean_squared_error'
 CROSS_VALIDATION = 10
 REPEATS = 250
-FEATURE_SELECTION = None
+FEATURE_SELECTION = 'ANOVA'
 SET_FRACTION = 0.5
 MIN_SET_SIZE = 10
 SEED = 3407

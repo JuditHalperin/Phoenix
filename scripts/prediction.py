@@ -5,8 +5,9 @@ from sklearn.preprocessing import StandardScaler, MinMaxScaler, LabelEncoder
 from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn.feature_selection import SelectKBest, f_classif, f_regression
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
+from sklearn.metrics import make_scorer
 import scipy.stats as stats
-from scripts.consts import METRICS, ALL_CELLS, SEED, CELL_TYPE_COL
+from scripts.consts import ALL_CELLS, SEED, CELL_TYPE_COL, METRICS
 from scripts.utils import show_runtime
 
 
@@ -112,6 +113,7 @@ def train(
         predictor_args['class_weight'] = 'balanced'
 
     model = predictor(**predictor_args)
+    score = make_scorer(METRICS[metric], greater_is_better=True)
 
     encode_labels = isinstance(y.iloc[0], str)
     if encode_labels:
@@ -119,7 +121,7 @@ def train(
         y = le.fit_transform(y)
 
     if cross_validation:
-        score = np.median(cross_val_score(model, X, y, cv=cross_validation, scoring=metric))
+        score = np.median(cross_val_score(model, X, y, cv=cross_validation, scoring=score))
 
     else:
         stratify = pd.cut(y, bins=bins, labels=False) if y.dtype == float else y
@@ -128,7 +130,7 @@ def train(
         model.fit(X_train, y_train)
         y_pred = model.predict(X_test)
 
-        score = METRICS[metric](y_test, y_pred)
+        score = score(y_test, y_pred)
 
     return float(score)
 

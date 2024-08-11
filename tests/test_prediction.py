@@ -284,7 +284,7 @@ class TrainingTest(Test):
         bad_features = np.array(self.expression[['Gene4', 'Gene1']])
         
         for classifier in ['RF', 'SVM', 'DTree']:
-            for metric in ['f1_weighted', 'balanced_accuracy']:
+            for metric in ['f1_weighted_icf', 'accuracy_balanced']:
 
                 predictor = CLASSIFIERS[classifier]
                 predictor_args = CLASSIFIER_ARGS[predictor]
