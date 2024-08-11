@@ -89,7 +89,8 @@ def get_data(
         return X[:, :set_size], y, features[:set_size]
 
     # Select randomly
-    return X[:, random.Random(seed).sample(list(range(X.shape[1])), set_size)], y, None
+    selected_indices = random.Random(seed).sample(list(range(X.shape[1])), set_size)
+    return X[:, selected_indices], y, [features[i] for i in selected_indices]
 
 
 @show_runtime
