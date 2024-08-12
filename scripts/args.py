@@ -123,7 +123,7 @@ def validate_run_args(args):
     assert args.regression_metric in REGRESSION_METRICS.keys()
     assert not args.feature_selection or args.feature_selection in FEATURE_SELECTION_METHODS
     assert 2 <= args.cross_validation <= 10
-    assert args.repeats > 10
+    assert args.repeats >= 5
     assert args.seed > 0
     assert args.distribution in DISTRIBUTIONS
     assert 0 < args.set_fraction <= 1
