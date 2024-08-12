@@ -76,8 +76,11 @@ def parse_run_args() -> argparse.Namespace:
 
 
 def process_run_args(args):
-    if not os.path.exists(args.reduction):
-        args.reduction = args.reduction.lower().replace('-', '').replace('_', '').replace(' ', '')
+
+    args.expression = get_full_path(args.expression)
+    args.cell_types = get_full_path(args.cell_types) if args.cell_types else None
+    args.pseudotime = get_full_path(args.pseudotime) if args.pseudotime else None
+    args.reduction = get_full_path(args.reduction) if os.path.exists(args.reduction) else args.reduction.lower().replace('-', '').replace('_', '').replace(' ', '')
     
     args.organism = args.organism.lower()
     if args.pathway_database is not None:
