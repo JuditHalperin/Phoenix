@@ -101,28 +101,28 @@ def execute_cmd(cmd, title: str, processes: int = None) -> int:
     process = subprocess.run(cmd, shell=True, capture_output=True, text=True)
     try:  # if sbatch run
         job_id = process.stdout.strip().split()[-1]
-        print(f'Executing {title} as job {job_id}' + (f'({processes} processes)' if processes else '') + '...')
+        print(f'Executing {title} as job {job_id}' + (f' ({processes} processes)' if processes else '') + '...')
         return job_id
     except:
         print(f'Executing {title}...')
         return None
 
 
-def run_setup_cmd(args: dict, tmp: str = None, func: str = 'setup') -> str:
+def run_setup_cmd(args: dict, tmp: str = None) -> str:
     cmd = get_cmd(
-        func=func,
+        func='setup',
         args=args,
         script='run_new',
         sbatch=True,
         mem='3G',  # TODO: estimate memory based on expression data size
         report_path=tmp,
     )
-    return execute_cmd(cmd, func)
+    return execute_cmd(cmd, 'initial setup')
 
 
-def run_experiments_cmd(setup_job_id: int, args: dict, tmp: str = None, func: str = 'run_experiments') -> int:
+def run_experiments_cmd(setup_job_id: int, args: dict, tmp: str = None) -> int:
     cmd = get_cmd(
-        func=func, 
+        func='run_experiments', 
         args=args,
         script='run_new',
         sbatch=True,
@@ -132,12 +132,12 @@ def run_experiments_cmd(setup_job_id: int, args: dict, tmp: str = None, func: st
         report_path=tmp,
         previous_job_id=setup_job_id,
     )
-    return execute_cmd(cmd, func, args['processes'])
+    return execute_cmd(cmd, 'experiments', args['processes'])
 
 
-def run_aggregation_cmd(exp_job_id: int, exp_processes: int | None, output: str, tmp: str, func: str = 'summarize') -> int:
+def run_aggregation_cmd(exp_job_id: int, exp_processes: int | None, output: str, tmp: str) -> int:
     cmd = get_cmd(
-        func=func,
+        func='summarize',
         args={'output': output, 'tmp': tmp},
         script='run_new',
         sbatch=True,
@@ -147,4 +147,4 @@ def run_aggregation_cmd(exp_job_id: int, exp_processes: int | None, output: str,
         previous_job_id=exp_job_id,
         previous_processes=exp_processes,
     )
-    return execute_cmd(cmd, func)
+    return execute_cmd(cmd, 'aggregation and plotting')
