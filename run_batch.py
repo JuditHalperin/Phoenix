@@ -102,6 +102,7 @@ def run_task(
 
 
 def run_gene_set_batch(
+        batch: int | None,
         batch_gene_sets: dict[str, list[str]],
         expression: pd.DataFrame,
         cell_types: pd.DataFrame,
@@ -119,7 +120,6 @@ def run_gene_set_batch(
         distribution: str,
         output: str,
         cache: str,
-        batch: int = None,
     ) -> None:
     """
     output: main output path for a single batch and temp output path for many batches

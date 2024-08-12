@@ -3,8 +3,11 @@ import pandas as pd
 import numpy as np
 import dask.dataframe as dd
 import matplotlib.pyplot as plt
-from scripts.consts import TARGET_COL
+from scripts.consts import TARGET_COL, CELL_TYPE_COL
 from scripts.utils import make_valid_filename, convert_to_str, convert_from_str, adjust_p_value
+
+
+# TODO: add methods to return paths of cache, reports and batch results (if needed)
 
 
 def read_csv(path: str, index_col: int = 0, dtype=None, verbose: bool = False) -> pd.DataFrame:
@@ -23,13 +26,29 @@ def read_csv(path: str, index_col: int = 0, dtype=None, verbose: bool = False) -
 
 
 def save_csv(data: list[dict] | pd.DataFrame | None, title: str, output_path: str, keep_index: bool = True) -> None:
+    # TODO: if already exists
+     
     if data is None: return
     if isinstance(data, list):
         if not data: return
 
-    data = pd.DataFrame(data) if not isinstance(data, pd.DataFrame) else data
-    # TODO: if already exists
-    data.to_csv(os.path.join(output_path, f'{make_valid_filename(title)}.csv'), index=keep_index)
+    if isinstance(data, dd.DataFrame):
+        data.to_csv(os.path.join(output_path, f'{make_valid_filename(title)}.csv'), single_file=True, index=keep_index)
+
+    else:
+        data = pd.DataFrame(data) if not isinstance(data, pd.DataFrame) else data
+        data.to_csv(os.path.join(output_path, f'{make_valid_filename(title)}.csv'), index=keep_index)
+
+
+def read_raw_data(expression: str, cell_types: str | None, pseudotime: str | None, reduction: str) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    expression = read_csv(expression)
+    cell_types = read_csv(cell_types).loc[expression.index] if cell_types else None
+    if cell_types is not None:
+        cell_types.rename(columns={cell_types.columns[0]: CELL_TYPE_COL}, inplace=True)
+    pseudotime = read_csv(pseudotime).loc[expression.index] if pseudotime else None 
+    if os.path.exists(reduction):
+        reduction = read_csv(reduction).loc[expression.index]
+    return expression, cell_types, pseudotime, reduction
 
 
 def load_background_scores(background: str, cache_path: str = None, verbose: bool = False):
@@ -51,8 +70,11 @@ def save_background_scores(background_scores: list[float], background: str, cach
             yaml.dump(background_scores, file)
 
 
-def read_gene_sets(output_path: str) -> dict[str, list[str]]:
-    df = read_csv(output_path, index_col=False, dtype=str)
+def read_gene_sets(output_path: str, title: str = 'gene_sets') -> dict[str, list[str]]:
+    if isinstance(output_path, dict):
+        return output_path
+    path = output_path if '.csv' in output_path else os.path.join(output_path, f'{make_valid_filename(title)}.csv') 
+    df = read_csv(path, index_col=False, dtype=str)
     return {column: df[column].dropna().tolist() for column in df.columns}
 
 
@@ -103,12 +125,12 @@ def get_preprocessed_data(data: pd.DataFrame | str, output_path: str):
     return data
 
 
-def aggregate_result(result_type: str, output: str, tmp: str):
+def aggregate_result(result_type: str, output: str, tmp: str | None) -> pd.DataFrame | None:
     df = read_results(result_type, output)
-    if df is not None:
+    if df is not None:  # if run was in a single batch or results already aggregated
         if 'fdr' not in df.columns:
             df['fdr'] = adjust_p_value(df['p_value'])
-            # TODO: save?
+            save_csv(df, result_type, output, keep_index=False)
         return df
     
     dfs = []
@@ -117,13 +139,13 @@ def aggregate_result(result_type: str, output: str, tmp: str):
         if df is not None:
             dfs.append(df)
 
-    if not dfs:
+    if not dfs:  # if result type is missing
         return None
-    dfs = pd.concat(dfs, ignore_index=True)
-
-    dfs['fdr'] = adjust_p_value(dfs['p_value'])
-    dd.from_pandas(dfs, npartitions=1).to_csv(os.path.join(output, f'{result_type}.csv'), single_file=True, index=False)
-    return dfs
+    
+    df = pd.concat(dfs, ignore_index=True)
+    df['fdr'] = adjust_p_value(df['p_value'])
+    save_csv(dd.from_pandas(df, npartitions=1), result_type, output, keep_index=False)
+    return df
 
 
 def get_experiment(results: pd.DataFrame | str, output_path: str, set_name: str = None, target: str = None) -> pd.DataFrame | dict:

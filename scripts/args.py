@@ -65,6 +65,8 @@ def parse_run_args() -> argparse.Namespace:
                         help='')
     
     # Output
+    parser.add_argument('--sbatch', action='store_true', default=False,
+                        help='')
     parser.add_argument('--processes', type=int, default=0,
                         help='')
     parser.add_argument('--output', type=str, required=True,
@@ -74,15 +76,7 @@ def parse_run_args() -> argparse.Namespace:
 
 
 def process_run_args(args):
-    args.expression = read_csv(args.expression)
-    args.cell_types = read_csv(args.cell_types).loc[args.expression.index] if args.cell_types else None
-    if args.cell_types is not None:
-        args.cell_types.rename(columns={args.cell_types.columns[0]: CELL_TYPE_COL}, inplace=True)
-    args.pseudotime = read_csv(args.pseudotime).loc[args.expression.index] if args.pseudotime else None
-    
-    if os.path.exists(args.reduction):
-        args.reduction = read_csv(args.reduction).loc[args.expression.index]
-    else:
+    if not os.path.exists(args.reduction):
         args.reduction = args.reduction.lower().replace('-', '').replace('_', '').replace(' ', '')
     
     args.organism = args.organism.lower()
@@ -120,8 +114,7 @@ def process_run_args(args):
 
 def validate_run_args(args):
     assert args.cell_types is not None or args.pseudotime is not None, 'Provide at least `cell_types` or `pseudotime`'
-    assert args.cell_types is None or ALL_CELLS not in args.cell_types[CELL_TYPE_COL].tolist(), f'`cell_types` cannot contain a cell-type called `{ALL_CELLS}`'
-    assert isinstance(args.reduction, pd.DataFrame) or args.reduction in REDUCTION_METHODS
+    assert os.path.exists(args.reduction) or args.reduction in REDUCTION_METHODS
     assert args.pathway_database is not None or args.custom_pathways is not None, 'Provide at least `pathway_database` or `custom_pathways`'
     assert args.pathway_database is None or all([db in DATABASES for db in args.pathway_database])
     assert args.classifier in CLASSIFIERS
@@ -129,11 +122,12 @@ def validate_run_args(args):
     assert args.classification_metric in CLASSIFICATION_METRICS.keys()
     assert args.regression_metric in REGRESSION_METRICS.keys()
     assert not args.feature_selection or args.feature_selection in FEATURE_SELECTION_METHODS
-    assert 1 <= args.cross_validation <= 10
-    assert args.repeats > 1
+    assert 2 <= args.cross_validation <= 10
+    assert args.repeats > 10
     assert args.seed > 0
     assert args.distribution in DISTRIBUTIONS
     assert 0 < args.set_fraction <= 1
+    assert not (not args.sbatch and args.processes), 'Cannot run multiple processes without sbatch'
     assert not args.processes or args.processes >= 0
 
 
@@ -179,7 +173,7 @@ def process_run_batch_args(args):
     args.cell_types = get_preprocessed_data('cell_types', args.output)
     args.pseudotime = get_preprocessed_data('pseudotime', args.output)
 
-    gene_sets = read_gene_sets(os.path.join(args.output, 'gene_sets.csv'))
+    gene_sets = read_gene_sets(args.output)
     args.batch_gene_sets = get_gene_set_batch(gene_sets, args.batch, args.batch_size)
     del args.batch_size
 
@@ -209,7 +203,7 @@ def parse_plot_args() -> argparse.Namespace:
                         help='')
     parser.add_argument('--pathway', type=str, nargs='*',
                         help='')
-    parser.add_argument('--all_plots', action='store_true', default=False,
+    parser.add_argument('--all', action='store_true', default=False,
                         help='')
     parser.add_argument('--output', type=str, required=True,
                         help='')
@@ -226,7 +220,7 @@ def process_plot_args(args):
 
 
 def validate_plot_args(args):
-    if not args.all_plots:
+    if not args.all:
         assert args.pathway, 'Provide `pathway`'
         assert args.cell_type or args.lineage, 'Provide either `cell_type` or `lineage` target column'
 

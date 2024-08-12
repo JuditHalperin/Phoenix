@@ -4,7 +4,7 @@ from scripts.data import preprocess_data
 from scripts.pathways import get_gene_sets
 from scripts.utils import define_batch_size
 from scripts.computation import get_batch_run_cmd, get_aggregation_cmd
-from scripts.output import aggregate_result
+from scripts.output import read_raw_data, aggregate_result
 from scripts.visualization import plot
 from scripts.consts import CELL_TYPE_COL
 
@@ -37,17 +37,16 @@ def run_tool(
         repeats: int,
         seed: int,
         distribution: str,
+        sbatch: bool,
         processes: int,
         output: str,
         cache: str,
         tmp: str,
     ) -> None:
+    assert sbatch
 
-    expression, _, _, _ = preprocess_data(
-        expression, cell_types, pseudotime, reduction,
-        preprocessed=preprocessed, exclude_cell_types=exclude_cell_types, exclude_lineages=exclude_lineages,
-        output=output
-    )
+    expression, cell_types, pseudotime, reduction = read_raw_data(expression, cell_types, pseudotime, reduction)
+    expression, _, _, _ = preprocess_data(expression, cell_types, pseudotime, reduction, preprocessed=preprocessed, exclude_cell_types=exclude_cell_types, exclude_lineages=exclude_lineages, output=output)
     gene_sets = get_gene_sets(pathway_database, custom_pathways, organism, expression.columns, min_set_size, output)
     batch_size = define_batch_size(len(gene_sets), processes)
     print(f'Running experiments for {len(gene_sets)} gene annotations with batch size of {batch_size}...')
@@ -65,7 +64,7 @@ def run_tool(
     job_id = process.stdout.strip().split()[-1]
 
     cmd = get_aggregation_cmd(output, tmp, job_id, processes)
-    subprocess.run(cmd, shell=True) #, capture_output=True, text=True)
+    subprocess.run(cmd, shell=True)
 
 
 if __name__ == '__main__':

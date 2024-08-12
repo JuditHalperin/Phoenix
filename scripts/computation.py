@@ -56,7 +56,7 @@ def get_aggregation_cmd(output: str, tmp: str | None, job_id: int, process: int)
 def get_cmd(
         func: str,
         args: dict[str, str],
-        script: str,
+        script: str = 'run',
         sbatch: bool = False,
         processes: int = None,
         array_param: str = 'batch',
@@ -97,21 +97,54 @@ def get_cmd(
     return sbatch_cmd
 
 
-def execute_cmd(cmd, title: str, processes: int = None):
+def execute_cmd(cmd, title: str, processes: int = None) -> int:
     process = subprocess.run(cmd, shell=True, capture_output=True, text=True)
-    job_id = process.stdout.strip().split()[-1]
-    msg = f'Executing {title} as job {job_id}' + (f'({processes} processes)' if processes else '')
-    print(msg)
-    return job_id
+    try:  # if sbatch run
+        job_id = process.stdout.strip().split()[-1]
+        print(f'Executing {title} as job {job_id}' + (f'({processes} processes)' if processes else '') + '...')
+        return job_id
+    except:
+        print(f'Executing {title}...')
+        return None
 
 
-def run_setup_cmd(args: dict, report: str, func: str = 'setup') -> str:
+def run_setup_cmd(args: dict, tmp: str = None, func: str = 'setup') -> str:
     cmd = get_cmd(
         func=func,
         args=args,
         script='run_new',
         sbatch=True,
-        mem='5G',
-        report_path=report,
+        mem='3G',  # TODO: estimate memory based on expression data size
+        report_path=tmp,
+    )
+    return execute_cmd(cmd, func)
+
+
+def run_experiments_cmd(setup_job_id: int, args: dict, tmp: str = None, func: str = 'run_experiments') -> int:
+    cmd = get_cmd(
+        func=func, 
+        args=args,
+        script='run_new',
+        sbatch=True,
+        processes=args['processes'],
+        mem='2G',  # TODO: estimate memory based on expression data size
+        time='1:0:0',  # TODO: estimate time based on expression data size / task length
+        report_path=tmp,
+        previous_job_id=setup_job_id,
+    )
+    return execute_cmd(cmd, func, args['processes'])
+
+
+def run_aggregation_cmd(exp_job_id: int, exp_processes: int | None, output: str, tmp: str, func: str = 'summarize') -> int:
+    cmd = get_cmd(
+        func=func,
+        args={'output': output, 'tmp': tmp},
+        script='run_new',
+        sbatch=True,
+        mem='2G',  # TODO: estimate memory based on expression data size
+        time='1:0:0',  # TODO: estimate time based on expression data size / task length
+        report_path=tmp,
+        previous_job_id=exp_job_id,
+        previous_processes=exp_processes,
     )
     return execute_cmd(cmd, func)
