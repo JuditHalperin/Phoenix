@@ -114,15 +114,13 @@ def train(
         predictor_args['class_weight'] = 'balanced'
 
     model = predictor(**predictor_args)
-    score = make_scorer(METRICS[metric], greater_is_better=True)
+    score_func = make_scorer(METRICS[metric], greater_is_better=True)
 
-    encode_labels = isinstance(y.iloc[0], str)
-    if encode_labels:
-        le = LabelEncoder()
-        y = le.fit_transform(y)
+    if isinstance(y.iloc[0], str):
+        y = LabelEncoder().fit_transform(y)
 
     if cross_validation:
-        score = np.median(cross_val_score(model, X, y, cv=cross_validation, scoring=score))
+        score = np.median(cross_val_score(model, X, y, cv=cross_validation, scoring=score_func))
 
     else:
         stratify = pd.cut(y, bins=bins, labels=False) if y.dtype == float else y
@@ -131,7 +129,7 @@ def train(
         model.fit(X_train, y_train)
         y_pred = model.predict(X_test)
 
-        score = score(y_test, y_pred)
+        score = score_func(y_test, y_pred)
 
     return float(score)
 
