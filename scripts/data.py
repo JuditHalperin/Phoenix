@@ -2,7 +2,7 @@ import warnings, random
 import pandas as pd
 import numpy as np
 import scanpy as sc
-from scripts.consts import ALL_CELLS, CELL_TYPE_COL, NUM_GENES, CELL_PERCENT
+from scripts.consts import ALL_CELLS, CELL_TYPE_COL, NUM_GENES, CELL_PERCENT, SEED
 from scripts.utils import transform_log, re_transform_log
 from scripts.output import save_csv
 
@@ -33,17 +33,17 @@ def preprocess_expression(expression: pd.DataFrame, preprocessed: bool, num_gene
     return pd.DataFrame(data=adata.X, index=adata.obs_names, columns=adata.var_names)
 
 
-def reduce_dimension(expression: pd.DataFrame, reduction_method: str) -> pd.DataFrame:
+def reduce_dimension(expression: pd.DataFrame, reduction_method: str, seed: int) -> pd.DataFrame:
     print('Reducing single-cell dimensionality...')
 
     adata = sc.AnnData(expression)
 
-    sc.tl.pca(adata)
+    sc.tl.pca(adata, random_state=seed)
     if reduction_method == 'umap':
-        sc.pp.neighbors(adata)
-        sc.tl.umap(adata)
+        sc.pp.neighbors(adata, random_state=seed)
+        sc.tl.umap(adata, random_state=seed)
     elif reduction_method == 'tsne':
-        sc.tl.tsne(adata)
+        sc.tl.tsne(adata, random_state=seed)
 
     return pd.DataFrame(
         adata.obsm[f'X_{reduction_method}'],
@@ -61,6 +61,7 @@ def preprocess_data(
         min_cell_percent: float = CELL_PERCENT,
         exclude_cell_types: list[str] = [],
         exclude_lineages: list[str] = [],
+        seed: int = SEED,
         output: str = None,
         verbose: bool = True,
     ):
@@ -94,7 +95,7 @@ def preprocess_data(
 
     # Reduce dimensions
     if isinstance(reduction, str):
-        reduction = reduce_dimension(expression, reduction)
+        reduction = reduce_dimension(expression, reduction, seed)
     reduction = reduction.loc[expression.index]
 
     # Save preprocessed data

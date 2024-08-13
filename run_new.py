@@ -21,12 +21,13 @@ def setup(
         custom_pathways: list[str],
         organism: str,
         min_set_size: int,
+        seed: int,
         output: str,
         return_data: bool = False,
     ) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, dict[str, list[str]]] | None:
 
     expression, cell_types, pseudotime, reduction = read_raw_data(expression, cell_types, pseudotime, reduction)
-    expression, cell_types, pseudotime, reduction = preprocess_data(expression, cell_types, pseudotime, reduction, preprocessed=preprocessed, exclude_cell_types=exclude_cell_types, exclude_lineages=exclude_lineages, output=output)
+    expression, cell_types, pseudotime, reduction = preprocess_data(expression, cell_types, pseudotime, reduction, preprocessed=preprocessed, exclude_cell_types=exclude_cell_types, exclude_lineages=exclude_lineages, seed=seed, output=output)
     gene_sets = get_gene_sets(pathway_database, custom_pathways, organism, expression.columns, min_set_size, output)
     
     if return_data:
@@ -125,7 +126,7 @@ def run_tool(
             'expression': expression, 'cell_types': cell_types, 'pseudotime': pseudotime, 'reduction': reduction,
             'preprocessed': preprocessed, 'exclude_cell_types': exclude_cell_types, 'exclude_lineages': exclude_lineages,
             'pathway_database': pathway_database, 'custom_pathways': custom_pathways, 'organism': organism, 'min_set_size': min_set_size,
-            'output': output
+            'seed': seed, 'output': output
         }
         setup_job_id = run_setup_cmd(setup_args, tmp)
 
@@ -142,7 +143,7 @@ def run_tool(
         run_aggregation_cmd(exp_job_id, processes, output, tmp)
     
     else:
-        expression, cell_types, pseudotime, reduction, gene_sets = setup(expression, cell_types, pseudotime, reduction, preprocessed, exclude_cell_types, exclude_lineages, pathway_database, custom_pathways, organism, min_set_size, output, return_data=True)
+        expression, cell_types, pseudotime, reduction, gene_sets = setup(expression, cell_types, pseudotime, reduction, preprocessed, exclude_cell_types, exclude_lineages, pathway_database, custom_pathways, organism, min_set_size, seed, output, return_data=True)
         run_experiments(None, feature_selection, set_fraction, min_set_size, classifier, regressor, classification_metric, regression_metric, cross_validation, repeats, seed, distribution, processes, output, tmp, cache, expression, cell_types, pseudotime, gene_sets)
         summarize(output)
 
