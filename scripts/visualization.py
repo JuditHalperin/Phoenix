@@ -274,7 +274,7 @@ def plot_experiment(
     if target_type == 'pseudotime':
         target_name = "'s pseudotime"
     elif target == ALL_CELLS:
-        target_name = 'Identities'
+        target_name = ' Identities'
     else:
         target_name = "'s identity"
     plt.suptitle(f'Predicting {target}{target_name} using {set_name}')
