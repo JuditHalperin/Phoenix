@@ -148,10 +148,17 @@ def get_top_sum_pathways(data, ascending: bool, size: int) -> list[str]:
     return data.copy().dropna(axis=0).sum(axis=1).sort_values(ascending=ascending).head(size).index.tolist()
 
 
-def get_column_unique_pathways(data, col: str, size: int, threshold: float) -> list[str]:
+def get_column_unique_pathways(data, col: str, size: int, threshold: float | None) -> list[str]:
+    """Get pathways that are unique to the current cell type compared to the rest"""
     tmp = data.copy()
+
+    # Keep experiments with most significant results at current cell type compared to the rest and below a certain threshold
     tmp = tmp[(tmp[col] == tmp.min(axis=1)) & (tmp[col] <= threshold if threshold else 1)]
-    tmp = tmp.loc[tmp[col].dropna().sort_values(ascending=True).index[:200]]
+
+    # Keep 1% top experiments to focus on the most significant results
+    tmp = tmp.loc[tmp[col].sort_values(ascending=True).index[:int(data.shape[0] * 0.01)]]
+
+    # Keep experiments with the highest difference between the minimum and the current cell type
     to_drop = [col, ALL_CELLS] if ALL_CELLS in tmp.columns else [col]
     tmp['max_diff'] = tmp.drop(to_drop, axis=1).min(axis=1) - tmp[col]
     tmp = tmp.sort_values(by='max_diff', ascending=False)
@@ -159,12 +166,8 @@ def get_column_unique_pathways(data, col: str, size: int, threshold: float) -> l
 
 
 def get_all_column_unique_pathways(data, size: int, threshold: float):
-    size = size // data.shape[1]
-    pathways = []
-    for col in data.columns:
-        if col != ALL_CELLS:
-            pathways.extend(get_column_unique_pathways(data, col, size, threshold))
-    return pathways
+    return [get_column_unique_pathways(data, col, size // data.shape[1], threshold)
+            for col in data.columns if col != ALL_CELLS]
 
 
 def sum_gene_expression(gene_set_expression: pd.DataFrame) -> pd.Series:
