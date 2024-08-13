@@ -54,7 +54,6 @@ def _plot_prediction_scores(
         experiment: dict[str, str | float | list[str]],
         set_name: str,
         by_freq: bool = True,
-        rm_outliers: bool = False,
         title: str = '',
     ):
     """
@@ -71,9 +70,6 @@ def _plot_prediction_scores(
 
     # Draw distribution for background score
     background_scores = experiment['background_scores']
-    if rm_outliers:
-        background_scores = remove_outliers(background_scores)
-
     plot_args = {
         'x': background_scores,
         'label': f'Random genes: {np.round(experiment["background_score_mean"], 3)}',
@@ -209,11 +205,10 @@ def _plot_gene_set_expression(
         gene_set: list[str],
         set_name: str = '',
         cells: list[str] = None,
-        rm_outliers: bool = True,
     ):
     cells = cells if cells is not None else expression.index
     gene_expression = sum_gene_expression(expression.loc[cells, gene_set])
-    clean_expression = remove_outliers(gene_expression) if rm_outliers else gene_expression.tolist()
+    clean_expression = remove_outliers(gene_expression)
     
     plt.scatter(reduction.iloc[:, 0], reduction.iloc[:, 1], s=10, c=BACKGROUND_COLOR)
     plt.scatter(reduction.loc[cells].iloc[:, 0], reduction.loc[cells].iloc[:, 1], s=10, c=gene_expression, cmap=plt.cm.Blues, vmin=min(clean_expression), vmax=max(clean_expression))

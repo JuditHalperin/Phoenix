@@ -3,7 +3,7 @@ from scripts.args import get_run_batch_args
 from scripts.data import get_cell_types, get_lineages
 from scripts.prediction import get_data, train, compare_scores
 from scripts.consts import CLASSIFIERS, REGRESSORS, CLASSIFIER_ARGS, REGRESSOR_ARGS
-from scripts.utils import define_background, define_set_size
+from scripts.utils import define_background, define_set_size, remove_outliers
 from scripts.output import load_background_scores, save_background_scores, summarise_result, save_csv
 
 
@@ -92,7 +92,7 @@ def run_task(
         for i in range(repeats):
             background_scores.append(get_prediction_score(seed=i, **prediction_args)[0])
         if trim_background:
-            background_scores = [s for s in background_scores if s > min(background_scores) and s < max(background_scores)]
+            background_scores = remove_outliers(background_scores)
         save_background_scores(background_scores, background, cache)
 
     # Compare scores
