@@ -3,8 +3,9 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
+import scipy.stats as stats
 from scipy.cluster import hierarchy
-from scripts.data import get_column_unique_pathways, get_top_sum_pathways, sum_gene_expression
+from scripts.data import sum_gene_expression
 from scripts.utils import remove_outliers, get_color_mapping, convert_to_sci
 from scripts.output import save_plot, get_experiment, get_preprocessed_data, save_csv 
 from scripts.consts import THRESHOLD, TARGET_COL, ALL_CELLS, OTHER_CELLS, BACKGROUND_COLOR, INTEREST_COLOR, CELL_TYPE_COL, MAP_SIZE
@@ -12,6 +13,33 @@ from scripts.consts import THRESHOLD, TARGET_COL, ALL_CELLS, OTHER_CELLS, BACKGR
 
 sns.set_theme(style='white')
 sys.setrecursionlimit(10000)
+
+
+def get_top_sum_pathways(data, ascending: bool, size: int) -> list[str]:
+    return data.copy().dropna(axis=0).sum(axis=1).sort_values(ascending=ascending).head(size).index.tolist()
+
+
+def get_column_unique_pathways(data, col: str, size: int, threshold: float | None) -> list[str]:
+    """Get pathways that are unique to the current cell type compared to the rest"""
+    tmp = data.copy()
+
+    # Keep experiments with most significant results at current cell type compared to the rest and below a certain threshold
+    tmp = tmp[(tmp[col] == tmp.min(axis=1)) & (tmp[col] <= threshold if threshold else 1)]
+
+    # Keep 10% top experiments to focus on the most significant results
+    most_sig = int(data.shape[0] * 0.1) if data.shape[0] > 100 else data.shape[0]
+    tmp = tmp.loc[tmp[col].sort_values(ascending=True).index[:most_sig]]
+
+    # Keep experiments with the highest difference between the minimum and the current cell type
+    to_drop = [col, ALL_CELLS] if ALL_CELLS in tmp.columns else [col]
+    tmp['max_diff'] = tmp.drop(to_drop, axis=1).min(axis=1) - tmp[col]
+    tmp = tmp.sort_values(by='max_diff', ascending=False)
+    return tmp.head(size).index.tolist()
+
+
+def get_all_column_unique_pathways(data, size: int, threshold: float):
+    return [get_column_unique_pathways(data, col, size // data.shape[1], threshold)
+            for col in data.columns if col != ALL_CELLS]
 
 
 def plot_p_values(
@@ -54,6 +82,7 @@ def _plot_prediction_scores(
         experiment: dict[str, str | float | list[str]],
         set_name: str,
         by_freq: bool = True,
+        show_fit: bool = True,
         title: str = '',
     ):
     """
@@ -82,6 +111,15 @@ def _plot_prediction_scores(
     else:
         sns.kdeplot(fill=True, **plot_args)
         plt.ylabel('Density')
+
+    if show_fit:
+        shape, loc, scale = stats.gamma.fit(background_scores)
+        x = np.linspace(min(background_scores), max(background_scores), 1000)
+        pdf = stats.gamma.pdf(x, shape, loc=loc, scale=scale)
+        bin_edges = np.histogram_bin_edges(background_scores, bins=30)  # get bin edges for consistent plotting
+        bin_centers = 0.5 * (bin_edges[1:] + bin_edges[:-1])
+        fit_values = np.interp(bin_centers, x, pdf * len(background_scores) * np.diff(bin_edges)[0])  # scale fit to match histogram frequency
+        plt.plot(bin_centers, fit_values, color='grey', lw=2, label='Gamma fit')
 
     plt.xlabel(experiment['metric'])
     plt.legend()

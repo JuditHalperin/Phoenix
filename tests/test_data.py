@@ -1,7 +1,8 @@
 import unittest
 import pandas as pd
 from tests.interface import Test
-from scripts.data import intersect_genes, get_top_sum_pathways, get_column_unique_pathways, preprocess_expression, preprocess_data
+from scripts.data import intersect_genes, preprocess_expression, preprocess_data
+from scripts.visualization import get_top_sum_pathways, get_column_unique_pathways
 from scripts.consts import CELL_TYPE_COL
 
 
