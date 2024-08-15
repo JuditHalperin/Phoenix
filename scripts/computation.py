@@ -71,7 +71,7 @@ def get_cmd(
     
     script = f'scripts.{script}' if not os.path.exists(f'{script}.py') else script
     python_cmd = (
-        f"python -c 'from {script} import {func}; import sys; "
+        f"python -c 'from {script} import {func}; "
         f"{func}({parsed_args})' "
     )
     if not sbatch:
