@@ -59,7 +59,6 @@ def get_cmd(
         script: str = 'run',
         sbatch: bool = False,
         processes: int = None,
-        array_param: str = 'batch',
         mem: str = '1G',
         time: str = '0:30:0',
         report_path: str = None,
@@ -67,13 +66,13 @@ def get_cmd(
         previous_processes: int = None,
     ):
 
-    args = ', '.join([rf'{k}={repr(v)}' if isinstance(v, str) else rf'{k}={v}' for k, v in args.items()])
-    args += f', {array_param}=\$SLURM_ARRAY_TASK_ID' if processes else ''
+    parsed_args = ', '.join([f'{k}={repr(v) if isinstance(v, str) else v}' for k, v in args.items()])
+    parsed_args = parsed_args.replace("'", '\\"')
     
     script = f'scripts.{script}' if not os.path.exists(f'{script}.py') else script
     python_cmd = (
-        f"python -c 'from {script} import {func}; "
-        rf"{func}({args})'"
+        f"python -c 'from {script} import {func}; import sys; "
+        f"{func}({parsed_args})' "
     )
     if not sbatch:
         return python_cmd
@@ -114,7 +113,8 @@ def run_setup_cmd(args: dict, tmp: str = None) -> str:
         args=args,
         script='run_new',
         sbatch=True,
-        mem='3G',  # TODO: estimate memory based on expression data size
+        mem='4G',  # TODO: estimate memory based on expression data size
+        time='0:15:0',
         report_path=tmp,
     )
     return execute_cmd(cmd, 'initial setup')
@@ -127,8 +127,8 @@ def run_experiments_cmd(setup_job_id: int, args: dict, tmp: str = None) -> int:
         script='run_new',
         sbatch=True,
         processes=args['processes'],
-        mem='2G',  # TODO: estimate memory based on expression data size
-        time='1:0:0',  # TODO: estimate time based on expression data size / task length
+        mem='1G',  # TODO: estimate memory based on expression data size
+        time='0:1:0',  # TODO: estimate time based on expression data size / task length
         report_path=tmp,
         previous_job_id=setup_job_id,
     )
@@ -141,8 +141,8 @@ def run_aggregation_cmd(exp_job_id: int, exp_processes: int | None, output: str,
         args={'output': output, 'tmp': tmp},
         script='run_new',
         sbatch=True,
-        mem='2G',  # TODO: estimate memory based on expression data size
-        time='1:0:0',  # TODO: estimate time based on expression data size / task length
+        mem='1G',  # TODO: estimate memory based on expression data size
+        time='0:5:0',  # TODO: estimate time based on expression data size / task length
         report_path=tmp,
         previous_job_id=exp_job_id,
         previous_processes=exp_processes,

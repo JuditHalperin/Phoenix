@@ -1,3 +1,4 @@
+import os
 import pandas as pd
 from scripts.args import get_run_args
 from scripts.data import preprocess_data
@@ -22,6 +23,7 @@ def setup(
         organism: str,
         min_set_size: int,
         seed: int,
+        processes: int,
         output: str,
         return_data: bool = False,
     ) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, dict[str, list[str]]] | None:
@@ -30,13 +32,14 @@ def setup(
     expression, cell_types, pseudotime, reduction = preprocess_data(expression, cell_types, pseudotime, reduction, preprocessed=preprocessed, exclude_cell_types=exclude_cell_types, exclude_lineages=exclude_lineages, seed=seed, output=output)
     gene_sets = get_gene_sets(pathway_database, custom_pathways, organism, expression.columns, min_set_size, output)
     
+    print(f'Running experiments for {len(gene_sets)} gene annotations with batch size of {define_batch_size(len(gene_sets), processes)}...')
+
     if return_data:
         return expression, cell_types, pseudotime, reduction, gene_sets
     return None
 
 
 def run_experiments(
-        batch: int | None,
         feature_selection: str,
         set_fraction: float,
         min_set_size: int,
@@ -59,19 +62,17 @@ def run_experiments(
     ) -> None:
     """
     Run experiments for a single batch of gene sets.
-    batch: index between 1 and `processes`, or None for a single batch
     output: main output path
     """
+    batch = int(os.getenv('SLURM_ARRAY_TASK_ID', None))  # index between 1 and `processes`, or None for a single batch
+
     expression = get_preprocessed_data(expression, output)
     cell_types = get_preprocessed_data(cell_types, output)
     pseudotime = get_preprocessed_data(pseudotime, output)
 
-    gene_sets = read_gene_sets(gene_sets)
+    gene_sets = read_gene_sets(output, gene_sets)
     batch_size = define_batch_size(len(gene_sets), processes)
-    batch_gene_sets = get_gene_set_batch(gene_sets, batch, batch_size)
-
-    if not batch or batch == 1:
-        print(f'Running experiments for {len(gene_sets)} gene annotations with batch size of {batch_size}...')
+    batch_gene_sets = get_gene_set_batch(gene_sets, batch, batch_size)      
 
     run_gene_set_batch(
         batch, batch_gene_sets, expression, cell_types, pseudotime,
@@ -86,8 +87,11 @@ def summarize(
         output: str,
         tmp: str = None,
     ) -> None:
+    print('Aggregating results...')
     aggregate_result('cell_type_classification', output, tmp)
     aggregate_result('pseudotime_regression', output, tmp)
+
+    print('Plotting results...')
     plot(output)
 
 
@@ -126,7 +130,7 @@ def run_tool(
             'expression': expression, 'cell_types': cell_types, 'pseudotime': pseudotime, 'reduction': reduction,
             'preprocessed': preprocessed, 'exclude_cell_types': exclude_cell_types, 'exclude_lineages': exclude_lineages,
             'pathway_database': pathway_database, 'custom_pathways': custom_pathways, 'organism': organism, 'min_set_size': min_set_size,
-            'seed': seed, 'output': output
+            'seed': seed, 'processes': processes, 'output': output
         }
         setup_job_id = run_setup_cmd(setup_args, tmp)
 
@@ -143,8 +147,8 @@ def run_tool(
         run_aggregation_cmd(exp_job_id, processes, output, tmp)
     
     else:
-        expression, cell_types, pseudotime, reduction, gene_sets = setup(expression, cell_types, pseudotime, reduction, preprocessed, exclude_cell_types, exclude_lineages, pathway_database, custom_pathways, organism, min_set_size, seed, output, return_data=True)
-        run_experiments(None, feature_selection, set_fraction, min_set_size, classifier, regressor, classification_metric, regression_metric, cross_validation, repeats, seed, distribution, processes, output, tmp, cache, expression, cell_types, pseudotime, gene_sets)
+        expression, cell_types, pseudotime, reduction, gene_sets = setup(expression, cell_types, pseudotime, reduction, preprocessed, exclude_cell_types, exclude_lineages, pathway_database, custom_pathways, organism, min_set_size, seed, processes, output, return_data=True)
+        run_experiments(feature_selection, set_fraction, min_set_size, classifier, regressor, classification_metric, regression_metric, cross_validation, repeats, seed, distribution, processes, output, tmp, cache, expression, cell_types, pseudotime, gene_sets)
         summarize(output)
 
 
