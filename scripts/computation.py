@@ -1,5 +1,5 @@
 import os, subprocess
-from scripts.utils import estimate_mem, estimate_time
+from scripts.utils import estimate_mem, estimate_time, get_file_size
 
 
 def get_gene_set_batch(gene_sets: dict[str, list[str]], batch: int | None = None, batch_size: int | None = None) -> dict[str, list[str]]:
@@ -113,8 +113,8 @@ def run_setup_cmd(args: dict, tmp: str = None) -> str:
         args=args,
         script='run_new',
         sbatch=True,
-        mem='4G',  # TODO: estimate memory based on expression data size
-        time='0:15:0',
+        mem=get_file_size(args['expression']),  # raw expression data
+        time='0:15:0',  # TODO: estimate time
         report_path=tmp,
     )
     return execute_cmd(cmd, 'initial setup')
@@ -127,8 +127,8 @@ def run_experiments_cmd(setup_job_id: int, args: dict, tmp: str = None) -> int:
         script='run_new',
         sbatch=True,
         processes=args['processes'],
-        mem='1G',  # TODO: estimate memory based on expression data size
-        time='0:1:0',  # TODO: estimate time based on expression data size / task length
+        mem=get_file_size(os.path.join(args['output'], 'expression.csv')),  # preprocessed expression data
+        time='0:1:0',  # TODO: estimate time
         report_path=tmp,
         previous_job_id=setup_job_id,
     )
@@ -141,8 +141,8 @@ def run_aggregation_cmd(exp_job_id: int, exp_processes: int | None, output: str,
         args={'output': output, 'tmp': tmp},
         script='run_new',
         sbatch=True,
-        mem='1G',  # TODO: estimate memory based on expression data size
-        time='0:5:0',  # TODO: estimate time based on expression data size / task length
+        mem='500M',  # TODO: estimate memory
+        time='0:15:0',  # TODO: estimate time
         report_path=tmp,
         previous_job_id=exp_job_id,
         previous_processes=exp_processes,
