@@ -2,7 +2,8 @@ import unittest
 import pandas as pd
 import numpy as np
 from tests.interface import Test
-from scripts.prediction import get_target, get_data, train, compare_scores
+from scripts.train import get_train_target, get_train_data, train
+from scripts.prediction import compare_scores, get_gene_set_batch
 from scripts.utils import adjust_p_value
 from scripts.consts import CELL_TYPE_COL, ALL_CELLS, CLASSIFIERS, CLASSIFIER_ARGS, REGRESSORS, REGRESSOR_ARGS, THRESHOLD
 
@@ -29,26 +30,26 @@ class TrainDataTest(Test):
         }, index=['Cell1', 'Cell2', 'Cell3', 'Cell4'])
 
     def test_cell_type_target(self):
-        # Test case for get_target function with cell_types
+        # Test case for get_train_target function with cell_types
         cell_type = 'TypeB'
-        cell_type_target = get_target(cell_types=self.cell_types, cell_type=cell_type)
+        cell_type_target = get_train_target(cell_types=self.cell_types, cell_type=cell_type)
         self.assertTrue(cell_type_target.dtype == bool)
         self.assertEqual(cell_type_target.tolist(), [c == cell_type for c in self.cell_types[CELL_TYPE_COL]])
 
-        cell_type_target = get_target(cell_types=self.cell_types, cell_type=ALL_CELLS)
+        cell_type_target = get_train_target(cell_types=self.cell_types, cell_type=ALL_CELLS)
         self.assertEqual(cell_type_target.tolist(), self.cell_types[CELL_TYPE_COL].tolist())
 
     def test_pseudotime_target(self):
-        # Test case for get_target function with pseudotime
-        pseudotime_target = get_target(pseudotime=self.pseudotime, lineage=2, scale=False)
+        # Test case for get_train_target function with pseudotime
+        pseudotime_target = get_train_target(pseudotime=self.pseudotime, lineage=2, scale=False)
         self.assertEqual(pseudotime_target.tolist(), self.pseudotime[2].tolist())
 
-        pseudotime_target = get_target(pseudotime=self.pseudotime, lineage=1, scale=True)
+        pseudotime_target = get_train_target(pseudotime=self.pseudotime, lineage=1, scale=True)
         self.assertEqual(pseudotime_target.tolist(), [0.0, 0.5, 1.0])
 
     def test_data_without_selection(self):
         # Test case where using cell_types and cell_type
-        X, _, features = get_data(
+        X, _, features = get_train_data(
             self.expression,
             features=self.expression.columns, 
             cell_types=self.cell_types,
@@ -60,7 +61,7 @@ class TrainDataTest(Test):
         self.assertEqual(X.shape, self.expression.shape)
         self.assertListEqual(features, self.expression.columns.tolist())
 
-        X, _, features = get_data(
+        X, _, features = get_train_data(
             self.expression,
             features=self.expression.columns, 
             cell_types=self.cell_types,
@@ -79,7 +80,7 @@ class TrainDataTest(Test):
         for cell_type in ['All', 'TypeA', 'TypeB']:
 
             set_size = 4
-            X, y, selected_genes = get_data(
+            X, y, selected_genes = get_train_data(
                 self.expression,
                 features=self.expression.columns, 
                 cell_types=self.cell_types,
@@ -94,7 +95,7 @@ class TrainDataTest(Test):
             self.assertTrue('Gene4' not in selected_genes)
 
             set_size = 3
-            X, y, selected_genes = get_data(
+            X, y, selected_genes = get_train_data(
                 self.expression,
                 features=['Gene1', 'Gene3', 'Gene2', 'Gene4', 'Gene5'], 
                 cell_types=self.cell_types,
@@ -109,7 +110,7 @@ class TrainDataTest(Test):
             self.assertEqual(selected_genes, ['Gene3', 'Gene2', 'Gene5']) # SelectKBest does not change order of features
 
             set_size = 2
-            X, y, selected_genes = get_data(
+            X, y, selected_genes = get_train_data(
                 self.expression,
                 features=self.expression.columns, 
                 cell_types=self.cell_types,
@@ -123,7 +124,7 @@ class TrainDataTest(Test):
             self.assertEqual(len(selected_genes), set_size)
             self.assertEqual(selected_genes, ['Gene2', 'Gene5']) # SelectKBest does not change order of features
 
-            X, y, selected_genes = get_data(
+            X, y, selected_genes = get_train_data(
                 self.expression,
                 features=['Gene1', 'Gene3', 'Gene5'],  # missing good predictor Gene2
                 cell_types=self.cell_types,
@@ -143,7 +144,7 @@ class TrainDataTest(Test):
         for cell_type in ['All', 'TypeA', 'TypeB']:
 
             set_size = self.expression.shape[1] - 1
-            X, y, selected_genes = get_data(
+            X, y, selected_genes = get_train_data(
                 self.expression,
                 features=self.expression.columns, 
                 cell_types=self.cell_types,
@@ -162,7 +163,7 @@ class TrainDataTest(Test):
             self.assertTrue('Gene4' not in selected_genes) 
 
             set_size = self.expression.shape[1] - 2
-            X, y, selected_genes = get_data(
+            X, y, selected_genes = get_train_data(
                 self.expression,
                 features=[g for g in self.expression.columns if g != 'Gene2'], 
                 cell_types=self.cell_types,
@@ -181,7 +182,7 @@ class TrainDataTest(Test):
         lineage = 1
         cell_dim = self.pseudotime[lineage].dropna().shape[0]
         set_size = 1
-        X, y, selected_genes = get_data(
+        X, y, selected_genes = get_train_data(
             expression=self.expression,
             features=self.expression.columns,
             pseudotime=self.pseudotime,
@@ -198,7 +199,7 @@ class TrainDataTest(Test):
         lineage = 2
         cell_dim = self.pseudotime[lineage].dropna().shape[0]
         set_size = 3
-        X, y, selected_genes = get_data(
+        X, y, selected_genes = get_train_data(
             expression=self.expression,
             features=self.expression.columns,
             pseudotime=self.pseudotime,
@@ -219,7 +220,7 @@ class TrainDataTest(Test):
 
         lineage = 1
         cell_dim = self.pseudotime[lineage].dropna().shape[0]
-        X, y, selected_genes = get_data(
+        X, y, selected_genes = get_train_data(
             expression=self.expression,
             features=self.expression.columns,
             pseudotime=self.pseudotime,
@@ -235,7 +236,7 @@ class TrainDataTest(Test):
 
         lineage = 2
         cell_dim = self.pseudotime[lineage].dropna().shape[0]
-        X, y, selected_genes = get_data(
+        X, y, selected_genes = get_train_data(
             expression=self.expression,
             features=self.expression.columns,
             pseudotime=self.pseudotime,
@@ -266,14 +267,14 @@ class TrainingTest(Test):
         cell_types = pd.DataFrame({
             CELL_TYPE_COL: ['TypeA', 'TypeB', 'TypeA', 'TypeB'],
         }, index=['Cell1', 'Cell2', 'Cell3', 'Cell4'])
-        self.cell_type_target = get_target(cell_types=cell_types, cell_type=ALL_CELLS)
+        self.cell_type_target = get_train_target(cell_types=cell_types, cell_type=ALL_CELLS)
 
         pseudotime = pd.DataFrame({
             1: [0.1, 0.2, 0.3, 0.4],
             2: [0.6, 0.3, 0.9, 0.1],
         }, index=['Cell1', 'Cell2', 'Cell3', 'Cell4'])
-        self.pseudotime1_target = get_target(pseudotime=pseudotime, lineage=1)
-        self.pseudotime2_target = get_target(pseudotime=pseudotime, lineage=2)
+        self.pseudotime1_target = get_train_target(pseudotime=pseudotime, lineage=1)
+        self.pseudotime2_target = get_train_target(pseudotime=pseudotime, lineage=2)
 
         self.cross_validation = 2
     
@@ -362,6 +363,19 @@ class ScoreComparisonTest(Test):
 
     def test_multiple_corrections(self):
         adjust_p_value([0.0, 0.05, 0.5, 1.0])
+
+
+class BatchTest(Test):
+
+    def setUp(self) -> None:
+        self.gene_sets = {'set1': ['gene1'], 'set2': ['gene2'], 'set3': ['gene3'], 'set4': ['gene4'], 'set5': ['gene5'], 'set6': ['gene6']}
+                    
+    def test_get_gene_set_batch(self):
+        self.assertEqual(get_gene_set_batch(self.gene_sets), self.gene_sets)
+        self.assertEqual(get_gene_set_batch(self.gene_sets, batch=1, batch_size=3), {'set1': ['gene1'], 'set2': ['gene2'], 'set3': ['gene3']})
+        self.assertEqual(get_gene_set_batch(self.gene_sets, batch=2, batch_size=3), {'set4': ['gene4'], 'set5': ['gene5'], 'set6': ['gene6']})
+        self.assertEqual(get_gene_set_batch(self.gene_sets, batch=3, batch_size=2), {'set5': ['gene5'], 'set6': ['gene6']})
+        self.assertEqual(get_gene_set_batch(self.gene_sets, batch=1, batch_size=4), {'set1': ['gene1'], 'set2': ['gene2'], 'set3': ['gene3'], 'set4': ['gene4']})
 
 
 if __name__ == '__main__':

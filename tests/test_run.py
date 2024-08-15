@@ -1,7 +1,7 @@
 import unittest
 import pandas as pd
 from tests.interface import Test
-from run_batch import run_task
+from scripts.prediction import run_comparison
 from scripts.consts import CELL_TYPE_COL, ALL_CELLS, CLASSIFICATION_METRIC, REGRESSION_METRIC, FEATURE_SELECTION, SEED, THRESHOLD
 
 
@@ -49,17 +49,17 @@ class TaskRunTest(Test):
             }
             
             good_gene_set = ['Gene2']
-            p_value = run_task(gene_set=good_gene_set, **task_args)[0]
+            p_value = run_comparison(gene_set=good_gene_set, **task_args)[0]
             self.assertLessEqual(p_value, THRESHOLD)
             good_gene_set = ['Gene5']
-            p_value = run_task(gene_set=good_gene_set, **task_args)[0]
+            p_value = run_comparison(gene_set=good_gene_set, **task_args)[0]
             self.assertLessEqual(p_value, THRESHOLD)
 
             bad_gene_set = ['Gene4']
-            p_value = run_task(gene_set=bad_gene_set, **task_args)[0]
+            p_value = run_comparison(gene_set=bad_gene_set, **task_args)[0]
             self.assertGreaterEqual(p_value, THRESHOLD)
             bad_gene_set = ['Gene1']
-            p_value = run_task(gene_set=bad_gene_set, **task_args)[0]
+            p_value = run_comparison(gene_set=bad_gene_set, **task_args)[0]
             self.assertGreaterEqual(p_value, THRESHOLD)
 
     def test_regression_run(self):
@@ -82,17 +82,17 @@ class TaskRunTest(Test):
             }
             
             good_gene_set = ['Gene1']
-            p_value = run_task(gene_set=good_gene_set, **task_args)[0]
+            p_value = run_comparison(gene_set=good_gene_set, **task_args)[0]
             self.assertLessEqual(p_value, THRESHOLD)
             good_gene_set = ['Gene3']
-            p_value = run_task(gene_set=good_gene_set, **task_args)[0]
+            p_value = run_comparison(gene_set=good_gene_set, **task_args)[0]
             self.assertLessEqual(p_value, THRESHOLD)
 
             bad_gene_set = ['Gene2']
-            p_value = run_task(gene_set=bad_gene_set, **task_args)[0]
+            p_value = run_comparison(gene_set=bad_gene_set, **task_args)[0]
             self.assertGreaterEqual(p_value, THRESHOLD)
             bad_gene_set = ['Gene4']
-            p_value = run_task(gene_set=bad_gene_set, **task_args)[0]
+            p_value = run_comparison(gene_set=bad_gene_set, **task_args)[0]
             self.assertGreaterEqual(p_value, THRESHOLD)
         
 

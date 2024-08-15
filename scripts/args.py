@@ -1,9 +1,6 @@
 import argparse, os
-import pandas as pd
 from scripts.consts import *
 from scripts.utils import get_full_path, parse_missing_args
-from scripts.computation import get_gene_set_batch
-from scripts.output import read_csv, get_preprocessed_data, read_gene_sets
 
 
 ### Run ###
@@ -139,58 +136,6 @@ def get_run_args():
     args = parse_missing_args(args)
     args = process_run_args(args)
     validate_run_args(args)
-    return args
-
-
-### Batch run ###
-
-
-def parse_run_batch_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser()
-
-    parser.add_argument('--batch', type=int, default=None, help='')
-    parser.add_argument('--batch_size', type=int, default=None, help='')
-
-    parser.add_argument('--feature_selection', type=str, required=True, help='')
-    parser.add_argument('--set_fraction', type=float, required=True, help='')
-    parser.add_argument('--min_set_size', type=int, required=True, help='')
-
-    parser.add_argument('--classifier', type=str, required=True, help='')
-    parser.add_argument('--regressor', type=str, required=True, help='')
-    parser.add_argument('--classification_metric', type=str, required=True, help='')
-    parser.add_argument('--regression_metric', type=str, required=True, help='')
-    parser.add_argument('--cross_validation', type=int, required=True, help='')
-    parser.add_argument('--repeats', type=int, required=True, help='')
-    parser.add_argument('--distribution', type=str, required=True, help='')
-    parser.add_argument('--seed', type=int, required=True, help='')
-
-    parser.add_argument('--output', type=str, required=True, help='')
-    parser.add_argument('--cache', type=str, required=True, help='')
-    parser.add_argument('--tmp', type=str, required=True, help='')
-
-    return parser.parse_args()
-
-
-def process_run_batch_args(args):
-    args.expression = get_preprocessed_data('expression', args.output)
-    args.cell_types = get_preprocessed_data('cell_types', args.output)
-    args.pseudotime = get_preprocessed_data('pseudotime', args.output)
-
-    gene_sets = read_gene_sets(args.output)
-    args.batch_gene_sets = get_gene_set_batch(gene_sets, args.batch, args.batch_size)
-    del args.batch_size
-
-    if args.batch is not None:
-        args.output = args.tmp
-    del args.tmp
-
-    return args
-
-
-def get_run_batch_args():
-    args = parse_run_batch_args()
-    args = parse_missing_args(args)
-    args = process_run_batch_args(args)
     return args
 
 

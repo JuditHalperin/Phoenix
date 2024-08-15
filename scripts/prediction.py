@@ -1,137 +1,56 @@
-import random, inspect, warnings
+import warnings
 import numpy as np
 import pandas as pd
-from sklearn.preprocessing import StandardScaler, MinMaxScaler, LabelEncoder
-from sklearn.model_selection import train_test_split, cross_val_score
-from sklearn.feature_selection import SelectKBest, f_classif, f_regression
-from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
-from sklearn.metrics import make_scorer
 import scipy.stats as stats
-from scripts.consts import ALL_CELLS, SEED, CELL_TYPE_COL, METRICS
-from scripts.utils import show_runtime
+from scripts.data import get_cell_types, get_lineages
+from scripts.train import get_train_data, train
+from scripts.consts import CLASSIFIERS, REGRESSORS, CLASSIFIER_ARGS, REGRESSOR_ARGS
+from scripts.utils import define_background, define_set_size, remove_outliers
+from scripts.output import load_background_scores, save_background_scores, summarise_result, save_csv
 
 
-@show_runtime
-def get_target(
-        cell_types: pd.DataFrame = None,
-        pseudotime: pd.DataFrame = None,
-        cell_type: str = None,
-        lineage: int = None,
-        scale: bool = True
-    ):
-    """
-    scale: whether to normalize continuous target pseudo-time values using min-max scaler
-    """
-    if pseudotime is not None:
-        y = pseudotime.loc[:, lineage].dropna()
-        return pd.Series(MinMaxScaler().fit_transform(y.values.reshape(-1, 1)).flatten(), index=y.index) if scale else y
-    
-    if cell_type == ALL_CELLS:
-        return cell_types[CELL_TYPE_COL]
-    return cell_types[CELL_TYPE_COL] == cell_type
-
-
-@show_runtime
-def get_data(
+def get_prediction_score(
         expression: pd.DataFrame,
-        features: list[str] = None,
-        cell_types: pd.DataFrame = None,
-        pseudotime: pd.DataFrame = None,
-        cell_type: str = None,
-        lineage: int = None,
-        scale_features: bool = True,
-        scale_target: bool = True,
+        predictor: str,
+        metric: str,
+        seed: int,
+        gene_set: list[str] = None,
         set_size: int = None,
         feature_selection: str = None,
-        selection_args: dict = {},
-        ordered_selection: bool = False,
-        seed: int = SEED
-    ) -> tuple:
-    """
-    feature_selection: either 'ANOVA' or 'RF', supported for both classification and regression
-    ordered_selection: ignored if feature_selection is set
-    """
-    assert (cell_types is not None and cell_type is not None) or (pseudotime is not None and lineage is not None)
-    is_regression = pseudotime is not None
-
-    y = get_target(cell_types, pseudotime, cell_type, lineage, scale_target)
-    cells = y.index
-    features = [f for f in features if f in expression.columns] if features is not None else expression.columns
-    X = expression.loc[cells, features]
-    X = StandardScaler().fit_transform(X) if scale_features else X
-
-    # Select all features
-    if not set_size or set_size >= len(features):
-        return X, y, features
-
-    # Select best features using either ANOVA or RF
-    if feature_selection:
-        if feature_selection == 'ANOVA':
-            selected_features = SelectKBest(score_func=f_regression if is_regression else f_classif, k=set_size).fit(X, y)
-            selected_genes = [features[i] for i in selected_features.get_support(indices=True)]
-            return selected_features.transform(X), y, selected_genes
-        
-        if feature_selection == 'RF':
-            if 'n_estimators' not in selection_args.keys():
-                selection_args['n_estimators'] = 50
-            if is_regression:
-                importances = RandomForestRegressor(random_state=seed, **selection_args).fit(X, y).feature_importances_
-            else:
-                importances = RandomForestClassifier(random_state=seed, class_weight='balanced', **selection_args).fit(X, y).feature_importances_
-            selected_indices = (-importances).argsort()[:set_size]
-            selected_genes = [features[i] for i in selected_indices]
-            return X[:, selected_indices], y, selected_genes
-        
-        raise ValueError(f'Unsupported feature selection method {feature_selection}')
-
-    # Select first
-    if ordered_selection:
-        return X[:, :set_size], y, features[:set_size]
-
-    # Select randomly
-    selected_indices = random.Random(seed).sample(list(range(X.shape[1])), set_size)
-    return X[:, selected_indices], y, [features[i] for i in selected_indices]
-
-
-@show_runtime
-def train(
-        X, y,
-        predictor,
-        predictor_args: dict,
-        metric: str,
         cross_validation: int = None,
-        balanced_weights: bool = True,
-        train_size: float = 0.8,
-        bins: int = 3,
-        seed: int = SEED,
-    ) -> float:
+        cell_types: pd.DataFrame = None,
+        pseudotime: pd.DataFrame = None,
+        cell_type: str = None,
+        lineage: int = None,
+    ) -> tuple[float, list[str]]:
 
-    if 'n_jobs' in inspect.signature(predictor).parameters:
-        predictor_args['n_jobs'] = -1  # all processes
-    if 'random_state' in inspect.signature(predictor).parameters:
-        predictor_args['random_state'] = seed
-    if balanced_weights and 'class_weight' in inspect.signature(predictor).parameters:
-        predictor_args['class_weight'] = 'balanced'
+    X, y, selected_genes = get_train_data(
+        expression=expression,
+        features=gene_set,
+        cell_types=cell_types,
+        pseudotime=pseudotime,
+        cell_type=cell_type,
+        lineage=lineage,
+        set_size=set_size,
+        feature_selection=feature_selection,
+        seed=seed,
+    )
 
-    model = predictor(**predictor_args)
-    score_func = make_scorer(METRICS[metric], greater_is_better=True)
+    is_regression = pseudotime is not None
+    predictor = REGRESSORS[predictor] if is_regression else CLASSIFIERS[predictor]
+    predictor_args = REGRESSOR_ARGS[predictor] if is_regression else CLASSIFIER_ARGS[predictor]
+    
+    score = train(
+        X=X,
+        y=y,
+        predictor=predictor,
+        predictor_args=predictor_args,
+        metric=metric,
+        cross_validation=cross_validation,
+        seed=seed
+    )
 
-    if isinstance(y.iloc[0], str):
-        y = LabelEncoder().fit_transform(y)
-
-    if cross_validation:
-        score = np.median(cross_val_score(model, X, y, cv=cross_validation, scoring=score_func))
-
-    else:
-        stratify = pd.cut(y, bins=bins, labels=False) if y.dtype == float else y
-        X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=stratify, train_size=train_size, random_state=seed)
-
-        model.fit(X_train, y_train)
-        y_pred = model.predict(X_test)
-
-        score = score_func(y_test, y_pred)
-
-    return float(score)
+    return score, selected_genes
 
 
 def compare_scores(pathway_score: float, background_scores: list[float], distribution: str) -> float:
@@ -157,3 +76,137 @@ def compare_scores(pathway_score: float, background_scores: list[float], distrib
         raise ValueError('Unsupported distribution type. Use `normal` or `gamma`')
 
     return p_value if not np.isnan(p_value) else 1.0
+
+
+def run_comparison(
+        expression: pd.DataFrame,
+        gene_set: list[str],
+        predictor: str,
+        metric: str,
+        set_size: int,
+        feature_selection: str | None,
+        cross_validation: int,
+        repeats: int,
+        seed: int,
+        distribution: str,
+        cell_types: pd.DataFrame = None,
+        pseudotime: pd.DataFrame = None,
+        cell_type: str = None,
+        lineage: str = None,
+        trim_background: bool = True,
+        cache: str = None
+    ):
+
+    prediction_args = {
+        'expression': expression,
+        'predictor': predictor,
+        'metric': metric,
+        'cross_validation': cross_validation,
+        'set_size': set_size,
+        'cell_types': cell_types,
+        'pseudotime': pseudotime,
+        'cell_type': cell_type,
+        'lineage': lineage,
+    }
+
+    # Pathway of interest
+    pathway_score, top_genes = get_prediction_score(seed=seed, gene_set=gene_set, feature_selection=feature_selection, **prediction_args)
+
+    # Background
+    background = define_background(set_size, repeats, cell_type, lineage)
+    background_scores = load_background_scores(background, cache)
+    if not background_scores:
+        for i in range(repeats):
+            background_scores.append(get_prediction_score(seed=i, **prediction_args)[0])
+        if trim_background:
+            background_scores = remove_outliers(background_scores)
+        save_background_scores(background_scores, background, cache)
+
+    # Compare scores
+    p_value = compare_scores(pathway_score, background_scores, distribution)
+
+    return p_value, pathway_score, background_scores, top_genes
+
+
+def get_gene_set_batch(gene_sets: dict[str, list[str]], batch: int | None = None, batch_size: int | None = None) -> dict[str, list[str]]:
+    """
+    batch: number between 1 and `processes`, or None for a single batch
+    """
+    if batch is None:
+        return gene_sets
+    batch_start = (batch - 1) * batch_size
+    batch_end = min(batch_start + batch_size, len(gene_sets))
+    set_names = list(gene_sets.keys())[batch_start:batch_end]
+    return {set_name: gene_sets[set_name] for set_name in set_names}
+
+
+def run_batch(
+        batch: int | None,
+        batch_gene_sets: dict[str, list[str]],
+        expression: pd.DataFrame,
+        cell_types: pd.DataFrame,
+        pseudotime: pd.DataFrame,
+        feature_selection: str,
+        set_fraction: float,
+        min_set_size: int,
+        classifier: str,
+        regressor: str,
+        classification_metric: str,
+        regression_metric: str,
+        cross_validation: int,
+        repeats: int,
+        seed: int,
+        distribution: str,
+        output: str,
+        cache: str,
+    ) -> None:
+    """
+    output: main output path for a single batch and temp output path for many batches
+    batch: number between 1 and `processes`, or None for a single batch
+    """
+    if batch_gene_sets is None:
+        pass
+
+    classification_results, regression_results = [], []
+
+    logger = f'Batch {batch}: ' if batch else ''
+    for i, (set_name, gene_set) in enumerate(batch_gene_sets.items()):
+        print(f'{logger}Pathway {i + 1}/{len(batch_gene_sets)}: {set_name}')
+
+        set_size = define_set_size(len(gene_set), set_fraction, min_set_size)
+        task_args = {
+            'expression': expression, 'gene_set': gene_set,
+            'set_size': set_size, 'feature_selection': feature_selection,
+            'cross_validation': cross_validation, 'repeats': repeats,
+            'seed': seed, 'distribution': distribution, 'cache': cache
+        }
+
+        # Cell-type classification
+        for cell_type in get_cell_types(cell_types):
+            p_value, pathway_score, background_scores, top_genes = run_comparison(
+                predictor=classifier, metric=classification_metric,
+                cell_types=cell_types, cell_type=cell_type,
+                **task_args
+            )
+            classification_results.append(summarise_result(
+                cell_type, set_name, top_genes, set_size, feature_selection, classifier, classification_metric,
+                cross_validation, repeats, seed, pathway_score, background_scores, p_value
+            ))
+        
+        # Pseudo-time regression
+        for lineage in get_lineages(pseudotime):
+            p_value, pathway_score, background_scores, top_genes = run_comparison(
+                predictor=regressor, metric=regression_metric,
+                pseudotime=pseudotime, lineage=lineage,
+                **task_args
+            )
+
+            regression_results.append(summarise_result(
+                lineage, set_name, top_genes, set_size, feature_selection, regressor, regression_metric,
+                cross_validation, repeats, seed, pathway_score, background_scores, p_value
+            ))
+
+    # Save results
+    info = f'_batch{batch}' if batch else ''
+    save_csv(classification_results, f'cell_type_classification{info}', output, keep_index=False)
+    save_csv(regression_results, f'pseudotime_regression{info}', output, keep_index=False)

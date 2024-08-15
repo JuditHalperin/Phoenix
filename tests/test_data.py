@@ -6,7 +6,7 @@ from scripts.visualization import get_top_sum_pathways, get_column_unique_pathwa
 from scripts.consts import CELL_TYPE_COL
 
 
-class DataTest(Test):
+class GeneDataTest(Test):
 
     def setUp(self):
         self.all_genes = ['Gene1', 'Gene2', 'Gene3', 'Gene4', 'Gene5', 'Gene6', 'Gene7', 'Gene8']

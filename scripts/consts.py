@@ -8,7 +8,7 @@ from sklearn.neural_network import MLPClassifier, MLPRegressor
 from lightgbm import LGBMClassifier, LGBMRegressor
 from xgboost import XGBClassifier, XGBRegressor
 from sklearn.metrics import accuracy_score, balanced_accuracy_score, f1_score, mean_absolute_error, mean_squared_error
-from scripts.metric import weighted_metric_using_icf, compute_f1, compute_recall
+from scripts.metrics import weighted_metric_using_icf, compute_f1, compute_recall
 
 
 SIZES = [5, 6, 7, 8, 9, 10, 15, 20, 35, 50, 75, 100, 120, 140, 160, 180, 200, 225, 250, 275, 300, 350, 400]

@@ -1,6 +1,6 @@
 import unittest, random
 from tests.interface import Test
-from scripts.metric import compute_f1, compute_recall, normalized_inverse_class_frequency
+from scripts.metrics import compute_f1, compute_recall, normalized_inverse_class_frequency
 from scripts.consts import CLASSIFICATION_METRICS
 
 
