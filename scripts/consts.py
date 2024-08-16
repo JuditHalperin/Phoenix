@@ -11,7 +11,7 @@ from sklearn.metrics import accuracy_score, balanced_accuracy_score, f1_score, m
 from scripts.metrics import weighted_metric_using_icf, compute_f1, compute_recall
 
 
-SIZES = [5, 6, 7, 8, 9, 10, 15, 20, 35, 50, 75, 100, 120, 140, 160, 180, 200, 225, 250, 275, 300, 350, 400]
+SIZES = [5, 6, 7, 8, 9, 10, 15, 20, 25, 30, 40, 50, 75, 100, 120, 140, 160, 180, 200, 225, 250]
 
 REDUCTION_METHODS = ['pca', 'umap', 'tsne']
 
@@ -57,7 +57,7 @@ REGRESSOR_ARGS = {
     KNeighborsRegressor: {'n_neighbors': 10},
     SVR: {'kernel': 'rbf'},
     DecisionTreeRegressor: {'max_depth': 10},
-    RandomForestRegressor: {'max_depth': 10, 'n_estimators': 20},
+    RandomForestRegressor: {'criterion': 'squared_error', 'max_depth': 10, 'n_estimators': 20},
     LGBMRegressor: {'n_estimators': 20, 'verbose': -1},
     XGBRegressor: {'n_estimators': 20},
     GradientBoostingRegressor: {'n_estimators': 20},
@@ -105,8 +105,8 @@ REGRESSION_METRIC = 'neg_mean_squared_error'
 CROSS_VALIDATION = 10
 REPEATS = 200
 FEATURE_SELECTION = 'ANOVA'
-SET_FRACTION = 0.5
-MIN_SET_SIZE = 10
+SET_FRACTION = 0.75
+MIN_SET_SIZE = SIZES[0]
 SEED = 3407
 THRESHOLD = 0.05
 MAP_SIZE = 50

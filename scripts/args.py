@@ -127,6 +127,7 @@ def validate_run_args(args):
     assert args.seed > 0
     assert args.distribution in DISTRIBUTIONS
     assert 0 < args.set_fraction <= 1
+    assert SIZES[0] <= args.min_set_size <= SIZES[-1]
     assert not (not args.sbatch and args.processes), 'Cannot run multiple processes without sbatch'
     assert not args.processes or args.processes >= 0
 
