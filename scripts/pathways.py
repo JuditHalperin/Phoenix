@@ -1,7 +1,6 @@
 import os, requests, datetime, warnings
 import gseapy as gp
 from bioservices.kegg import KEGG
-from scripts.data import intersect_genes
 from scripts.consts import SIZES
 from scripts.utils import make_valid_term
 from scripts.output import read_gene_sets, save_gene_sets
@@ -171,8 +170,33 @@ def retrieve_all_msigdb_pathways(organism: str) -> dict[str, list[str]]:
 
 
 def retrieve_pathway(id: str, organism: str) -> dict[str, list[str]]:
+    # TODO: support pathway retrieval by ID
     # print('...')
     raise NotImplementedError('Pathway ID is not supported yet')
+
+
+def intersect_genes(gene_set: list[str], all_genes: list[str], required_len: int = 5) -> list[str]:
+
+    is_set = lambda gene_set: len(list(set(gene_set).intersection(set(all_genes)))) >= min(required_len, len(gene_set) // 2)
+    intersect_set = lambda gene_set: sorted([g for g in set(gene_set) if g in all_genes])
+
+    if is_set(gene_set):
+        return intersect_set(gene_set)
+
+    gene_set = [g.lower() for g in gene_set]
+    if is_set(gene_set):
+        return intersect_set(gene_set)
+
+    gene_set = [g.upper() for g in gene_set]
+    if is_set(gene_set):
+        return intersect_set(gene_set)
+
+    to_title = lambda word: word[0].upper() + word[1:].lower()
+    gene_set = [to_title(g) for g in gene_set]
+    if is_set(gene_set):
+        return intersect_set(gene_set)
+
+    return []
 
 
 def get_gene_sets(pathway_database: list[str], custom_pathways: list[str], organism: str, all_genes: list[str], min_set_size: int, output: str) -> dict[str, list[str]]:
@@ -193,7 +217,7 @@ def get_gene_sets(pathway_database: list[str], custom_pathways: list[str], organ
     
     # Filter gene annotations based on size
     gene_sets = {make_valid_term(set_name): [g for g in intersect_genes(gene_set, all_genes) if g != ''] for set_name, gene_set in gene_sets.items()}
-    gene_sets = {set_name: gene_set for set_name, gene_set in gene_sets.items() if len(gene_set) >= max(min_set_size, SIZES[0]) and len(gene_set) <= SIZES[-1]}  # TODO: smaller than min size
+    gene_sets = {set_name: gene_set for set_name, gene_set in gene_sets.items() if len(gene_set) >= max(min_set_size, SIZES[0]) and len(gene_set) <= SIZES[-1]}
 
     # Save
     save_gene_sets(gene_sets, output)

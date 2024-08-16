@@ -108,30 +108,6 @@ def preprocess_data(
     return expression, cell_types, pseudotime, reduction
 
 
-def intersect_genes(gene_set: list[str], all_genes: list[str], required_len: int = 5) -> list[str]:
-
-    is_set = lambda gene_set: len(list(set(gene_set).intersection(set(all_genes)))) >= min(required_len, len(gene_set) // 2)
-    intersect_set = lambda gene_set: sorted([g for g in set(gene_set) if g in all_genes])
-
-    if is_set(gene_set):
-        return intersect_set(gene_set)
-
-    gene_set = [g.lower() for g in gene_set]
-    if is_set(gene_set):
-        return intersect_set(gene_set)
-
-    gene_set = [g.upper() for g in gene_set]
-    if is_set(gene_set):
-        return intersect_set(gene_set)
-
-    to_title = lambda word: word[0].upper() + word[1:].lower()
-    gene_set = [to_title(g) for g in gene_set]
-    if is_set(gene_set):
-        return intersect_set(gene_set)
-
-    return []
-
-
 def get_cell_types(cell_types: pd.DataFrame) -> list[str]:
     cell_type_list = (cell_types[CELL_TYPE_COL].unique().tolist() + [ALL_CELLS]) if cell_types is not None else []
     random.shuffle(cell_type_list)
