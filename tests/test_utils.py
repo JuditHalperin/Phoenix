@@ -12,7 +12,7 @@ class UtilTest(Test):
         self.assertEqual(define_set_size(20, 0.5, 15), 15)
         self.assertEqual(define_set_size(8, 0.5, 10), 8)
         self.assertEqual(define_set_size(80, 0.25, 10), 20)
-        self.assertEqual(define_set_size(80, 0.5, 10), 35)  # as 40 is not in SIZES
+        self.assertEqual(define_set_size(300, 0.5, 10), 140)  # as 150 is not in SIZES
 
     def test_num_batches_definition(self):
         self.assertEqual(define_batch_size(9, 3), 3)

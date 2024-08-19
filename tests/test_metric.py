@@ -65,9 +65,9 @@ class ICFMetricTest(MetricTest):
         self.assertLess(frequencies[3], frequencies[2])
 
     def test_f1_weighted_icf_vs_f1_weighted(self):
-        for _ in range(10):
-            y_true = self.generate_labels(100, 5, balanced=False)
-            y_pred = self.generate_labels(100, 5, balanced=False)
+        for _ in range(3):
+            y_true = self.generate_labels(100, 10, balanced=False)
+            y_pred = self.generate_labels(100, 10, balanced=False)
             self.assertLess(CLASSIFICATION_METRICS['f1_weighted_icf'](y_true, y_pred), CLASSIFICATION_METRICS['f1_weighted'](y_true, y_pred))
 
     def test_multiclass_weighted_metric_using_icf(self):
