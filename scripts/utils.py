@@ -27,9 +27,9 @@ def get_file_size(path: str) -> str:
     
     if file_size_gb < 1:
         file_size_mb = file_size_bytes / (1024 ** 2)
-        return f"{np.ceil(file_size_mb)}M"
+        return f"{int(np.ceil(file_size_mb))}M"
     else:
-        return f"{np.ceil(file_size_gb)}G"
+        return f"{int(np.ceil(file_size_gb))}G"
     
 
 def make_valid_filename(filename: str) -> str:
