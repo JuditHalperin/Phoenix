@@ -91,7 +91,7 @@ def save_gene_sets(gene_sets: dict[str, list[str]], output_path: str, by_set: bo
             pd.DataFrame(df[col]).dropna().to_csv(f'{output_path}/{make_valid_filename(col)}.csv', index=False)
 
 
-def summarise_result(target, set_name, top_genes, set_size, feature_selection, predictor, metric, cross_validation, repeats, seed, pathway_score, background_scores: list[float], p_value):
+def summarise_result(target, set_name, top_genes, set_size, feature_selection, predictor, metric, cross_validation, repeats, distribution, seed, pathway_score, background_scores: list[float], p_value):
     result = {
         TARGET_COL: target,
         'set_name': set_name,
@@ -102,6 +102,7 @@ def summarise_result(target, set_name, top_genes, set_size, feature_selection, p
         'metric': metric,
         'cross_validation': cross_validation,
         'repeats': repeats,
+        'distribution': distribution,
         'seed': seed,
         'pathway_score': pathway_score,
         'background_scores': background_scores,

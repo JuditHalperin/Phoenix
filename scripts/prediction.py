@@ -190,7 +190,7 @@ def run_batch(
             )
             classification_results.append(summarise_result(
                 cell_type, set_name, top_genes, set_size, feature_selection, classifier, classification_metric,
-                cross_validation, repeats, seed, pathway_score, background_scores, p_value
+                cross_validation, repeats, distribution, seed, pathway_score, background_scores, p_value
             ))
         
         # Pseudo-time regression
@@ -203,7 +203,7 @@ def run_batch(
 
             regression_results.append(summarise_result(
                 lineage, set_name, top_genes, set_size, feature_selection, regressor, regression_metric,
-                cross_validation, repeats, seed, pathway_score, background_scores, p_value
+                cross_validation, repeats, distribution, seed, pathway_score, background_scores, p_value
             ))
 
     # Save results

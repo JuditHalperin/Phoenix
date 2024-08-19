@@ -112,7 +112,7 @@ def _plot_prediction_scores(
         sns.kdeplot(fill=True, **plot_args)
         plt.ylabel('Density')
 
-    if show_fit:
+    if show_fit and experiment['distribution'] == 'gamma':
         shape, loc, scale = stats.gamma.fit(background_scores)
         x = np.linspace(min(background_scores), max(background_scores), 1000)
         pdf = stats.gamma.pdf(x, shape, loc=loc, scale=scale)
