@@ -310,7 +310,7 @@ def plot_experiment(
         target_name = ' Identities'
     else:
         target_name = "'s identity"
-    plt.suptitle(f'Predicting {target}{target_name} using {set_name}')
+    plt.suptitle(f'Predicting {target}{target_name} using {set_name}')  # TODO: mention prediction type
     save_plot(f'predicting {target} using {set_name}', output)    
 
 
