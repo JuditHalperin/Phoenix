@@ -1,5 +1,6 @@
 import argparse, os
 from scripts.consts import *
+from scripts.output import create_dir
 from scripts.utils import get_full_path, parse_missing_args
 
 
@@ -97,18 +98,16 @@ def process_run_args(args):
     args.feature_selection = args.feature_selection.upper() if args.feature_selection else None
     args.distribution = args.distribution.lower()
 
-    if not os.path.exists(args.output):
-        os.mkdir(args.output)
     args.output = get_full_path(args.output)
+    create_dir(args.output)
 
     args.cache = os.path.join(args.output, 'cache')
-    if not os.path.exists(args.cache):
-        os.mkdir(args.cache)
+    create_dir(args.cache)
 
     args.tmp = os.path.join(args.output, 'tmp')
-    if args.processes and not os.path.exists(args.tmp):
-        os.mkdir(args.tmp)
-
+    if args.processes:
+        create_dir(args.tmp)
+    
     return args
 
 

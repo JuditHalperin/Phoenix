@@ -78,17 +78,13 @@ def read_gene_sets(output_path: str, title: str = 'gene_sets') -> dict[str, list
     return {column: df[column].dropna().tolist() for column in df.columns}
 
 
-def save_gene_sets(gene_sets: dict[str, list[str]], output_path: str, by_set: bool = False) -> None:
+def save_gene_sets(gene_sets: dict[str, list[str]], output_path: str, title: str = 'gene_sets', by_set: bool = False) -> None:
     df = pd.DataFrame(dict([(k, pd.Series(v)) for k, v in gene_sets.items()]))
-
-    if not os.path.exists(output_path):
-        os.mkdir(output_path)
-
-    df.to_csv(f'{output_path}/gene_sets.csv', index=False)
+    save_csv(df, title, output_path, keep_index=False)
 
     if by_set:
         for col in df.columns:
-            pd.DataFrame(df[col]).dropna().to_csv(f'{output_path}/{make_valid_filename(col)}.csv', index=False)
+            save_csv(pd.DataFrame(df[col]).dropna(), col, output_path, keep_index=False)
 
 
 def summarise_result(target, set_name, top_genes, set_size, feature_selection, predictor, metric, cross_validation, repeats, distribution, seed, pathway_score, background_scores: list[float], p_value):
@@ -167,7 +163,47 @@ def get_experiment(results: pd.DataFrame | str, output_path: str, set_name: str 
 def save_plot(title: str, output: str = None):
     plt.tight_layout()
     if output:
-        plt.savefig(f'{output}/{make_valid_filename(title)}.png')
+        plt.savefig(os.path.join(output, f'{make_valid_filename(title)}.png'))
     else:
         plt.show()
     plt.close()
+
+
+def create_dir(path: str) -> None:
+    os.makedirs(path, exist_ok=True)
+
+
+def get_dir(
+        output: str | None,
+        data: bool = False,
+        reports: bool = False,
+        background: bool = False,
+        classification: bool = False,
+        regression: bool = False,
+        batch: bool = False,
+        pathways: bool = False,
+    ) -> str | None:
+    if not output:
+        return None
+    
+    if data:
+        title = 'preprocessed_data'
+    elif reports:
+        title = 'reports'
+    elif background:
+        title = 'background_scores'
+    elif classification:
+        title = 'cell_type_classification'
+    elif regression:
+        title = 'pseudotime_regression'
+    else:
+        title = ''
+    
+    path = os.path.join(output, title)
+    if pathways:
+        path = os.path.join(path, 'pathways')
+    elif batch:
+        path = os.path.join(path, 'batches')
+
+    create_dir(path)
+    return path

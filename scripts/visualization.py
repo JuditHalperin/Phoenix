@@ -331,7 +331,7 @@ def plot_all_cell_types_and_trajectories(
         plt.subplot(1, num_plots, num_plots)
         _plot_pseudotime(reduction, pseudotime, title=True)
     
-    save_plot('all_cell_types_and_trajectories', output)
+    save_plot('targets', output)
 
 
 def plot(
