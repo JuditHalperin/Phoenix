@@ -6,10 +6,10 @@ def plot_tool(
         cell_type: list[str],
         lineage: list[str],
         pathway: list[str],
-        all_plots: bool,
+        all: bool,
         output: str,
     ):
-    if all_plots:
+    if all:
         plot(output)
 
     for p in pathway:
