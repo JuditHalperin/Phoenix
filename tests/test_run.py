@@ -68,7 +68,7 @@ class TaskRunTest(Test):
             task_args = {
                 'expression': self.expression,
                 'predictor': predictor,
-                'metric': REGRESSION_METRIC,
+                'metric': 'neg_mean_squared_error',
                 'set_size': 1,
                 'feature_selection': FEATURE_SELECTION,
                 'cross_validation': self.cross_validation,
