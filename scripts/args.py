@@ -168,7 +168,7 @@ def process_plot_args(args):
 
 
 def validate_plot_args(args):
-    if not args.pathway:
+    if args.pathway:
         assert args.cell_type or args.lineage, 'Provide either `cell_type` or `lineage` target column'
 
 
