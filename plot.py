@@ -9,8 +9,8 @@ def plot_tool(
         all: bool,
         output: str,
     ):
-    if all:
-        plot(output)
+    if not pathway:
+        plot(output, all=all)
 
     for p in pathway:
         for c in cell_type:

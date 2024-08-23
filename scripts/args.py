@@ -153,7 +153,7 @@ def parse_plot_args() -> argparse.Namespace:
     parser.add_argument('--pathway', type=str, nargs='*',
                         help='')
     parser.add_argument('--all', action='store_true', default=False,
-                        help='')
+                        help='Whether to plot all pathways for all cell-type and lineage targets')
     parser.add_argument('--output', type=str, required=True,
                         help='')
     
@@ -161,16 +161,15 @@ def parse_plot_args() -> argparse.Namespace:
 
 
 def process_plot_args(args):
-    args.cell_type = args.cell_type if args.cell_type else []
-    args.lineage = args.lineage if args.lineage else []
-    args.pathway = args.pathway if args.pathway else []
+    args.cell_type = args.cell_type if args.cell_type and not args.all else []
+    args.lineage = args.lineage if args.lineage and not args.all else []
+    args.pathway = args.pathway if args.pathway and not args.all else []
     args.output = get_full_path(args.output)
     return args
 
 
 def validate_plot_args(args):
-    if not args.all:
-        assert args.pathway, 'Provide `pathway`'
+    if not args.pathway:
         assert args.cell_type or args.lineage, 'Provide either `cell_type` or `lineage` target column'
 
 

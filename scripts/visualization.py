@@ -343,9 +343,10 @@ def plot(
         classification_results: pd.DataFrame | str = 'cell_type_classification',
         regression_results: pd.DataFrame | str = 'pseudotime_regression',
         threshold: float = THRESHOLD,
+        all: bool = False,
     ):
     """
-    result table or file title
+    all: whether to plot all pathways
     """
     expression = get_preprocessed_data(expression, output)
     reduction = get_preprocessed_data(reduction, output)
@@ -365,7 +366,7 @@ def plot(
         data = results.pivot(index='set_name', columns=TARGET_COL, values='fdr')
         save_csv(data, f'p_values_{target_type}', output)
 
-        if data.shape[0] <= MAP_SIZE:  # plot all pathways
+        if all or data.shape[0] <= MAP_SIZE:  # plot all pathways
             pathways = data.index
             for target in data.columns:
                 for pathway_name in pathways:
@@ -382,9 +383,10 @@ def plot(
                         plot_experiment(output, target, pathway_name, target_type, results, target_data, expression, reduction)
             pathways.extend(get_top_sum_pathways(data, ascending=False, size=3))
 
+        if len(pathways) < data.shape[0]:
             plot_p_values(data, cluster_rows=True, title=f'{target_type} Prediction using All Pathways', output=output)
-        
         plot_p_values(data.loc[pathways], title=f'{target_type} Prediction', output=output)
         
         del data
         del results
+        del pathways
