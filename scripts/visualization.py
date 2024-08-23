@@ -8,7 +8,7 @@ from scipy.cluster import hierarchy
 from scripts.data import sum_gene_expression
 from scripts.utils import remove_outliers, get_color_mapping, convert_to_sci
 from scripts.output import save_plot, get_experiment, get_preprocessed_data, save_csv 
-from scripts.consts import THRESHOLD, TARGET_COL, ALL_CELLS, OTHER_CELLS, BACKGROUND_COLOR, INTEREST_COLOR, CELL_TYPE_COL, MAP_SIZE
+from scripts.consts import THRESHOLD, TARGET_COL, ALL_CELLS, OTHER_CELLS, BACKGROUND_COLOR, INTEREST_COLOR, CELL_TYPE_COL, MAP_SIZE, DPI, LEGEND_FONT_SIZE, POINT_SIZE
 
 
 sns.set_theme(style='white')
@@ -63,14 +63,14 @@ def plot_p_values(
         row_order = hierarchy.dendrogram(row_linkage, no_plot=True)['leaves']
         heatmap_data = heatmap_data.iloc[row_order, :]
 
-    plt.figure(figsize=(9, 6), dpi=200)
+    plt.figure(figsize=(8, 6), dpi=DPI)
     max_value = max(heatmap_data.fillna(0).values.flatten().tolist()) if not max_value else max_value
     heatmap = sns.heatmap(heatmap_data, cmap='Reds', cbar=False, vmin=0, vmax=int(max_value), xticklabels=True, yticklabels=False)
 
     plt.colorbar(heatmap.collections[0], label='-log10(p-value)')
     if heatmap_data.shape[0] <= MAP_SIZE:
-        plt.yticks(np.arange(len(heatmap_data.index)) + 0.5, heatmap_data.index, rotation=0, fontsize=5, ha='right')
-        heatmap.set_yticklabels(heatmap_data.index, rotation=0, fontsize=5, ha='right')
+        plt.yticks(np.arange(len(heatmap_data.index)) + 0.5, heatmap_data.index, rotation=0, fontsize=LEGEND_FONT_SIZE, ha='right')
+        heatmap.set_yticklabels(heatmap_data.index, rotation=0, fontsize=LEGEND_FONT_SIZE, ha='right')
     heatmap.set_xticklabels(heatmap.get_xticklabels(), rotation=90, ha='right')
     
     plt.title(title)
@@ -112,7 +112,7 @@ def _plot_prediction_scores(
         sns.kdeplot(fill=True, **plot_args)
         plt.ylabel('Density')
 
-    if show_fit and experiment['distribution'] == 'gamma':
+    if show_fit and 'distribution' in experiment.keys() and experiment['distribution'] == 'gamma':
         shape, loc, scale = stats.gamma.fit(background_scores)
         x = np.linspace(min(background_scores), max(background_scores), 1000)
         pdf = stats.gamma.pdf(x, shape, loc=loc, scale=scale)
@@ -122,7 +122,7 @@ def _plot_prediction_scores(
         plt.plot(bin_centers, fit_values, color='grey', lw=2, label='Gamma fit')
 
     plt.xlabel(experiment['metric'])
-    plt.legend()
+    plt.legend(fontsize=LEGEND_FONT_SIZE)
     plt.title(title)
 
 
@@ -203,10 +203,10 @@ def _plot_pseudotime(
         trajectory: str = None,
         title: bool = False
     ):
-    plt.scatter(reduction.iloc[:, 0], reduction.iloc[:, 1], s=10, c=BACKGROUND_COLOR)
+    plt.scatter(reduction.iloc[:, 0], reduction.iloc[:, 1], s=POINT_SIZE, c=BACKGROUND_COLOR)
     trajectories = [trajectory] if trajectory else pseudotime.columns.tolist()
     for lineage in trajectories:
-        plt.scatter(reduction.iloc[:, 0], reduction.iloc[:, 1], s=10, c=pseudotime[lineage], cmap=plt.cm.plasma)
+        plt.scatter(reduction.iloc[:, 0], reduction.iloc[:, 1], s=POINT_SIZE, c=pseudotime[lineage], cmap=plt.cm.plasma)
     if title: plt.title(f'{trajectory} Trajectory' if trajectory else 'Trajectories')
     plt.xlabel(reduction.columns[0])
     plt.ylabel(reduction.columns[1])
@@ -222,8 +222,8 @@ def _plot_cell_types(
     if cell_type != ALL_CELLS:
         cell_types.loc[cell_types[CELL_TYPE_COL] != cell_type, CELL_TYPE_COL] = OTHER_CELLS
     color_mapping = get_color_mapping(cell_types[CELL_TYPE_COL].unique().tolist()) if cell_type == ALL_CELLS else {cell_type: INTEREST_COLOR, OTHER_CELLS: BACKGROUND_COLOR}
-    sns.scatterplot(data=reduction, x=reduction.columns[0], y=reduction.columns[1], hue=cell_types[CELL_TYPE_COL], palette=color_mapping, s=15, edgecolor='none')
-    plt.legend(title='')
+    sns.scatterplot(data=reduction, x=reduction.columns[0], y=reduction.columns[1], hue=cell_types[CELL_TYPE_COL], palette=color_mapping, s=POINT_SIZE, edgecolor='none')
+    plt.legend(title='', fontsize=LEGEND_FONT_SIZE)
     if title: plt.title(cell_type if cell_type != ALL_CELLS else 'Cell-types')
 
 
@@ -248,8 +248,8 @@ def _plot_gene_set_expression(
     gene_expression = sum_gene_expression(expression.loc[cells, gene_set])
     clean_expression = remove_outliers(gene_expression)
     
-    plt.scatter(reduction.iloc[:, 0], reduction.iloc[:, 1], s=10, c=BACKGROUND_COLOR)
-    plt.scatter(reduction.loc[cells].iloc[:, 0], reduction.loc[cells].iloc[:, 1], s=10, c=gene_expression, cmap=plt.cm.Blues, vmin=min(clean_expression), vmax=max(clean_expression))
+    plt.scatter(reduction.iloc[:, 0], reduction.iloc[:, 1], s=POINT_SIZE, c=BACKGROUND_COLOR)
+    plt.scatter(reduction.loc[cells].iloc[:, 0], reduction.loc[cells].iloc[:, 1], s=POINT_SIZE, c=gene_expression, cmap=plt.cm.Blues, vmin=min(clean_expression), vmax=max(clean_expression))
     
     plt.colorbar(label='Pathway expression sum')
     plt.xlabel(reduction.columns[0])
@@ -285,7 +285,7 @@ def plot_experiment(
     if experiment is None:
         raise ValueError(f'Cannot access `{output}/{results}.csv`')
 
-    plt.figure(figsize=(13, 10), dpi=200)
+    plt.figure(figsize=(8, 6), dpi=DPI)
 
     # Gene set prediction score
     plt.subplot(2, 2, 1)
@@ -321,7 +321,7 @@ def plot_all_cell_types_and_trajectories(
         output: str = None,
     ):
     num_plots = int(cell_types is not None) + int(pseudotime is not None)
-    plt.figure(figsize=(6.5 * num_plots, 5), dpi=200)
+    plt.figure(figsize=(6.5 * num_plots, 5), dpi=DPI)
 
     if cell_types is not None:
         plt.subplot(1, num_plots, 1)
