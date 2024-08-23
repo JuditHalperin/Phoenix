@@ -163,6 +163,7 @@ def get_experiment(results: pd.DataFrame | str, output_path: str, set_name: str 
 def save_plot(title: str, output: str = None):
     plt.tight_layout()
     if output:
+        create_dir(output)
         plt.savefig(os.path.join(output, f'{make_valid_filename(title)}.png'))
     else:
         plt.show()

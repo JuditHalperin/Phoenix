@@ -1,4 +1,4 @@
-import sys
+import sys, os
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -310,8 +310,8 @@ def plot_experiment(
         target_name = ' Identities'
     else:
         target_name = "'s identity"
-    plt.suptitle(f'Predicting {target}{target_name} using {set_name}')  # TODO: mention prediction type
-    save_plot(f'predicting {target} using {set_name}', output)    
+    plt.suptitle(f'Predicting {target}{target_name} using {set_name}')
+    save_plot(f'predicting {target} using {set_name}', os.path.join(output, 'pathways', target_type))    
 
 
 def plot_all_cell_types_and_trajectories(
