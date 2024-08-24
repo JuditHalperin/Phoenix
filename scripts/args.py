@@ -38,7 +38,7 @@ def parse_run_args() -> argparse.Namespace:
 
     # Feature selection
     parser.add_argument('--feature_selection', type=str, default=FEATURE_SELECTION,
-                        help='')
+                        help='Method for feature selection')
     parser.add_argument('--set_fraction', type=float, default=SET_FRACTION,
                         help='')
     parser.add_argument('--min_set_size', type=int, default=MIN_SET_SIZE,
