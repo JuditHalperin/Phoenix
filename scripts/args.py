@@ -18,7 +18,7 @@ def parse_run_args() -> argparse.Namespace:
     parser.add_argument('--pseudotime', type=str,
                         help='Path to pseudo-time where rows represent cells and columns represent pseudo-time values of different trajectories (CSV file)')
     parser.add_argument('--reduction', type=str, default=REDUCTION,
-                        help='Path to dimensionality reduction where rows represent cells and columns represent the first two components (CSV file), or a dimensionality reduction method: `pca`, `tsne` or `umap`')
+                        help='Path to dimensionality reduction where rows represent cells and columns represent the first two components (CSV file), or a dimensionality reduction method: ' + ', '.join(REDUCTION_METHODS))
 
     # Data preprocessing
     parser.add_argument('--preprocessed', action='store_true', default=False,
@@ -32,13 +32,13 @@ def parse_run_args() -> argparse.Namespace:
     parser.add_argument('--organism', type=str, required=True,
                         help='Organism name')
     parser.add_argument('--pathway_database', type=str, nargs='*',
-                        help='Known pathway database: `kegg`, `go` or `msigdb`')
+                        help='Known pathway database: ' + ', '.join(DATABASES))
     parser.add_argument('--custom_pathways', type=str, nargs='*',
                         help='Path to custom gene sets where columns represent set names and rows include gene symbols (CSV file)')
 
     # Feature selection
     parser.add_argument('--feature_selection', type=str, default=FEATURE_SELECTION,
-                        help='')
+                        help='Feature selection method: ' + ', '.join(FEATURE_SELECTION_METHODS))
     parser.add_argument('--set_fraction', type=float, default=SET_FRACTION,
                         help='')
     parser.add_argument('--min_set_size', type=int, default=MIN_SET_SIZE,
