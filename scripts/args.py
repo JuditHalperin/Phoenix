@@ -22,19 +22,19 @@ def parse_run_args() -> argparse.Namespace:
 
     # Data preprocessing
     parser.add_argument('--preprocessed', action='store_true', default=False,
-                        help='Log-normalized expression data')
+                        help='Whether expression data are log-normalized')
     parser.add_argument('--exclude_cell_types', type=str, nargs='*',
-                        help='Cell type to exclude from analysis')
+                        help='Cell-type to exclude from analysis')
     parser.add_argument('--exclude_lineages', type=str, nargs='*',
                         help='Lineage to exclude from analysis')
 
     # Pathway annotations
     parser.add_argument('--organism', type=str, required=True,
-                        help='')
+                        help='Organism name')
     parser.add_argument('--pathway_database', type=str, nargs='*',
-                        help='db name')
+                        help='Known pathway database: `kegg`, `go` or `msigdb`')
     parser.add_argument('--custom_pathways', type=str, nargs='*',
-                        help='path or ids')
+                        help='Path to custom gene sets where columns represent set names and rows include gene symbols (CSV file)')
 
     # Feature selection
     parser.add_argument('--feature_selection', type=str, default=FEATURE_SELECTION,
