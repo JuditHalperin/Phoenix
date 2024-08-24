@@ -98,8 +98,8 @@ def process_run_args(args):
     args.feature_selection = args.feature_selection.upper() if args.feature_selection else None
     args.distribution = args.distribution.lower()
 
-    args.output = get_full_path(args.output)
     create_dir(args.output)
+    args.output = get_full_path(args.output)
 
     args.cache = os.path.join(args.output, 'cache')
     create_dir(args.cache)
