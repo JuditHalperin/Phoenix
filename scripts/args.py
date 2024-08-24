@@ -12,13 +12,13 @@ def parse_run_args() -> argparse.Namespace:
 
     # Input data
     parser.add_argument('--expression', type=str, required=True,
-                        help='Path to single-cell expression data in (CSV file) where genes in columns and cells in rows')
+                        help='Path to single-cell expression data where rows represent cells and columns represent gene symbols (CSV file)')
     parser.add_argument('--cell_types', type=str,
-                        help='')
+                        help='Path to cell-type annotations where rows represent cells and first column presents cell-types (CSV file)')
     parser.add_argument('--pseudotime', type=str,
-                        help='')
+                        help='Path to pseudo-time where rows represent cells and columns represent pseudo-time values of different trajectories (CSV file)')
     parser.add_argument('--reduction', type=str, default=REDUCTION,
-                        help='Path to dimensionality reduction data or reduction method name')
+                        help='Path to dimensionality reduction where rows represent cells and columns represent the first two components (CSV file), or a dimensionality reduction method: `pca`, `tsne` or `umap`')
 
     # Data preprocessing
     parser.add_argument('--preprocessed', action='store_true', default=False,
