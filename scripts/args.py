@@ -22,7 +22,7 @@ def parse_run_args() -> argparse.Namespace:
 
     # Data preprocessing
     parser.add_argument('--preprocessed', action='store_true', default=False,
-                        help='Log-normalized expression data')
+                        help='Whether expression data are log-normalized')
     parser.add_argument('--exclude_cell_types', type=str, nargs='*',
                         help='Cell type to exclude from analysis')
     parser.add_argument('--exclude_lineages', type=str, nargs='*',
