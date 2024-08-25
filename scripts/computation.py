@@ -52,9 +52,10 @@ def execute_cmd(cmd, title: str, processes: int = None) -> int:
         print(f'Executing {title} as job {job_id}' + (f' ({processes} processes)' if processes else '') + '...')
         return job_id
     except:
-        print(f'Executing {title}...')
-        return None
+        raise ValueError('Currently not supporting non-sbatch commands')
 
+
+# TODO: estimate memory and time for each step
 
 def run_setup_cmd(args: dict, tmp: str = None) -> str:
     cmd = get_cmd(
@@ -62,8 +63,8 @@ def run_setup_cmd(args: dict, tmp: str = None) -> str:
         args=args,
         script='run',
         sbatch=True,
-        mem=get_file_size(args['expression']),  # raw expression data
-        time='0:15:0',  # TODO: estimate time
+        mem='5G',
+        time='0:15:0',
         report_path=tmp,
     )
     return execute_cmd(cmd, 'initial setup')
@@ -76,8 +77,8 @@ def run_experiments_cmd(setup_job_id: int, args: dict, tmp: str = None) -> int:
         script='run',
         sbatch=True,
         processes=args['processes'],
-        mem=get_file_size(os.path.join(args['output'], 'expression.csv')),  # preprocessed expression data
-        time='0:1:0',  # TODO: estimate time
+        mem='10G',
+        time='15:0:0',
         report_path=tmp,
         previous_job_id=setup_job_id,
     )
@@ -90,8 +91,8 @@ def run_aggregation_cmd(exp_job_id: int, exp_processes: int | None, output: str,
         args={'output': output, 'tmp': tmp},
         script='run',
         sbatch=True,
-        mem='500M',  # TODO: estimate memory
-        time='0:15:0',  # TODO: estimate time
+        mem='5G',  
+        time='0:15:0',
         report_path=tmp,
         previous_job_id=exp_job_id,
         previous_processes=exp_processes,
