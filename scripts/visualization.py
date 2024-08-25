@@ -64,13 +64,13 @@ def plot_p_values(
         heatmap_data = heatmap_data.iloc[row_order, :]
 
     plt.figure(figsize=(8, 6), dpi=DPI)
-    max_value = max(heatmap_data.fillna(0).values.flatten().tolist()) if not max_value else max_value
+    max_value = max(heatmap_data.fillna(0).values.flatten().tolist()) - 1 if not max_value else max_value
     heatmap = sns.heatmap(heatmap_data, cmap='Reds', cbar=False, vmin=0, vmax=int(max_value), xticklabels=True, yticklabels=False)
 
     plt.colorbar(heatmap.collections[0], label='-log10(p-value)')
     if heatmap_data.shape[0] <= MAP_SIZE:
-        plt.yticks(np.arange(len(heatmap_data.index)) + 0.5, heatmap_data.index, rotation=0, fontsize=LEGEND_FONT_SIZE, ha='right')
-        heatmap.set_yticklabels(heatmap_data.index, rotation=0, fontsize=LEGEND_FONT_SIZE, ha='right')
+        plt.yticks(np.arange(len(heatmap_data.index)) + 0.5, heatmap_data.index, rotation=0, fontsize=8, ha='right')
+        heatmap.set_yticklabels(heatmap_data.index, rotation=0, fontsize=8, ha='right')
     heatmap.set_xticklabels(heatmap.get_xticklabels(), rotation=90, ha='right')
     
     plt.title(title)
@@ -80,7 +80,6 @@ def plot_p_values(
 
 def _plot_prediction_scores(
         experiment: dict[str, str | float | list[str]],
-        set_name: str,
         by_freq: bool = True,
         show_fit: bool = True,
         title: str = '',
@@ -93,7 +92,7 @@ def _plot_prediction_scores(
     plt.axvline(
         x=experiment['pathway_score'],
         color=INTEREST_COLOR,
-        label=f'{set_name[:30]}: {np.round(experiment["pathway_score"], 3)}, p={convert_to_sci(experiment["fdr"])}',
+        label=f'Pathway: {np.round(experiment["pathway_score"], 3)}, p={convert_to_sci(experiment["fdr"])}',
         linestyle='--'
     )
 
@@ -101,7 +100,7 @@ def _plot_prediction_scores(
     background_scores = experiment['background_scores']
     plot_args = {
         'x': background_scores,
-        'label': f'Random genes: {np.round(experiment["background_score_mean"], 3)}',
+        'label': f'Background: {np.round(experiment["background_score_mean"], 3)}',
         'color': BACKGROUND_COLOR
     }
     
@@ -289,7 +288,7 @@ def plot_experiment(
 
     # Gene set prediction score
     plt.subplot(2, 2, 1)
-    _plot_prediction_scores(experiment, set_name)
+    _plot_prediction_scores(experiment)
 
     # Gene set expression distribution
     plt.subplot(2, 2, 2)
@@ -310,7 +309,7 @@ def plot_experiment(
         target_name = ' Identities'
     else:
         target_name = "'s identity"
-    plt.suptitle(f'Predicting {target}{target_name} using {set_name}')
+    plt.suptitle(f'Predicting {target}{target_name} using {set_name}', fontsize=12)
     save_plot(f'predicting {target} using {set_name}', os.path.join(output, 'pathways', target_type))    
 
 
