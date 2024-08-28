@@ -69,8 +69,8 @@ def plot_p_values(
 
     plt.colorbar(heatmap.collections[0], label='-log10(p-value)')
     if heatmap_data.shape[0] <= MAP_SIZE:
-        plt.yticks(np.arange(len(heatmap_data.index)) + 0.5, heatmap_data.index, rotation=0, fontsize=8, ha='right')
-        heatmap.set_yticklabels(heatmap_data.index, rotation=0, fontsize=8, ha='right')
+        plt.yticks(np.arange(len(heatmap_data.index)) + 0.5, heatmap_data.index, rotation=0, fontsize=6, ha='right')
+        heatmap.set_yticklabels(heatmap_data.index, rotation=0, fontsize=6, ha='right')
     heatmap.set_xticklabels(heatmap.get_xticklabels(), rotation=90, ha='right')
     
     plt.title(title)
@@ -309,7 +309,11 @@ def plot_experiment(
         target_name = ' Identities'
     else:
         target_name = "'s identity"
-    plt.suptitle(f'Predicting {target}{target_name} using {set_name}', fontsize=12)
+
+    title = f'Predicting {target}{target_name} using {set_name}'
+    fontsize = 10 if len(title) < 90 else 7
+    plt.suptitle(title, fontsize=fontsize)
+
     save_plot(f'predicting {target} using {set_name}', os.path.join(output, 'pathways', target_type))    
 
 
