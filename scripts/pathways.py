@@ -172,7 +172,7 @@ def retrieve_all_msigdb_pathways(organism: str) -> dict[str, list[str]]:
 def retrieve_pathway(id: str, organism: str) -> dict[str, list[str]]:
     # TODO: support pathway retrieval by ID
     # print('...')
-    raise NotImplementedError('Pathway ID is not supported yet')
+    raise NotImplementedError('Pathway ID is not supported yet. Provide a valid pathway file instead.')
 
 
 def intersect_genes(gene_set: list[str], all_genes: list[str], required_len: int = 5) -> list[str]:
