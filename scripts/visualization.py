@@ -52,8 +52,10 @@ def plot_p_values(
     
     if cluster_rows:
         heatmap_data = heatmap_data.loc[np.unique(heatmap_data.index)]
-
     heatmap_data.index = [i[:50] for i in heatmap_data.index]
+
+    if ALL_CELLS in heatmap_data.columns:
+        heatmap_data = heatmap_data[[ALL_CELLS] + heatmap_data.drop(ALL_CELLS, axis=1).columns.tolist()]
 
     heatmap_data.replace(0, heatmap_data[heatmap_data != 0].stack().min() / 10, inplace=True)
     heatmap_data = np.log10(heatmap_data ** (-1))
@@ -130,6 +132,7 @@ def _plot_expression_across_cell_types(
         cell_types: pd.DataFrame,
         cell_type: str,
         title: str = '',
+        sep_genes: int = 5,
     ):
     """
     pass copy
@@ -140,14 +143,28 @@ def _plot_expression_across_cell_types(
     expression[CELL_TYPE_COL] = cell_types[CELL_TYPE_COL]
     data_long = expression.melt(id_vars=[CELL_TYPE_COL], var_name='genes', value_name='expression')
 
-    color_mapping = get_color_mapping(cell_types[CELL_TYPE_COL].unique().tolist()) if cell_type == ALL_CELLS else {cell_type: INTEREST_COLOR, OTHER_CELLS: BACKGROUND_COLOR}
+    color_mapping = (get_color_mapping(cell_types[CELL_TYPE_COL].unique().tolist()) if cell_type == ALL_CELLS
+                     else {cell_type: INTEREST_COLOR, OTHER_CELLS: BACKGROUND_COLOR})
 
+    # if expression.shape[1] - 1 <= sep_genes:
+    #     for key in list(color_mapping.keys()):
+    #         for gene in data_long['genes'].unique().tolist():
+    #             color_mapping[f'{key}_{gene}'] = color_mapping[key]
+
+    #     data_long['combination'] = data_long[CELL_TYPE_COL] + '_' + data_long['genes']
+
+    #     for cell_type in data_long[CELL_TYPE_COL].unique().tolist():
+    #         for gene in data_long['genes'].unique().tolist():        
+    #             sns.boxenplot(data=data_long[(data_long['genes'] == gene) & (data_long[CELL_TYPE_COL] == cell_type)], x='combination', y='expression', hue=CELL_TYPE_COL, palette=color_mapping, width=0.8)
+    # else:
     sns.violinplot(data=data_long, x=CELL_TYPE_COL, y='expression', hue=CELL_TYPE_COL, palette=color_mapping, width=0.8)
     sns.stripplot(data=data_long, x=CELL_TYPE_COL, y='expression', hue=CELL_TYPE_COL, palette='dark:black', alpha=0.2, size=1, jitter=0.08, zorder=1)  # linewidth=0.5
 
     plt.ylabel('Expression')
     plt.xlabel('')
-    plt.xticks(rotation=90)
+    plt.xticks(fontsize=LEGEND_FONT_SIZE)
+    if cell_type == ALL_CELLS:
+        plt.xticks(rotation=90)
     plt.ylim(bottom=0)
     plt.title(title)
 
