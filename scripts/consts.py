@@ -93,7 +93,6 @@ LIST_SEP = '; '
 
 # Defaults
 NUM_GENES = 5000  # TODO: add param
-CELL_PERCENT = 5  # TODO: add param
 REDUCTION = 'umap'
 DB = 'ALL'
 CLASSIFIER = 'RF'
