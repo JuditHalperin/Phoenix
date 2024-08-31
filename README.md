@@ -123,7 +123,7 @@ python run.py \
     --organism human \
     --pathway_database msigdb \
     --set_fraction 0.5 \
-    -- sbatch --processes 100
+    --sbatch --processes 100
 ```
 
 ### Visualization
