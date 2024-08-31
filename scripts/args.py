@@ -12,13 +12,13 @@ def parse_run_args() -> argparse.Namespace:
 
     # Input data
     parser.add_argument('--expression', type=str, required=True,
-                        help='Path to single-cell expression data where rows represent cells and columns represent gene symbols (CSV file)')
+                        help='Path to single-cell raw expression data where rows represent cells and columns represent gene symbols (CSV file)')
     parser.add_argument('--cell_types', type=str,
                         help='Path to cell-type annotations where rows represent cells and first column presents cell-types (CSV file)')
     parser.add_argument('--pseudotime', type=str,
-                        help='Path to pseudo-time where rows represent cells and columns represent pseudo-time values of different trajectories (CSV file)')
+                        help='Path to pseudo-time values where rows represent cells and columns include names of different trajectories (CSV file)')
     parser.add_argument('--reduction', type=str, default=REDUCTION,
-                        help='Path to dimensionality reduction where rows represent cells and columns represent the first two components (CSV file), or a dimensionality reduction method: ' + ', '.join(REDUCTION_METHODS))
+                        help='Path to dimensionality reduction coordinates where rows represent cells and columns include names of the first two components (CSV file), or a dimensionality reduction method: ' + ', '.join(REDUCTION_METHODS))
 
     # Data preprocessing
     parser.add_argument('--preprocessed', action='store_true', default=False,
@@ -29,8 +29,8 @@ def parse_run_args() -> argparse.Namespace:
                         help='Lineage to exclude from analysis')
 
     # Pathway annotations
-    parser.add_argument('--organism', type=str, required=True,
-                        help='Organism name')
+    parser.add_argument('--organism', type=str,
+                        help='Organism name for pathway annotations')
     parser.add_argument('--pathway_database', type=str, nargs='*',
                         help='Known pathway database: ' + ', '.join(DATABASES))
     parser.add_argument('--custom_pathways', type=str, nargs='*',
@@ -38,37 +38,37 @@ def parse_run_args() -> argparse.Namespace:
 
     # Feature selection
     parser.add_argument('--feature_selection', type=str, default=FEATURE_SELECTION,
-                        help='Feature selection method: ' + ', '.join(FEATURE_SELECTION_METHODS))
+                        help='Feature selection method applied to each gene set: ' + ', '.join(FEATURE_SELECTION_METHODS))
     parser.add_argument('--set_fraction', type=float, default=SET_FRACTION,
-                        help='')
+                        help='Fraction of genes to select from each gene set')
     parser.add_argument('--min_set_size', type=int, default=MIN_SET_SIZE,
-                        help='')
+                        help='Minimum number of genes to select from each gene set')
 
     # Prediction model
     parser.add_argument('--classifier', type=str, default=CLASSIFIER,
-                        help='')
+                        help='Classification model: ' + ', '.join(CLASSIFIERS.keys()))
     parser.add_argument('--regressor', type=str, default=REGRESSOR,
-                        help='')
+                        help='Regression model: ' + ', '.join(REGRESSORS.keys()))
     parser.add_argument('--classification_metric', type=str, default=CLASSIFICATION_METRIC,
-                        help='')
+                        help='Classification score: ' + ', '.join(CLASSIFICATION_METRICS.keys()))
     parser.add_argument('--regression_metric', type=str, default=REGRESSION_METRIC,
-                        help='')
+                        help='Regression score: ' + ', '.join(REGRESSION_METRICS.keys()))
     parser.add_argument('--cross_validation', type=int, default=CROSS_VALIDATION,
-                        help='')
+                        help='Number of cross-validation folds')
     parser.add_argument('--repeats', type=int, default=REPEATS,
-                        help='')
+                        help='Size of background distribution')
     parser.add_argument('--seed', type=int, default=SEED,
-                        help='')
+                        help='Seed for reproducibility')
     parser.add_argument('--distribution', type=str, default=DISTRIBUTIONS[0],
-                        help='')
+                        help='Type of background distribution: ' + ', '.join(DISTRIBUTIONS))
     
     # Output
     parser.add_argument('--sbatch', action='store_true', default=False,
-                        help='')
+                        help='Whether to run multiple processes using sbatch')
     parser.add_argument('--processes', type=int, default=0,
-                        help='')
+                        help='Number of processes to run in parallel')
     parser.add_argument('--output', type=str, required=True,
-                        help='')
+                        help='Path to output directory')
     
     return parser.parse_args()
 
@@ -80,11 +80,11 @@ def process_run_args(args):
     args.pseudotime = get_full_path(args.pseudotime) if args.pseudotime else None
     args.reduction = get_full_path(args.reduction) if os.path.exists(args.reduction) else args.reduction.lower().replace('-', '').replace('_', '').replace(' ', '')
     
-    args.organism = args.organism.lower()
+    args.organism = args.organism.lower() if args.organism else None
     if args.pathway_database is not None:
         args.pathway_database = [db.lower() for db in args.pathway_database]
         from scripts.pathways import get_msigdb_organism
-        if 'msigdb' in args.pathway_database and len(args.pathway_database) > 1 and get_msigdb_organism(args.organism):
+        if 'msigdb' in args.pathway_database and len(args.pathway_database) > 1 and args.organism and get_msigdb_organism(args.organism):
             args.pathway_database = ['msigdb']
             print(f'MSigDB already includes the other annotation databases for {args.organism} - automatically removing other annotations')
     else:
@@ -114,6 +114,7 @@ def process_run_args(args):
 def validate_run_args(args):
     assert args.cell_types is not None or args.pseudotime is not None, 'Provide at least `cell_types` or `pseudotime`'
     assert os.path.exists(args.reduction) or args.reduction in REDUCTION_METHODS
+    assert args.organism is not None or args.pathway_database is None, 'Provide `organism` for pathway annotations'
     assert args.pathway_database is not None or args.custom_pathways is not None, 'Provide at least `pathway_database` or `custom_pathways`'
     assert args.pathway_database is None or all([db in DATABASES for db in args.pathway_database])
     assert args.classifier in CLASSIFIERS
@@ -146,15 +147,15 @@ def parse_plot_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
 
     parser.add_argument('--cell_type', type=str, nargs='*',
-                        help='')
+                        help='Cell-type target column to plot')
     parser.add_argument('--lineage', type=str, nargs='*',
-                        help='')
+                        help='Trajectory target column to plot')
     parser.add_argument('--pathway', type=str, nargs='*',
-                        help='')
+                        help='Pathway to plot')
     parser.add_argument('--all', action='store_true', default=False,
                         help='Whether to plot all pathways for all cell-type and lineage targets')
     parser.add_argument('--output', type=str, required=True,
-                        help='')
+                        help='Path to output directory containing tool results')
     
     return parser.parse_args()
 
