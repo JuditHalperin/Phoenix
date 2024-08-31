@@ -65,8 +65,8 @@ Provide output path:
 Customize preprocessing parameters:
 
 * `preprocessed`: Whether expression data are log-normalized. Default: `False`.
-* `exclude_cell_types`: Cell-type to exclude from analysis.
-* `exclude_lineages`: Lineage to exclude from analysis.
+* `exclude_cell_types`: Cell-types to exclude from the analysis.
+* `exclude_lineages`: Lineages to exclude from the analysis.
 
 Customize feature selection parameters:
 
@@ -90,10 +90,10 @@ Customize background distribution parameters:
 
 Include parameters relevant for parallelization, which is highly recommended for large pathway databases:
 
-* `sbatch`: Whether to run multiple processes using sbatch. Default: `False`.
+* `sbatch`: Whether to run multiple processes using `sbatch`. Default: `False`.
 * `processes`: Number of processes to run in parallel. Default: `0`.
 
-For full list of available parameters run:
+For a full list of available parameters, run:
 
 ```
 python run.py --help
@@ -130,7 +130,7 @@ python run.py \
 
 For additional visualization of specific pathways, run the `plot.py` script with parameters:
 
-* `output`: Path to output directory containing tool results.
+* `output`: Path to the output directory containing all tool results.
 * `pathway`: Pathway name to plot.
 * `cell_type`: Cell-type target column to plot. Default: all cell-types.
 * `lineage`: Trajectory target column to plot. Default: all lineages.
