@@ -45,12 +45,12 @@ Provide input data:
 * `expression`: Path to single-cell raw expression data where rows represent cells and columns represent gene symbols (CSV file).
 * `reduction`: Path to dimensionality reduction coordinates where rows represent cells and columns include names of the first two components (CSV file), or a dimensionality reduction method: `pca`, `umap` or `tsne`. Default: `umap`.
 
-Provide at least one target:
+Provide at least one target values:
 
 * `cell_types`: Path to cell-type annotations where rows represent cells and first column presents cell-types (CSV file).
 * `pseudotime`: Path to pseudo-time values where rows represent cells and columns include names of different trajectories (CSV file).
 
-Specify known pathway database for a specific organism, or provide a custom gene set list:
+Specify a known pathway database for a specific organism, or provide a custom gene set list:
 
 * `organism`: Organism name for pathway annotations.
 * `pathway_database`: Known pathway database: `go`, `kegg` or `msigdb`.
@@ -88,7 +88,7 @@ Customize background distribution parameters:
 * `repeats`: Size of background distribution. Default: `200`.
 * `distribution`: Type of background distribution: `gamma` or `normal`. Default: `gamma`.
 
-Include parameters relevant for parallelization, which is highly recommended for large pathway databases:
+Include parameters relevant for parallelization on a high-computing cluster, which is highly recommended for large pathway databases:
 
 * `sbatch`: Whether to run multiple processes using `sbatch`. Default: `False`.
 * `processes`: Number of processes to run in parallel. Default: `0`.
