@@ -30,7 +30,7 @@ pip install -r requirements.txt
 ```
 conda create prefix .venv python=3.11
 conda activate ./.venv
-conda install file requirements.txt
+conda install --file requirements.txt
 ```
 
 
