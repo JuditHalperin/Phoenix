@@ -63,8 +63,6 @@ def parse_run_args() -> argparse.Namespace:
                         help='Type of background distribution: ' + ', '.join(DISTRIBUTIONS))
     
     # Output
-    parser.add_argument('--sbatch', action='store_true', default=False,
-                        help='Whether to run multiple processes using sbatch')
     parser.add_argument('--processes', type=int, default=0,
                         help='Number of processes to run in parallel')
     parser.add_argument('--output', type=str, required=True,
@@ -128,7 +126,6 @@ def validate_run_args(args):
     assert args.distribution in DISTRIBUTIONS
     assert 0 < args.set_fraction <= 1
     assert SIZES[0] <= args.min_set_size <= SIZES[-1]
-    assert not (not args.sbatch and args.processes), 'Cannot run multiple processes without sbatch'
     assert not args.processes or args.processes >= 0
 
 

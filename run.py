@@ -117,14 +117,13 @@ def run_tool(
         repeats: int,
         seed: int,
         distribution: str,
-        sbatch: bool,
         processes: int,
         output: str,
         cache: str,
         tmp: str,
     ) -> None:
 
-    if sbatch:
+    if processes:
         # Setup
         setup_args = {
             'expression': expression, 'cell_types': cell_types, 'pseudotime': pseudotime, 'reduction': reduction,

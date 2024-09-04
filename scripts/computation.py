@@ -1,12 +1,11 @@
 import os, subprocess
-from scripts.utils import get_file_size
 
 
 def get_cmd(
         func: str,
         args: dict[str, str],
         script: str = 'run',
-        sbatch: bool = False,
+        sbatch: bool = True,
         processes: int = None,
         mem: str = '1G',
         time: str = '0:30:0',
@@ -45,14 +44,14 @@ def get_cmd(
     return sbatch_cmd
 
 
-def execute_cmd(cmd, title: str, processes: int = None) -> int:
+def execute_sbatch_cmd(cmd, title: str, processes: int = None) -> int:
     process = subprocess.run(cmd, shell=True, capture_output=True, text=True)
-    try:  # if sbatch run
+    try:
         job_id = process.stdout.strip().split()[-1]
         print(f'Executing {title} as job {job_id}' + (f' ({processes} processes)' if processes else '') + '...')
         return job_id
     except:
-        raise ValueError('Currently not supporting non-sbatch commands')
+        raise RuntimeError(f'Failed executing command {cmd} due to {process.stderr}')
 
 
 # TODO: estimate memory and time for each step
@@ -62,12 +61,11 @@ def run_setup_cmd(args: dict, tmp: str = None) -> str:
         func='setup',
         args=args,
         script='run',
-        sbatch=True,
         mem='5G',
         time='0:15:0',
         report_path=tmp,
     )
-    return execute_cmd(cmd, 'initial setup')
+    return execute_sbatch_cmd(cmd, 'initial setup')
 
 
 def run_experiments_cmd(setup_job_id: int, args: dict, tmp: str = None) -> int:
@@ -75,14 +73,13 @@ def run_experiments_cmd(setup_job_id: int, args: dict, tmp: str = None) -> int:
         func='run_experiments', 
         args=args,
         script='run',
-        sbatch=True,
         processes=args['processes'],
         mem='10G',
         time='15:0:0',
         report_path=tmp,
         previous_job_id=setup_job_id,
     )
-    return execute_cmd(cmd, 'experiments', args['processes'])
+    return execute_sbatch_cmd(cmd, 'experiments', args['processes'])
 
 
 def run_aggregation_cmd(exp_job_id: int, exp_processes: int | None, output: str, tmp: str) -> int:
@@ -90,11 +87,10 @@ def run_aggregation_cmd(exp_job_id: int, exp_processes: int | None, output: str,
         func='summarize',
         args={'output': output, 'tmp': tmp},
         script='run',
-        sbatch=True,
         mem='5G',  
         time='0:15:0',
         report_path=tmp,
         previous_job_id=exp_job_id,
         previous_processes=exp_processes,
     )
-    return execute_cmd(cmd, 'aggregation and plotting')
+    return execute_sbatch_cmd(cmd, 'aggregation and plotting')
