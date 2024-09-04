@@ -9,7 +9,8 @@ class CmdTest(Test):
         cmd = get_cmd(
             func='my_function',
             args={'arg1': 'value1', 'arg2': 2, 'arg3': ['value3', 'value4']},
-            script='my_script'
+            script='my_script',
+            sbatch=False
         )
         expected_cmd = 'python -c \'from scripts.my_script import my_function; my_function(arg1=\\"value1\\", arg2=2, arg3=[\\"value3\\", \\"value4\\"])\' '
         self.assertEqual(cmd, expected_cmd)
