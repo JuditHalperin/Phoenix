@@ -90,7 +90,6 @@ Customize background distribution parameters:
 
 Include parameters relevant for parallelization on a high-computing cluster, which is highly recommended for large pathway databases:
 
-* `sbatch`: Whether to run multiple processes using `sbatch`. Default: `False`.
 * `processes`: Number of processes to run in parallel. Default: `0`.
 
 For a full list of available parameters, run:
@@ -123,7 +122,7 @@ python run.py \
     --organism human \
     --pathway_database msigdb \
     --set_fraction 0.5 \
-    --sbatch --processes 100
+    --processes 20
 ```
 
 ### Visualization
