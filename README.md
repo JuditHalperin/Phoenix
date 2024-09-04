@@ -132,8 +132,8 @@ For additional visualization of specific pathways, run the `plot.py` script with
 
 * `output`: Path to the output directory containing all tool results.
 * `pathway`: Pathway name to plot.
-* `cell_type`: Cell-type target column to plot. Default: all cell-types.
-* `lineage`: Trajectory target column to plot. Default: all lineages.
+* `cell_type`: Cell-type target column to plot.
+* `lineage`: Trajectory target column to plot.
 * `all`: Whether to plot all pathways for all cell-type and lineage targets. Default: `False`.
 
 For example:
