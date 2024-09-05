@@ -118,7 +118,7 @@ def preprocess_data(
             
         # Remove too short lineages (many NA values)
         short_lineages = [lineage for lineage in pseudotime.columns
-                          if pseudotime[lineage].isna().sum() / pseudotime.shape[0] * 100 > min_lineage_percent] if min_lineage_percent else []
+                          if pseudotime[lineage].notna().sum() / pseudotime.shape[0] * 100 < min_lineage_percent] if min_lineage_percent else []
         
         # Remove requested to exclude lineages
         exclude_lineages = [lineage for lineage in exclude_lineages

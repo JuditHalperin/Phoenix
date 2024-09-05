@@ -60,7 +60,7 @@ class PreprocessingTest(Test):
     def test_short_lineages(self):
         _, _, pseudotime, _ = preprocess_data(
             self.expression, self.cell_types, self.pseudotime, self.reduction,
-            preprocessed=True, min_lineage_percent=10,  # Lineage1 has NA value
+            preprocessed=True, min_lineage_percent=70,  # Lineage1 has 66% non-NA value
             min_cell_percent=0, last_cells=0, last_survived_cells=0, verbose=False
         )
         self.assertEqual(pseudotime.columns.tolist(), ['Lineage2'])
