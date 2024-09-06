@@ -128,4 +128,5 @@ def train(
 
         score = score_func(y_test, y_pred)
 
+    del model
     return float(score)
