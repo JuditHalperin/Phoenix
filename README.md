@@ -139,7 +139,8 @@ For example:
 ```
 python plot.py \
     --output my_experiment/output \
-    --pathway HALLMARK_HEME_METABOLISM
+    --pathway GOBP_POSITIVE_REGULATION_OF_MONOCYTE_DIFFERENTIATION \
+    --cell_type Monocyte
 ```
 
 
