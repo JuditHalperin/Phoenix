@@ -149,6 +149,8 @@ def parse_plot_args() -> argparse.Namespace:
                         help='Trajectory target column to plot')
     parser.add_argument('--pathway', type=str, nargs='*',
                         help='Pathway to plot')
+    parser.add_argument('--top', type=int, default=None,
+                        help='Number of top pathways to plot')
     parser.add_argument('--all', action='store_true', default=False,
                         help='Whether to plot all pathways for all cell-type and lineage targets')
     parser.add_argument('--output', type=str, required=True,

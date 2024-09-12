@@ -133,7 +133,6 @@ For additional visualization of specific pathways, run the `plot.py` script with
 * `pathway`: Pathway name to plot.
 * `cell_type`: Cell-type target column to plot.
 * `lineage`: Trajectory target column to plot.
-* `all`: Whether to plot all pathways for all cell-type and lineage targets. Default: `False`.
 
 For example:
 

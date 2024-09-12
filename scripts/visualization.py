@@ -365,9 +365,11 @@ def plot(
         classification_results: pd.DataFrame | str = 'cell_type_classification',
         regression_results: pd.DataFrame | str = 'pseudotime_regression',
         threshold: float = THRESHOLD,
+        top: int = None,
         all: bool = False,
     ):
     """
+    top: number of top pathways to plot for each target
     all: whether to plot all pathways
     """
     expression = get_preprocessed_data(expression, output)
@@ -396,11 +398,12 @@ def plot(
 
         else:  # plot interesting pathways
             pathways = []
-            size = (MAP_SIZE - 3) // data.shape[1]
+            size = (MAP_SIZE - 6) // data.shape[1]
+            pathways.extend(get_top_sum_pathways(data, ascending=True, size=3))
             for target in data.columns:
                 if target != ALL_CELLS:
-                    pathway_names = get_column_unique_pathways(data, target, size, threshold)
-                    pathways.extend(pathway_names)
+                    pathway_names = get_column_unique_pathways(data, target, top if top else size, threshold)
+                    pathways.extend(pathway_names[:size])
                     for pathway_name in pathway_names:
                         plot_experiment(output, target, pathway_name, target_type, results, target_data, expression, reduction)
             pathways.extend(get_top_sum_pathways(data, ascending=False, size=3))
