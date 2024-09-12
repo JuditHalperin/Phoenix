@@ -390,28 +390,33 @@ def plot(
         data = results.pivot(index='set_name', columns=TARGET_COL, values='fdr')
         save_csv(data, f'p_values_{target_type}', output)
 
+        heatmap_pathways, exp_plot_pathways = [], []
+
         if all or data.shape[0] <= MAP_SIZE:  # plot all pathways
-            pathways = data.index
+            heatmap_pathways = data.index
             for target in data.columns:
-                for pathway_name in pathways:
+                for pathway_name in heatmap_pathways:
                     plot_experiment(output, target, pathway_name, target_type, results, target_data, expression, reduction)
 
         else:  # plot interesting pathways
-            pathways = []
             size = (MAP_SIZE - 6) // data.shape[1]
-            pathways.extend(get_top_sum_pathways(data, ascending=True, size=3))
+            heatmap_pathways.extend(get_top_sum_pathways(data, ascending=True, size=3))
             for target in data.columns:
                 if target != ALL_CELLS:
                     pathway_names = get_column_unique_pathways(data, target, top if top else size, threshold)
-                    pathways.extend(pathway_names[:size])
+                    heatmap_pathways.extend(pathway_names[:size])
                     for pathway_name in pathway_names:
+                        exp_plot_pathways.extend((target, pathway_name))
                         plot_experiment(output, target, pathway_name, target_type, results, target_data, expression, reduction)
-            pathways.extend(get_top_sum_pathways(data, ascending=False, size=3))
+            heatmap_pathways.extend(get_top_sum_pathways(data, ascending=False, size=3))
 
-        if len(pathways) < data.shape[0]:
+        if len(heatmap_pathways) < data.shape[0]:
             plot_p_values(data, cluster_rows=True, title=f'{target_type} Prediction using All Pathways', output=output)
-        plot_p_values(data.loc[pathways], title=f'{target_type} Prediction', output=output)
+        plot_p_values(data.loc[heatmap_pathways], title=f'{target_type} Prediction', output=output)
         
+        save_csv(pd.DataFrame(exp_plot_pathways, columns=[TARGET_COL, 'pathway']), title=f'top_{target_type}_pathways', output_path=output, keep_index=False)
+
         del data
         del results
-        del pathways
+        del heatmap_pathways
+        del exp_plot_pathways
