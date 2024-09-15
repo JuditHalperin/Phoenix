@@ -165,7 +165,7 @@ def run_batch(
     batch: number between 1 and `processes`, or None for a single batch
     """
     if batch_gene_sets is None:
-        pass
+        return
 
     classification_results, regression_results = [], []
 
