@@ -28,14 +28,14 @@ class PreprocessingTest(Test):
     def test_preprocessing_flow(self):
         preprocess_data(
             self.expression, self.cell_types, self.pseudotime, self.reduction,
-            min_lineage_percent=0, min_cell_percent=0, last_cells=0, last_survived_cells=0, verbose=False
+            min_lineage_percent=0, min_cell_percent=0, min_cell_count=0, last_cells=0, last_survived_cells=0, verbose=False
         )
 
     def test_cell_type_exclusion(self):
         expression, cell_types, _, _ = preprocess_data(
             self.expression, self.cell_types, self.pseudotime, self.reduction,
             preprocessed=True, exclude_cell_types=['Type1'],
-            min_cell_percent=0, min_lineage_percent=0, last_cells=0, last_survived_cells=0, verbose=False
+            min_cell_percent=0, min_cell_count=0, min_lineage_percent=0, last_cells=0, last_survived_cells=0, verbose=False
         )
         self.assertEqual(expression.shape[0], 1)
         self.assertEqual(cell_types[CELL_TYPE_COL].tolist(), ['Type2'])
@@ -44,7 +44,7 @@ class PreprocessingTest(Test):
         expression, cell_types, _, _ = preprocess_data(
             self.expression, self.cell_types, self.pseudotime, self.reduction,
             preprocessed=True, min_cell_percent=50,  # only Type1 is above 50 percent
-            min_lineage_percent=0, last_cells=0, last_survived_cells=0, verbose=False
+            min_cell_count=0, min_lineage_percent=0, last_cells=0, last_survived_cells=0, verbose=False
         )
         self.assertEqual(expression.shape[0], 2)
         self.assertEqual(cell_types[CELL_TYPE_COL].tolist(), ['Type1', 'Type1'])
@@ -53,7 +53,7 @@ class PreprocessingTest(Test):
         _, _, pseudotime, _ = preprocess_data(
             self.expression, self.cell_types, self.pseudotime, self.reduction,
             preprocessed=True, exclude_lineages=['Lineage1'],
-            min_cell_percent=0, min_lineage_percent=0, last_cells=0, last_survived_cells=0, verbose=False
+            min_cell_percent=0, min_cell_count=0, min_lineage_percent=0, last_cells=0, last_survived_cells=0, verbose=False
         )
         self.assertEqual(pseudotime.columns.tolist(), ['Lineage2'])
 
@@ -61,7 +61,7 @@ class PreprocessingTest(Test):
         _, _, pseudotime, _ = preprocess_data(
             self.expression, self.cell_types, self.pseudotime, self.reduction,
             preprocessed=True, min_lineage_percent=70,  # Lineage1 has 66% non-NA value
-            min_cell_percent=0, last_cells=0, last_survived_cells=0, verbose=False
+            min_cell_percent=0, min_cell_count=0, last_cells=0, last_survived_cells=0, verbose=False
         )
         self.assertEqual(pseudotime.columns.tolist(), ['Lineage2'])
 
@@ -69,7 +69,7 @@ class PreprocessingTest(Test):
         _, _, pseudotime, _ = preprocess_data(
             self.expression, self.cell_types, self.pseudotime, self.reduction,
             preprocessed=True, exclude_cell_types=['Type2'], last_cells=1, last_survived_cells=1,
-            min_cell_percent=0, min_lineage_percent=0, verbose=False
+            min_cell_percent=0, min_cell_count=0, min_lineage_percent=0, verbose=False
         )
         self.assertEqual(pseudotime.columns.tolist(), ['Lineage2'])
 

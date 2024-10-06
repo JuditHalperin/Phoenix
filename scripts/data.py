@@ -92,10 +92,12 @@ def preprocess_data(
         cell_types = cell_types.loc[expression.index]
 
         # Remove rare cell types
-        rare_cell_types = [cell_type for cell_type in cell_types[CELL_TYPE_COL].unique()
-                           if (cell_types[CELL_TYPE_COL] == cell_type).sum() / cell_types.shape[0] * 100 < min_cell_percent] if min_cell_percent else []
-        rare_cell_types = [cell_type for cell_type in cell_types[CELL_TYPE_COL].unique()
-                           if (cell_types[CELL_TYPE_COL] == cell_type).sum() < min_cell_count] if min_cell_count else []
+        rare_cell_types = []
+        assert not (min_cell_percent and min_cell_count)
+        if min_cell_percent:
+            rare_cell_types = [cell_type for cell_type in cell_types[CELL_TYPE_COL].unique() if (cell_types[CELL_TYPE_COL] == cell_type).sum() / cell_types.shape[0] * 100 < min_cell_percent]
+        if min_cell_count: 
+            rare_cell_types = [cell_type for cell_type in cell_types[CELL_TYPE_COL].unique() if (cell_types[CELL_TYPE_COL] == cell_type).sum() < min_cell_count]
         
         # Remove requested to exclude cell types
         exclude_cell_types = [cell_type for cell_type in exclude_cell_types
