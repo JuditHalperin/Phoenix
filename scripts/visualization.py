@@ -67,7 +67,7 @@ def plot_p_values(
         heatmap_data = heatmap_data.iloc[row_order, :]
 
     plt.figure(figsize=(8, 6 if heatmap_data.shape[0] > 1 else 3), dpi=DPI)
-    max_value = max(heatmap_data.fillna(0).values.flatten().tolist()) - 1 if not max_value else max_value
+    max_value = max(heatmap_data.fillna(0).values.flatten().tolist()) if not max_value else max_value
     heatmap = sns.heatmap(heatmap_data, cmap='Reds', cbar=False, vmin=0, vmax=int(max_value), xticklabels=True, yticklabels=False)
 
     plt.colorbar(heatmap.collections[0], label='-log10(p-value)')
@@ -187,8 +187,10 @@ def _plot_expression_across_pseudotime(
     """
     pass copy
     """
+    cells = expression.index.intersection(pseudotime.index)
+    pseudotime = pseudotime.loc[cells]
     pseudotime = pseudotime[~pseudotime[lineage].isna()]
-    expression = expression.loc[pseudotime.index]
+    expression = expression.loc[cells]
 
     expression['pseudotime_bin'] = pd.cut(pseudotime[lineage], bins=min(bins, len(pseudotime)), labels=False)
     expression = expression.groupby('pseudotime_bin').mean()
@@ -229,8 +231,9 @@ def _plot_pseudotime(
     ):
     plt.scatter(reduction.iloc[:, 0], reduction.iloc[:, 1], s=POINT_SIZE, c=BACKGROUND_COLOR)
     trajectories = [trajectory] if trajectory else pseudotime.columns.tolist()
+    cells = reduction.index.intersection(pseudotime.index)
     for lineage in trajectories:
-        plt.scatter(reduction.iloc[:, 0], reduction.iloc[:, 1], s=POINT_SIZE, c=pseudotime[lineage], cmap=plt.cm.plasma)
+        plt.scatter(reduction.loc[cells, reduction.columns[0]], reduction.loc[cells, reduction.columns[1]], s=POINT_SIZE, c=pseudotime.loc[cells, lineage], cmap=plt.cm.plasma)
     if title: plt.title(f'{trajectory} Trajectory' if trajectory else 'Trajectories')
     plt.xlabel(reduction.columns[0])
     plt.ylabel(reduction.columns[1])
@@ -409,16 +412,20 @@ def plot(
                     plot_experiment(output, target, pathway_name, target_type, results, target_data, expression, reduction)
 
         else:  # plot interesting pathways
-            size = (MAP_SIZE - 6) // data.shape[1]
-            heatmap_pathways.extend(get_top_sum_pathways(data, ascending=True, size=3))
+            size = max(MAP_SIZE // data.shape[1], 1)
+            # heatmap_pathways.extend(get_top_sum_pathways(data, ascending=True, size=3))
+            non_unique_targets = []
             for target in data.columns:
                 if target != ALL_CELLS:
                     pathway_names = get_column_unique_pathways(data, target, top if top else size, threshold)
+                    if not pathway_names:
+                        non_unique_targets.append(target)
                     heatmap_pathways.extend(pathway_names[:size])
                     for pathway_name in pathway_names:
-                        exp_plot_pathways.extend((target, pathway_name))
+                        exp_plot_pathways.append((target, pathway_name))
                         plot_experiment(output, target, pathway_name, target_type, results, target_data, expression, reduction)
-            heatmap_pathways.extend(get_top_sum_pathways(data, ascending=False, size=3))
+            # heatmap_pathways.extend(get_top_sum_pathways(data, ascending=False, size=3))
+            data = data.drop(non_unique_targets, axis=1)
 
         if len(heatmap_pathways) < data.shape[0]:
             plot_p_values(data, cluster_rows=True, title=f'{target_type} Prediction using All Pathways', output=output)
