@@ -146,6 +146,23 @@ python plot.py \
 ```
 
 
+## Output
+
+The folder specified in `--output` will include the following upon completion of the run:
+
+* **Preprocessed data**, including `expression.csv`, `reduction.csv`,   `cell_types.csv`, `pseudotime.csv`, `gene_sets.csv`, and `targets.png`.
+* A `cache` folder containing saved background scores, which can be reused for future similar runs.
+* A `tmp` folder with per-batch results and reports.
+* **Full results**, comprising:
+    * Tables of all gene annotation results: `cell_type_classification.csv` and `pseudotime_regression.csv`.
+    * Corresponding p-value matrices: `p_values_celltypes.csv` and `p_values_pseudotime.csv`.
+    * Plots: `p_values_celltypes_prediction_using_all_pathways.png` and `p_values_pseudotime_prediction_using_all_pathways.png`.
+* **Top results**, consisting of:
+    * Lists of top gene annotations for each target: `top_celltypes_pathways.csv` and `top_pseudotime_pathways.csv`.
+    * Corresponding p-value plots: `p_values_celltypes_prediction.png` and `p_values_pseudotime_prediction.png`.
+    * Per-result plots in the `pathways` folder under `cell_types` and `pseudotime`.
+
+
 ## Tests
 
 To run all tests, use the `test.py` script:
