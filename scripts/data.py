@@ -60,8 +60,9 @@ def preprocess_data(
         preprocessed: bool = False,
         exclude_cell_types: list[str] = [],
         exclude_lineages: list[str] = [],
-        min_cell_percent: float = 5,
-        min_lineage_percent: float = 5,
+        min_cell_percent: float = None,
+        min_cell_count: int = 50,
+        min_lineage_percent: float = None,
         last_cells: int = 50,
         last_survived_cells: int = 30,
         seed: int = SEED,
@@ -77,6 +78,7 @@ def preprocess_data(
     exclude_cell_types: list of cell types to exclude from the analysis
     exclude_lineages: list of lineages to exclude from the analysis
     min_cell_percent: minimum percentage of single cells required to keep a cell type
+    min_cell_count: minimum number of single cells required to keep a cell type
     min_lineage_percent: minimum percentage of single cells required to keep a lineage
     last_cells: number of last cells in each trajectory considered as important for the trajectory
     last_survived_cells: minimum number of last cells required to remain after cell filtering in order to keep a lineage
@@ -92,6 +94,8 @@ def preprocess_data(
         # Remove rare cell types
         rare_cell_types = [cell_type for cell_type in cell_types[CELL_TYPE_COL].unique()
                            if (cell_types[CELL_TYPE_COL] == cell_type).sum() / cell_types.shape[0] * 100 < min_cell_percent] if min_cell_percent else []
+        rare_cell_types = [cell_type for cell_type in cell_types[CELL_TYPE_COL].unique()
+                           if (cell_types[CELL_TYPE_COL] == cell_type).sum() < min_cell_count] if min_cell_count else []
         
         # Remove requested to exclude cell types
         exclude_cell_types = [cell_type for cell_type in exclude_cell_types
@@ -110,7 +114,7 @@ def preprocess_data(
 
         # Remove lineages with too few last cells survived after cell type filtering
         removed_lineages = []
-        if last_cells >= last_survived_cells:
+        if last_cells and last_survived_cells and last_cells >= last_survived_cells:
             for lineage in pseudotime.columns:
                 original_last_cells = original_pseudotime[lineage].dropna().sort_values(ascending=False).head(last_cells).index
                 if original_last_cells.isin(pseudotime.index).sum() < last_survived_cells:
@@ -124,7 +128,7 @@ def preprocess_data(
         exclude_lineages = [lineage for lineage in exclude_lineages
                             if lineage in pseudotime.columns] if exclude_lineages else []
         
-        exclude_lineages = list(set(exclude_lineages + short_lineages + removed_lineages))
+        exclude_lineages = list(set(exclude_lineages + removed_lineages + short_lineages))
         if exclude_lineages:
             if verbose:
                 print(f'Excluding lineages: {", ".join(exclude_lineages)}...')
