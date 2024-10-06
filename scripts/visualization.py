@@ -46,6 +46,7 @@ def plot_p_values(
         heatmap_data: pd.DataFrame,
         cluster_rows: bool = False,
         max_value: int = None,
+        target_fontsize: int = 10,
         title: str = '',
         output: str = None,
     ):
@@ -65,7 +66,7 @@ def plot_p_values(
         row_order = hierarchy.dendrogram(row_linkage, no_plot=True)['leaves']
         heatmap_data = heatmap_data.iloc[row_order, :]
 
-    plt.figure(figsize=(8, 6), dpi=DPI)
+    plt.figure(figsize=(8, 6 if heatmap_data.shape[0] > 1 else 3), dpi=DPI)
     max_value = max(heatmap_data.fillna(0).values.flatten().tolist()) - 1 if not max_value else max_value
     heatmap = sns.heatmap(heatmap_data, cmap='Reds', cbar=False, vmin=0, vmax=int(max_value), xticklabels=True, yticklabels=False)
 
@@ -73,10 +74,15 @@ def plot_p_values(
     if heatmap_data.shape[0] <= MAP_SIZE:
         plt.yticks(np.arange(len(heatmap_data.index)) + 0.5, heatmap_data.index, rotation=0, fontsize=6, ha='right')
         heatmap.set_yticklabels(heatmap_data.index, rotation=0, fontsize=6, ha='right')
-    heatmap.set_xticklabels(heatmap.get_xticklabels(), rotation=90, ha='right')
+    heatmap.set_xticklabels(heatmap.get_xticklabels(), rotation=90, fontsize=target_fontsize, ha='center')
     
-    plt.title(title)
+    plt.title(title, fontsize=target_fontsize + 3)
     plt.xlabel('')
+
+    if heatmap_data.shape[0] == 1:
+        heatmap.set_yticklabels(heatmap_data.index, rotation=90, fontsize=13, ha='right')
+        plt.yticks(np.arange(1), heatmap_data.index, rotation=90, fontsize=13, ha='right')
+
     save_plot(f'p_values_{title}', output)
 
 
@@ -84,6 +90,7 @@ def _plot_prediction_scores(
         experiment: dict[str, str | float | list[str]],
         by_freq: bool = True,
         show_fit: bool = True,
+        add_legend: bool = False,
         title: str = '',
     ):
     """
@@ -123,7 +130,8 @@ def _plot_prediction_scores(
         plt.plot(bin_centers, fit_values, color='grey', lw=2, label='Gamma fit')
 
     plt.xlabel(experiment['metric'])
-    plt.legend(fontsize=LEGEND_FONT_SIZE)
+    if add_legend:
+        plt.legend(fontsize=LEGEND_FONT_SIZE)
     plt.title(title)
 
 
@@ -282,11 +290,13 @@ def plot_experiment(
         target_data: pd.DataFrame | str,
         expression: pd.DataFrame | str = 'expression',
         reduction: pd.DataFrame | str = 'reduction',
+        as_single_row: bool = False,
     ):
     """
     target_data: `cell_types` or `pseudotime`
     target: `cell_type` or `lineage`
-    target_type: `cell_types` or `pseudotime`    
+    target_type: `cell_types` or `pseudotime`
+    as_single_row: whether to plot all subplots in a single row
     """
     target_type = target_type.lower().replace('-', '_')
     assert target_type in ['cell_types', 'pseudotime']
@@ -301,25 +311,25 @@ def plot_experiment(
     if experiment is None:
         raise ValueError(f'Cannot access `{output}/{results}.csv`')
 
-    plt.figure(figsize=(8, 6), dpi=DPI)
+    plt.figure(figsize=(8, 6), dpi=DPI) if not as_single_row else plt.figure(figsize=(14, 3), dpi=DPI)
 
     # Gene set prediction score
-    plt.subplot(2, 2, 1)
-    _plot_prediction_scores(experiment)
+    plt.subplot(2, 2, 1) if not as_single_row else plt.subplot(1, 4, 1)
+    _plot_prediction_scores(experiment, add_legend=not as_single_row)
 
     # Gene set expression distribution
-    plt.subplot(2, 2, 2)
+    plt.subplot(2, 2, 2) if not as_single_row else plt.subplot(1, 4, 2)
     _plot_expression_distribution(expression, target_data, target, target_type, experiment['top_genes'])
 
     # Gene set expression upon reduction
-    plt.subplot(2, 2, 3)
+    plt.subplot(2, 2, 3) if not as_single_row else plt.subplot(1, 4, 3)
     cells = list(set(reduction.index).intersection(set(expression.index)))
     reduction, expression, target_data = reduction.loc[cells], expression.loc[cells], target_data.loc[cells]
     cells = cells if target_type == 'cell_types' else target_data[target].dropna().index
     _plot_gene_set_expression(expression, reduction, experiment['top_genes'], cells=cells)
     
     # Target data upon reduction
-    plt.subplot(2, 2, 4)
+    plt.subplot(2, 2, 4) if not as_single_row else plt.subplot(1, 4, 4)
     _plot_target_data(reduction, target_data, target, target_type)
     
     if target_type == 'pseudotime':
@@ -330,10 +340,10 @@ def plot_experiment(
         target_name = "'s identity"
 
     title = f'Predicting {target}{target_name} using {set_name}'
-    fontsize = 10 if len(title) < 90 else 7
+    fontsize = (10 if len(title) < 90 else 7) if not as_single_row else 14
     plt.suptitle(title, fontsize=fontsize)
 
-    save_plot(f'predicting {target} using {set_name}', os.path.join(output, 'pathways', target_type))    
+    save_plot(f'predicting {target} using {set_name}', os.path.join(output, 'pathways', target_type) if not as_single_row else None)    
 
 
 def plot_all_cell_types_and_trajectories(
