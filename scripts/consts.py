@@ -107,6 +107,10 @@ MIN_SET_SIZE = SIZES[0]
 SEED = 3407
 THRESHOLD = 0.05  # TODO: add param
 
+# Resources
+MEM = 10
+TIME = 15
+
 # Plotting
 MAP_SIZE = 50
 DPI = 100

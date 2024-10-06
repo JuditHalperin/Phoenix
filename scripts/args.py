@@ -65,6 +65,10 @@ def parse_run_args() -> argparse.Namespace:
     # Output
     parser.add_argument('--processes', type=int, default=0,
                         help='Number of processes to run in parallel')
+    parser.add_argument('--mem', type=int, default=MEM,
+                        help='Memory to allocate for each process (GB)')
+    parser.add_argument('--time', type=int, default=TIME,
+                        help='Time to allocate for each process (hours)')
     parser.add_argument('--output', type=str, required=True,
                         help='Path to output directory')
     
@@ -127,6 +131,8 @@ def validate_run_args(args):
     assert 0 < args.set_fraction <= 1
     assert SIZES[0] <= args.min_set_size <= SIZES[-1]
     assert not args.processes or args.processes >= 0
+    assert not args.processes or args.mem > 0
+    assert not args.processes or args.time > 0
 
 
 def get_run_args():

@@ -68,14 +68,14 @@ def run_setup_cmd(args: dict, tmp: str = None) -> str:
     return execute_sbatch_cmd(cmd, 'initial setup')
 
 
-def run_experiments_cmd(setup_job_id: int, args: dict, tmp: str = None) -> int:
+def run_experiments_cmd(setup_job_id: int, mem: int, time: int, args: dict, tmp: str = None) -> int:
     cmd = get_cmd(
         func='run_experiments', 
         args=args,
         script='run',
         processes=args['processes'],
-        mem='10G',
-        time='15:0:0',
+        mem=f'{mem}G',
+        time=f'{time}:0:0',
         report_path=tmp,
         previous_job_id=setup_job_id,
     )

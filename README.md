@@ -88,9 +88,11 @@ Customize background distribution parameters:
 * `repeats`: Size of background distribution. Default: `200`.
 * `distribution`: Type of background distribution: `gamma` or `normal`. Default: `gamma`.
 
-Include parameters relevant for parallelization on a high-computing cluster, which is highly recommended for large pathway databases:
+Include parameters relevant for parallelization on a high-computing cluster, which is highly recommended for large pathway databases. For larger datasets, consider adjusting memory and time resources: 
 
 * `processes`: Number of processes to run in parallel. Default: `0`.
+* `mem`: Memory to allocate for each process (GB). Default: `10`.
+* `time`: Time to allocate for each process (hours). Default: `15`.
 
 For a full list of available parameters, run:
 

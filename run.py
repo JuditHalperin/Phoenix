@@ -118,6 +118,8 @@ def run_tool(
         seed: int,
         distribution: str,
         processes: int,
+        mem: int,
+        time: int,
         output: str,
         cache: str,
         tmp: str,
@@ -140,7 +142,7 @@ def run_tool(
             'cross_validation': cross_validation, 'repeats': repeats, 'seed': seed, 'distribution': distribution,
             'processes': processes, 'output': output, 'tmp': tmp, 'cache': cache,
         }
-        exp_job_id = run_experiments_cmd(setup_job_id, exp_args, tmp)
+        exp_job_id = run_experiments_cmd(setup_job_id, mem, time, exp_args, tmp)
 
         # Aggregation
         run_aggregation_cmd(exp_job_id, processes, output, tmp)
