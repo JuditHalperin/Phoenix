@@ -38,8 +38,8 @@ def get_kegg_organism(organism):
 
 def retrieve_all_kegg_pathways(organism: str, subset: int = False) -> dict[str, list[str]]:
 
-    # If organism is supported by MSigDB use it as it is much faster
-    if get_msigdb_organism(organism):
+    # If organism is supported by MSigDB and includes KEGG, use it as it is much faster
+    if organism == 'human':
         pathways = retrieve_all_msigdb_pathways(organism)
         return {name.replace('KEGG_', ''): pathway for name, pathway in pathways.items() if 'KEGG' in name}
 
