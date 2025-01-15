@@ -160,11 +160,12 @@ def get_experiment(results: pd.DataFrame | str, output_path: str, set_name: str 
     return results
 
 
-def save_plot(title: str, output: str = None):
+def save_plot(title: str, output: str = None, format: str = 'png') -> None:
     plt.tight_layout()
     if output:
         create_dir(output)
-        plt.savefig(os.path.join(output, f'{make_valid_filename(title)}.png'))
+        file_path = os.path.join(output, f'{make_valid_filename(title)}.{format}')
+        plt.savefig(file_path, format=format)
     else:
         plt.show()
     plt.close()

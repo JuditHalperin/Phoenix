@@ -49,6 +49,7 @@ def plot_p_values(
         target_fontsize: int = 10,
         title: str = '',
         output: str = None,
+        format: str = 'png',
     ):
     
     if cluster_rows:
@@ -83,7 +84,7 @@ def plot_p_values(
         heatmap.set_yticklabels(heatmap_data.index, rotation=90, fontsize=13, ha='right')
         plt.yticks(np.arange(1), heatmap_data.index, rotation=90, fontsize=13, ha='right')
 
-    save_plot(f'p_values_{title}', output)
+    save_plot(f'p_values_{title}', output, format=format)
 
 
 def _plot_prediction_scores(
@@ -294,6 +295,7 @@ def plot_experiment(
         expression: pd.DataFrame | str = 'expression',
         reduction: pd.DataFrame | str = 'reduction',
         as_single_row: bool = False,
+        format: str = 'png',
     ):
     """
     target_data: `cell_types` or `pseudotime`
@@ -346,7 +348,7 @@ def plot_experiment(
     fontsize = (10 if len(title) < 90 else 7) if not as_single_row else 14
     plt.suptitle(title, fontsize=fontsize)
 
-    save_plot(f'predicting {target} using {set_name}', os.path.join(output, 'pathways', target_type) if not as_single_row else None)    
+    save_plot(f'predicting {target} using {set_name}', os.path.join(output, 'pathways', target_type) if format else None, format=format)    
 
 
 def plot_all_cell_types_and_trajectories(
