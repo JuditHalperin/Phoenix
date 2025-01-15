@@ -1,6 +1,6 @@
 ## Overview
 
-**Phoenix** is a comprehensive **P**at**H**way **O**ntology **EN**r**I**chment tool in single-cell e**X**pression data, focusing on identifying important pathways that distinguish between cell-types and across pseudo-time.
+*Phoenix* is a comprehensive **P**at**H**way **O**ntology **EN**r**I**chment tool in single-cell e**X**pression data, focusing on identifying important pathways that distinguish between cell-types and across pseudo-time.
 It evaluates biological pathways for their predictive power in two key areas: predicting cell-types (discrete values) and estimating pseudo-time (continuous values), using classification and regression models, respectively.
 To assess the significance of the identified pathways, the tool compares the performance of each gene set against a random set of genes of equivalent size.
 Gene annotations that significantly outperform random gene sets are considered particularly relevant within the specific context of the data.
@@ -161,6 +161,11 @@ The folder specified in `--output` will include the following upon completion of
     * Lists of top gene annotations for each target: `top_celltypes_pathways.csv` and `top_pseudotime_pathways.csv`.
     * Corresponding p-value plots: `p_values_celltypes_prediction.png` and `p_values_pseudotime_prediction.png`.
     * Per-result plots in the `pathways` folder under `cell_types` and `pseudotime`.
+
+
+## Results
+
+Our [portal](https://nachmanilab.shinyapps.io/phoenix_results) provides easy access to the results of *Phoenix*, applied to datasets on embryonic development and hematopoietic stem cell differentiation across several organisms.
 
 
 ## Tests
