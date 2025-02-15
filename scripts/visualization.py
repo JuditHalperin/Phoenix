@@ -200,7 +200,7 @@ def _plot_expression_across_pseudotime(
 
     palette = sns.color_palette('plasma', as_cmap=True)
 
-    sns.boxplot(data=data_long, x='pseudotime_bin', y='expression', hue='pseudotime_bin', palette=palette, width=0.6, legend=None)
+    sns.boxplot(data=data_long, x='pseudotime_bin', y='expression', hue='pseudotime_bin', palette=palette, width=0.6, legend=None, showfliers=False)
 
     plt.xticks([])
     plt.xlabel('Pseudotime bins')
@@ -228,7 +228,8 @@ def _plot_pseudotime(
         reduction: pd.DataFrame,
         pseudotime: pd.DataFrame,
         trajectory: str = None,
-        title: bool = False
+        title: bool = False,
+        subtitle: bool = False,
     ):
     plt.scatter(reduction.iloc[:, 0], reduction.iloc[:, 1], s=POINT_SIZE, c=BACKGROUND_COLOR)
     trajectories = [trajectory] if trajectory else pseudotime.columns.tolist()
@@ -236,6 +237,7 @@ def _plot_pseudotime(
     for lineage in trajectories:
         plt.scatter(reduction.loc[cells, reduction.columns[0]], reduction.loc[cells, reduction.columns[1]], s=POINT_SIZE, c=pseudotime.loc[cells, lineage], cmap=plt.cm.plasma)
     if title: plt.title(f'{trajectory} Trajectory' if trajectory else 'Trajectories')
+    if subtitle: plt.suptitle(f'n = {len(cells):,}', y=0.83, x=0.7, fontsize=11)
     plt.xlabel(reduction.columns[0])
     plt.ylabel(reduction.columns[1])
     plt.colorbar(label='Pseudotime')
@@ -245,7 +247,8 @@ def _plot_cell_types(
         reduction: pd.DataFrame,
         cell_types: pd.DataFrame,
         cell_type: str = ALL_CELLS,
-        title: bool = False
+        title: bool = False,
+        subtitle: bool = False
     ):
     if cell_type != ALL_CELLS:
         cell_types.loc[cell_types[CELL_TYPE_COL] != cell_type, CELL_TYPE_COL] = OTHER_CELLS
@@ -253,6 +256,7 @@ def _plot_cell_types(
     sns.scatterplot(data=reduction, x=reduction.columns[0], y=reduction.columns[1], hue=cell_types[CELL_TYPE_COL], palette=color_mapping, s=POINT_SIZE, edgecolor='none')
     plt.legend(title='', fontsize=LEGEND_FONT_SIZE)
     if title: plt.title(cell_type if cell_type != ALL_CELLS else 'Cell-types')
+    if subtitle: plt.suptitle(f'n = {len(cell_types):,}', y=0.83, x=0.7, fontsize=11)
 
 
 def _plot_target_data(
@@ -353,20 +357,21 @@ def plot_experiment(
 
 def plot_all_cell_types_and_trajectories(
         reduction: pd.DataFrame, 
-        cell_types: pd.DataFrame,
-        pseudotime: pd.DataFrame,
+        cell_types: pd.DataFrame | None,
+        pseudotime: pd.DataFrame | None,
         output: str = None,
+        subtitle: bool = False,
     ):
     num_plots = int(cell_types is not None) + int(pseudotime is not None)
     plt.figure(figsize=(6.5 * num_plots, 5), dpi=DPI)
 
     if cell_types is not None:
         plt.subplot(1, num_plots, 1)
-        _plot_cell_types(reduction, cell_types, title=True)
+        _plot_cell_types(reduction, cell_types, title=True, subtitle=subtitle)
     
     if pseudotime is not None:
         plt.subplot(1, num_plots, num_plots)
-        _plot_pseudotime(reduction, pseudotime, title=True)
+        _plot_pseudotime(reduction, pseudotime, title=True, subtitle=subtitle)
     
     save_plot('targets', output)
 
