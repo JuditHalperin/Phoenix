@@ -361,9 +361,10 @@ def plot_all_cell_types_and_trajectories(
         pseudotime: pd.DataFrame | None,
         output: str = None,
         subtitle: bool = False,
+        format: str = 'png',
     ):
     num_plots = int(cell_types is not None) + int(pseudotime is not None)
-    plt.figure(figsize=(6.5 * num_plots, 5), dpi=DPI)
+    plt.figure(figsize=(6 * num_plots, 5), dpi=DPI)
 
     if cell_types is not None:
         plt.subplot(1, num_plots, 1)
@@ -373,7 +374,7 @@ def plot_all_cell_types_and_trajectories(
         plt.subplot(1, num_plots, num_plots)
         _plot_pseudotime(reduction, pseudotime, title=True, subtitle=subtitle)
     
-    save_plot('targets', output)
+    save_plot('targets', output, format=format)
 
 
 def plot(
