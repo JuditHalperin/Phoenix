@@ -1,4 +1,7 @@
-import warnings, random
+import warnings
+warnings.filterwarnings(action='ignore', category=FutureWarning)
+
+import random
 import pandas as pd
 import numpy as np
 import scanpy as sc
@@ -12,10 +15,7 @@ sc.settings.verbosity = 0
 def preprocess_expression(expression: pd.DataFrame, preprocessed: bool, num_genes: int = NUM_GENES, verbose: bool = True) -> pd.DataFrame:
     if verbose:
         print('Running single-cell preprocessing...')
-
-    with warnings.catch_warnings():
-        warnings.filterwarnings('ignore', category=UserWarning)
-        adata = sc.AnnData(expression)
+    adata = sc.AnnData(expression)
 
     if not preprocessed:
         sc.pp.filter_cells(adata, min_genes=100)
@@ -164,4 +164,6 @@ def get_lineages(pseudotime: pd.DataFrame) -> list[str]:
 
 
 def sum_gene_expression(gene_set_expression: pd.DataFrame) -> pd.Series:
-    return transform_log(re_transform_log(gene_set_expression).sum(axis=1))
+    untransformed = re_transform_log(gene_set_expression)
+    summed = untransformed.sum() if untransformed.ndim == 1 else untransformed.sum(axis=1)
+    return transform_log(summed)
