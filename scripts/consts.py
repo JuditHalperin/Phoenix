@@ -11,7 +11,7 @@ from sklearn.metrics import accuracy_score, balanced_accuracy_score, f1_score, m
 from scripts.metrics import weighted_metric_using_icf, compute_f1, compute_recall
 
 
-SIZES = [5, 6, 7, 8, 9, 10, 15, 20, 25, 30, 40, 50, 75, 100, 120, 140, 160, 180, 200, 225, 250]
+SIZES = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 15, 20, 25, 30, 40, 50, 75, 100, 120, 140, 160, 180, 200, 225, 250]
 
 REDUCTION_METHODS = ['pca', 'umap', 'tsne']
 
