@@ -1,4 +1,7 @@
 import warnings
+import sys
+import random
+from tqdm import tqdm
 import numpy as np
 import pandas as pd
 import scipy.stats as stats
@@ -168,10 +171,19 @@ def run_batch(
         return
 
     classification_results, regression_results = [], []
+    all_cell_types, all_lineages = get_cell_types(cell_types), get_lineages(pseudotime)
 
-    logger = f'Batch {batch}: ' if batch else ''
-    for i, (set_name, gene_set) in enumerate(batch_gene_sets.items()):
-        print(f'{logger}Pathway {i + 1}/{len(batch_gene_sets)}: {set_name}')
+    logger = f'Batch {batch}: ' if batch else ''    
+    for i, (set_name, gene_set) in tqdm(
+        enumerate(batch_gene_sets.items()),
+        total=len(batch_gene_sets),
+        desc='Batch',
+        ncols=80,
+        ascii=True,
+        file=sys.stdout if batch else None
+    ):
+        print(f'/n{logger}Pathway {i + 1}/{len(batch_gene_sets)}: {set_name}', flush=True)
+        sys.stdout.flush()
 
         set_size = define_set_size(len(gene_set), set_fraction, min_set_size)
         task_args = {
@@ -182,7 +194,8 @@ def run_batch(
         }
 
         # Cell-type classification
-        for cell_type in get_cell_types(cell_types):
+        random.shuffle(all_cell_types)
+        for cell_type in all_cell_types:
             p_value, pathway_score, background_scores, top_genes = run_comparison(
                 predictor=classifier, metric=classification_metric,
                 cell_types=cell_types, cell_type=cell_type,
@@ -194,7 +207,8 @@ def run_batch(
             ))
         
         # Pseudo-time regression
-        for lineage in get_lineages(pseudotime):
+        random.shuffle(all_lineages)
+        for lineage in all_lineages:
             p_value, pathway_score, background_scores, top_genes = run_comparison(
                 predictor=regressor, metric=regression_metric,
                 pseudotime=pseudotime, lineage=lineage,
