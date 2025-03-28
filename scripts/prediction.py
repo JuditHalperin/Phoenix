@@ -187,7 +187,7 @@ def run_batch(
 
         set_size = define_set_size(len(gene_set), set_fraction, min_set_size)
         task_args = {
-            'expressscaled_expressionion': scaled_expression, 'gene_set': gene_set,
+            'scaled_expression': scaled_expression, 'gene_set': gene_set,
             'set_size': set_size, 'feature_selection': feature_selection,
             'cross_validation': cross_validation, 'repeats': repeats,
             'seed': seed, 'distribution': distribution, 'cache': cache
