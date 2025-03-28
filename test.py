@@ -1,4 +1,9 @@
-import unittest, warnings
+import warnings
+warnings.simplefilter('ignore', FutureWarning)
+warnings.simplefilter('ignore', UserWarning)
+warnings.simplefilter('ignore', RuntimeWarning)
+
+import unittest
 from scripts.utils import show_runtime
 
 
@@ -8,12 +13,7 @@ def test_all():
     runner = unittest.TextTestRunner()
 
     suite = loader.discover(start_dir='tests')
-    with warnings.catch_warnings():
-        warnings.filterwarnings('ignore', category=RuntimeWarning, message='invalid value encountered in divide')
-        warnings.filterwarnings('ignore', category=RuntimeWarning, message='divide by zero encountered in divide')
-        warnings.filterwarnings('ignore', category=UserWarning, message='Features .* are constant')
-
-        runner.run(suite)
+    runner.run(suite)
 
 
 if __name__ == '__main__':
