@@ -8,6 +8,8 @@ import scanpy as sc
 from scripts.consts import ALL_CELLS, CELL_TYPE_COL, NUM_GENES, SEED
 from scripts.utils import transform_log, re_transform_log
 from scripts.output import save_csv
+from sklearn.discriminant_analysis import StandardScaler
+from sklearn.preprocessing import MinMaxScaler
 
 sc.settings.verbosity = 0
 
@@ -110,6 +112,24 @@ def preprocess_data(
         save_csv(reduction, 'reduction', output)
 
     return expression, cell_types, pseudotime, reduction
+
+
+def scale_expression(expression: pd.DataFrame) -> pd.DataFrame:
+    """Scale expression data using standard scaler"""
+    return pd.DataFrame(
+        StandardScaler().fit_transform(expression),
+        index=expression.index, 
+        columns=expression.columns
+    )
+
+
+def scale_pseudotime(pseudotime: pd.DataFrame) -> pd.DataFrame:
+    "Scale each lineage independently using min-max scaler without missing cells"
+    return pd.DataFrame(
+        MinMaxScaler().fit_transform(pseudotime),
+        index=pseudotime.index, 
+        columns=pseudotime.columns
+    )
 
 
 def get_cell_types(cell_types: pd.DataFrame) -> list[str]:
