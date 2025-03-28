@@ -12,7 +12,7 @@ class TrainDataTest(Test):
 
     def setUp(self):
 
-        self.expression = pd.DataFrame({
+        self.scaled_expression = pd.DataFrame({
             'Gene1': [1.0, 1.3, 1.5, 1.7],  # similar across cell types
             'Gene2': [10, 1, 10, 1],  # very different across cell types
             'Gene3': [3, 3, 3, 5],  # a little different across cell types
@@ -24,7 +24,7 @@ class TrainDataTest(Test):
             CELL_TYPE_COL: ['TypeA', 'TypeB', 'TypeA', 'TypeB'],
         }, index=['Cell1', 'Cell2', 'Cell3', 'Cell4'])
 
-        self.pseudotime = pd.DataFrame({
+        self.scaled_pseudotime = pd.DataFrame({
             1: [0.1, 0.2, 0.3, None],
             2: [0.6, 0.3, 0.9, 0.1],
         }, index=['Cell1', 'Cell2', 'Cell3', 'Cell4'])
@@ -41,48 +41,45 @@ class TrainDataTest(Test):
 
     def test_pseudotime_target(self):
         # Test case for get_train_target function with pseudotime
-        pseudotime_target = get_train_target(pseudotime=self.pseudotime, lineage=2, scale=False)
-        self.assertEqual(pseudotime_target.tolist(), self.pseudotime[2].tolist())
-
-        pseudotime_target = get_train_target(pseudotime=self.pseudotime, lineage=1, scale=True)
-        self.assertEqual(pseudotime_target.tolist(), [0.0, 0.5, 1.0])
+        pseudotime_target = get_train_target(scaled_pseudotime=self.scaled_pseudotime, lineage=2)
+        self.assertEqual(pseudotime_target.tolist(), self.scaled_pseudotime[2].tolist())
 
     def test_data_without_selection(self):
         # Test case where using cell_types and cell_type
         X, _, features = get_train_data(
-            self.expression,
-            features=self.expression.columns, 
+            self.scaled_expression,
+            features=self.scaled_expression.columns, 
             cell_types=self.cell_types,
             cell_type='TypeA',
             set_size=None,
             feature_selection=None
         )
 
-        self.assertEqual(X.shape, self.expression.shape)
-        self.assertListEqual(features, self.expression.columns.tolist())
+        self.assertEqual(X.shape, self.scaled_expression.shape)
+        self.assertListEqual(features, self.scaled_expression.columns.tolist())
 
         X, _, features = get_train_data(
-            self.expression,
-            features=self.expression.columns, 
+            self.scaled_expression,
+            features=self.scaled_expression.columns, 
             cell_types=self.cell_types,
             cell_type='TypeA',
-            set_size=self.expression.shape[1],  # all
+            set_size=self.scaled_expression.shape[1],  # all
             feature_selection='RF'
         )
 
-        self.assertEqual(X.shape, self.expression.shape)
-        self.assertListEqual(features, self.expression.columns.tolist())
+        self.assertEqual(X.shape, self.scaled_expression.shape)
+        self.assertListEqual(features, self.scaled_expression.columns.tolist())
 
     def test_cell_type_data_with_anova(self):
         # Test case where using cell_types and cell_type
-        cell_dim = self.expression.shape[0]
+        cell_dim = self.scaled_expression.shape[0]
 
         for cell_type in ['All', 'TypeA', 'TypeB']:
 
             set_size = 4
             X, y, selected_genes = get_train_data(
-                self.expression,
-                features=self.expression.columns, 
+                self.scaled_expression,
+                features=self.scaled_expression.columns, 
                 cell_types=self.cell_types,
                 cell_type=cell_type,
                 set_size=set_size,
@@ -96,7 +93,7 @@ class TrainDataTest(Test):
 
             set_size = 3
             X, y, selected_genes = get_train_data(
-                self.expression,
+                self.scaled_expression,
                 features=['Gene1', 'Gene3', 'Gene2', 'Gene4', 'Gene5'], 
                 cell_types=self.cell_types,
                 cell_type=cell_type,
@@ -111,8 +108,8 @@ class TrainDataTest(Test):
 
             set_size = 2
             X, y, selected_genes = get_train_data(
-                self.expression,
-                features=self.expression.columns, 
+                self.scaled_expression,
+                features=self.scaled_expression.columns, 
                 cell_types=self.cell_types,
                 cell_type=cell_type,
                 set_size=set_size,
@@ -125,7 +122,7 @@ class TrainDataTest(Test):
             self.assertEqual(selected_genes, ['Gene2', 'Gene5']) # SelectKBest does not change order of features
 
             X, y, selected_genes = get_train_data(
-                self.expression,
+                self.scaled_expression,
                 features=['Gene1', 'Gene3', 'Gene5'],  # missing good predictor Gene2
                 cell_types=self.cell_types,
                 cell_type=cell_type,
@@ -139,14 +136,14 @@ class TrainDataTest(Test):
             self.assertEqual(selected_genes, ['Gene3', 'Gene5']) # SelectKBest does not change order of features
             
     def test_cell_type_data_with_rf(self):
-        cell_dim = self.expression.shape[0]
+        cell_dim = self.scaled_expression.shape[0]
 
         for cell_type in ['All', 'TypeA', 'TypeB']:
 
-            set_size = self.expression.shape[1] - 1
+            set_size = self.scaled_expression.shape[1] - 1
             X, y, selected_genes = get_train_data(
-                self.expression,
-                features=self.expression.columns, 
+                self.scaled_expression,
+                features=self.scaled_expression.columns, 
                 cell_types=self.cell_types,
                 cell_type=cell_type,
                 set_size=set_size,
@@ -162,10 +159,10 @@ class TrainDataTest(Test):
             self.assertTrue(selected_genes[1] in ['Gene5', 'Gene2'])
             self.assertTrue('Gene4' not in selected_genes) 
 
-            set_size = self.expression.shape[1] - 2
+            set_size = self.scaled_expression.shape[1] - 2
             X, y, selected_genes = get_train_data(
-                self.expression,
-                features=[g for g in self.expression.columns if g != 'Gene2'], 
+                self.scaled_expression,
+                features=[g for g in self.scaled_expression.columns if g != 'Gene2'], 
                 cell_types=self.cell_types,
                 cell_type=cell_type,
                 set_size=set_size,
@@ -180,12 +177,12 @@ class TrainDataTest(Test):
         # Test case where using pseudotime and lineage
 
         lineage = 1
-        cell_dim = self.pseudotime[lineage].dropna().shape[0]
+        cell_dim = self.scaled_pseudotime[lineage].dropna().shape[0]
         set_size = 1
         X, y, selected_genes = get_train_data(
-            expression=self.expression,
-            features=self.expression.columns,
-            pseudotime=self.pseudotime,
+            scaled_expression=self.scaled_expression,
+            features=self.scaled_expression.columns,
+            scaled_pseudotime=self.scaled_pseudotime,
             lineage=lineage,
             set_size=set_size,
             feature_selection='ANOVA'
@@ -197,12 +194,12 @@ class TrainDataTest(Test):
         self.assertTrue(selected_genes[0] == 'Gene1')  # Gene1 increases across time in lineage 1
 
         lineage = 2
-        cell_dim = self.pseudotime[lineage].dropna().shape[0]
+        cell_dim = self.scaled_pseudotime[lineage].dropna().shape[0]
         set_size = 3
         X, y, selected_genes = get_train_data(
-            expression=self.expression,
-            features=self.expression.columns,
-            pseudotime=self.pseudotime,
+            scaled_expression=self.scaled_expression,
+            features=self.scaled_expression.columns,
+            scaled_pseudotime=self.scaled_pseudotime,
             lineage=lineage,
             set_size=set_size,
             feature_selection='ANOVA'
@@ -216,14 +213,14 @@ class TrainDataTest(Test):
     def test_pseudotime_data_with_rf(self):
         # Test case where using pseudotime and lineage
 
-        set_size = self.expression.shape[1] - 1
+        set_size = self.scaled_expression.shape[1] - 1
 
         lineage = 1
-        cell_dim = self.pseudotime[lineage].dropna().shape[0]
+        cell_dim = self.scaled_pseudotime[lineage].dropna().shape[0]
         X, y, selected_genes = get_train_data(
-            expression=self.expression,
-            features=self.expression.columns,
-            pseudotime=self.pseudotime,
+            scaled_expression=self.scaled_expression,
+            features=self.scaled_expression.columns,
+            scaled_pseudotime=self.scaled_pseudotime,
             lineage=lineage,
             set_size=set_size,
             feature_selection='RF'
@@ -235,11 +232,11 @@ class TrainDataTest(Test):
         self.assertTrue(selected_genes[0] == 'Gene1')  # Gene1 increases across time in lineage 1
 
         lineage = 2
-        cell_dim = self.pseudotime[lineage].dropna().shape[0]
+        cell_dim = self.scaled_pseudotime[lineage].dropna().shape[0]
         X, y, selected_genes = get_train_data(
-            expression=self.expression,
-            features=self.expression.columns,
-            pseudotime=self.pseudotime,
+            scaled_expression=self.scaled_expression,
+            features=self.scaled_expression.columns,
+            scaled_pseudotime=self.scaled_pseudotime,
             lineage=lineage,
             set_size=set_size,
             feature_selection='RF'
@@ -256,7 +253,7 @@ class TrainingTest(Test):
     
     def setUp(self):
 
-        self.expression = pd.DataFrame({
+        self.scaled_expression = pd.DataFrame({
             'Gene1': [1.0, 1.3, 1.5, 1.7],  # similar across cell types
             'Gene2': [10, 1, 10, 1],  # very different across cell types
             'Gene3': [3, 3, 3, 5],  # a little different across cell types
@@ -269,20 +266,20 @@ class TrainingTest(Test):
         }, index=['Cell1', 'Cell2', 'Cell3', 'Cell4'])
         self.cell_type_target = get_train_target(cell_types=cell_types, cell_type=ALL_CELLS)
 
-        pseudotime = pd.DataFrame({
+        scaled_pseudotime = pd.DataFrame({
             1: [0.1, 0.2, 0.3, 0.4],
             2: [0.6, 0.3, 0.9, 0.1],
         }, index=['Cell1', 'Cell2', 'Cell3', 'Cell4'])
-        self.pseudotime1_target = get_train_target(pseudotime=pseudotime, lineage=1)
-        self.pseudotime2_target = get_train_target(pseudotime=pseudotime, lineage=2)
+        self.pseudotime1_target = get_train_target(scaled_pseudotime=scaled_pseudotime, lineage=1)
+        self.pseudotime2_target = get_train_target(scaled_pseudotime=scaled_pseudotime, lineage=2)
 
         self.cross_validation = 2
     
     def test_classification_training(self):
 
-        good_features = np.array(self.expression[['Gene2', 'Gene5']])
-        middle_features = np.array(self.expression[['Gene2', 'Gene1']])
-        bad_features = np.array(self.expression[['Gene4', 'Gene1']])
+        good_features = np.array(self.scaled_expression[['Gene2', 'Gene5']])
+        middle_features = np.array(self.scaled_expression[['Gene2', 'Gene1']])
+        bad_features = np.array(self.scaled_expression[['Gene4', 'Gene1']])
         
         for classifier in ['RF', 'SVM', 'DTree']:
             for metric in ['f1_weighted_icf', 'accuracy_balanced']:
@@ -301,9 +298,9 @@ class TrainingTest(Test):
     def test_regression_training(self):
 
         # Lineage 1
-        good_features = np.array(self.expression[['Gene1']])
-        good_features2 = np.array(self.expression[['Gene3']])
-        bad_features = np.array(self.expression[['Gene4']])
+        good_features = np.array(self.scaled_expression[['Gene1']])
+        good_features2 = np.array(self.scaled_expression[['Gene3']])
+        bad_features = np.array(self.scaled_expression[['Gene4']])
         
         for classifier in ['RF', 'SVM', 'LGBM']:
             for metric in ['neg_mean_squared_error']:
@@ -319,9 +316,9 @@ class TrainingTest(Test):
                 self.assertGreaterEqual(good_score2, bad_score)
 
         # Lineage 2
-        good_features = np.array(self.expression[['Gene2']])
-        good_features2 = np.array(self.expression[['Gene5']])
-        bad_features = np.array(self.expression[['Gene4']])
+        good_features = np.array(self.scaled_expression[['Gene2']])
+        good_features2 = np.array(self.scaled_expression[['Gene5']])
+        bad_features = np.array(self.scaled_expression[['Gene4']])
         
         for classifier in ['RF', 'SVM', 'LGBM']:
             for metric in ['neg_mean_squared_error']:

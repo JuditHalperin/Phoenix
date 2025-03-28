@@ -44,7 +44,7 @@ def read_raw_data(expression: str, cell_types: str | None, pseudotime: str | Non
     expression = read_csv(expression)
     cell_types = read_csv(cell_types).loc[expression.index] if cell_types else None
     if cell_types is not None:
-        cell_types.rename(columns={cell_types.columns[0]: CELL_TYPE_COL}, inplace=True)
+        cell_types = cell_types.rename(columns={cell_types.columns[0]: CELL_TYPE_COL})
     pseudotime = read_csv(pseudotime).loc[expression.index] if pseudotime else None 
     if os.path.exists(reduction):
         reduction = read_csv(reduction).loc[expression.index]

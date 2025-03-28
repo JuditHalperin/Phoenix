@@ -12,17 +12,12 @@ from scripts.utils import show_runtime
 
 def get_train_target(
         cell_types: pd.DataFrame = None,
-        pseudotime: pd.DataFrame = None,
+        scaled_pseudotime: pd.DataFrame = None,
         cell_type: str = None,
         lineage: int = None,
-        scale: bool = True
     ):
-    """
-    scale: whether to normalize continuous target pseudo-time values using min-max scaler
-    """
-    if pseudotime is not None:
-        y = pseudotime.loc[:, lineage].dropna()
-        return pd.Series(MinMaxScaler().fit_transform(y.values.reshape(-1, 1)).flatten(), index=y.index) if scale else y
+    if scaled_pseudotime is not None:
+        return scaled_pseudotime.loc[:, lineage].dropna()
     
     if cell_type == ALL_CELLS:
         return cell_types[CELL_TYPE_COL]
@@ -30,32 +25,29 @@ def get_train_target(
 
 
 def get_train_data(
-        expression: pd.DataFrame,
+        scaled_expression: pd.DataFrame,
         features: list[str] = None,
         cell_types: pd.DataFrame = None,
-        pseudotime: pd.DataFrame = None,
+        scaled_pseudotime: pd.DataFrame = None,
         cell_type: str = None,
         lineage: int = None,
-        scale_features: bool = True,
-        scale_target: bool = True,
         set_size: int = None,
         feature_selection: str = None,
         selection_args: dict = {},
         ordered_selection: bool = False,
         seed: int = SEED
-    ) -> tuple:
+    ) -> tuple[np.ndarray, pd.Series, list[str]]:
     """
     feature_selection: either 'ANOVA' or 'RF', supported for both classification and regression
     ordered_selection: ignored if feature_selection is set
     """
-    assert (cell_types is not None and cell_type is not None) or (pseudotime is not None and lineage is not None)
-    is_regression = pseudotime is not None
+    assert (cell_types is not None and cell_type is not None) or (scaled_pseudotime is not None and lineage is not None)
+    is_regression = scaled_pseudotime is not None
 
-    y = get_train_target(cell_types, pseudotime, cell_type, lineage, scale_target)
+    y = get_train_target(cell_types, scaled_pseudotime, cell_type, lineage)
     cells = y.index
-    features = [f for f in features if f in expression.columns] if features is not None else expression.columns
-    X = expression.loc[cells, features]
-    X = StandardScaler().fit_transform(X) if scale_features else X
+    features = [f for f in features if f in scaled_expression.columns] if features is not None else scaled_expression.columns
+    X = scaled_expression.loc[cells, features].to_numpy()
 
     # Select all features
     if not set_size or set_size >= len(features):

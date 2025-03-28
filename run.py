@@ -1,7 +1,7 @@
 import os
 import pandas as pd
 from scripts.args import get_run_args
-from scripts.data import preprocess_data
+from scripts.data import preprocess_data, scale_expression, scale_pseudotime
 from scripts.pathways import get_gene_sets
 from scripts.computation import run_setup_cmd, run_experiments_cmd, run_aggregation_cmd
 from scripts.prediction import run_batch, get_gene_set_batch
@@ -70,12 +70,15 @@ def run_experiments(
     cell_types = get_preprocessed_data(cell_types, output)
     pseudotime = get_preprocessed_data(pseudotime, output)
 
+    scaled_expression = scale_expression(expression)
+    scaled_pseudotime = scale_pseudotime(pseudotime)
+
     gene_sets = read_gene_sets(output, gene_sets)
     batch_size = define_batch_size(len(gene_sets), processes)
     batch_gene_sets = get_gene_set_batch(gene_sets, batch, batch_size)      
 
     run_batch(
-        batch, batch_gene_sets, expression, cell_types, pseudotime,
+        batch, batch_gene_sets, scaled_expression, cell_types, scaled_pseudotime,
         feature_selection, set_fraction, min_set_size,
         classifier, regressor, classification_metric, regression_metric,
         cross_validation, repeats, seed, distribution,

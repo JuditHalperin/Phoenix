@@ -13,7 +13,7 @@ from scripts.output import load_background_scores, save_background_scores, summa
 
 
 def get_prediction_score(
-        expression: pd.DataFrame,
+        scaled_expression: pd.DataFrame,
         predictor: str,
         metric: str,
         seed: int,
@@ -22,16 +22,16 @@ def get_prediction_score(
         feature_selection: str = None,
         cross_validation: int = None,
         cell_types: pd.DataFrame = None,
-        pseudotime: pd.DataFrame = None,
+        scaled_pseudotime: pd.DataFrame = None,
         cell_type: str = None,
         lineage: int = None,
     ) -> tuple[float, list[str]]:
 
     X, y, selected_genes = get_train_data(
-        expression=expression,
+        scaled_expression=scaled_expression,
         features=gene_set,
         cell_types=cell_types,
-        pseudotime=pseudotime,
+        scaled_pseudotime=scaled_pseudotime,
         cell_type=cell_type,
         lineage=lineage,
         set_size=set_size,
@@ -39,7 +39,7 @@ def get_prediction_score(
         seed=seed,
     )
 
-    is_regression = pseudotime is not None
+    is_regression = scaled_pseudotime is not None
     predictor = REGRESSORS[predictor] if is_regression else CLASSIFIERS[predictor]
     predictor_args = REGRESSOR_ARGS[predictor] if is_regression else CLASSIFIER_ARGS[predictor]
     
@@ -82,7 +82,7 @@ def compare_scores(pathway_score: float, background_scores: list[float], distrib
 
 
 def run_comparison(
-        expression: pd.DataFrame,
+        scaled_expression: pd.DataFrame,
         gene_set: list[str],
         predictor: str,
         metric: str,
@@ -93,7 +93,7 @@ def run_comparison(
         seed: int,
         distribution: str,
         cell_types: pd.DataFrame = None,
-        pseudotime: pd.DataFrame = None,
+        scaled_pseudotime: pd.DataFrame = None,
         cell_type: str = None,
         lineage: str = None,
         trim_background: bool = True,
@@ -101,13 +101,13 @@ def run_comparison(
     ):
 
     prediction_args = {
-        'expression': expression,
+        'scaled_expression': scaled_expression,
         'predictor': predictor,
         'metric': metric,
         'cross_validation': cross_validation,
         'set_size': set_size,
         'cell_types': cell_types,
-        'pseudotime': pseudotime,
+        'scaled_pseudotime': scaled_pseudotime,
         'cell_type': cell_type,
         'lineage': lineage,
     }
@@ -146,9 +146,9 @@ def get_gene_set_batch(gene_sets: dict[str, list[str]], batch: int | None = None
 def run_batch(
         batch: int | None,
         batch_gene_sets: dict[str, list[str]],
-        expression: pd.DataFrame,
+        scaled_expression: pd.DataFrame,
         cell_types: pd.DataFrame,
-        pseudotime: pd.DataFrame,
+        scaled_pseudotime: pd.DataFrame,
         feature_selection: str,
         set_fraction: float,
         min_set_size: int,
@@ -171,7 +171,7 @@ def run_batch(
         return
 
     classification_results, regression_results = [], []
-    all_cell_types, all_lineages = get_cell_types(cell_types), get_lineages(pseudotime)
+    all_cell_types, all_lineages = get_cell_types(cell_types), get_lineages(scaled_pseudotime)
 
     logger = f'Batch {batch}: ' if batch else ''    
     for i, (set_name, gene_set) in tqdm(
@@ -187,7 +187,7 @@ def run_batch(
 
         set_size = define_set_size(len(gene_set), set_fraction, min_set_size)
         task_args = {
-            'expression': expression, 'gene_set': gene_set,
+            'expressscaled_expressionion': scaled_expression, 'gene_set': gene_set,
             'set_size': set_size, 'feature_selection': feature_selection,
             'cross_validation': cross_validation, 'repeats': repeats,
             'seed': seed, 'distribution': distribution, 'cache': cache
@@ -211,7 +211,7 @@ def run_batch(
         for lineage in all_lineages:
             p_value, pathway_score, background_scores, top_genes = run_comparison(
                 predictor=regressor, metric=regression_metric,
-                pseudotime=pseudotime, lineage=lineage,
+                scaled_pseudotime=scaled_pseudotime, lineage=lineage,
                 **task_args
             )
 

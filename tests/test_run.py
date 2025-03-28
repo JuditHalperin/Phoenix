@@ -9,7 +9,7 @@ class TaskRunTest(Test):
 
     def setUp(self) -> None:
 
-        self.expression = pd.DataFrame({
+        self.scaled_expression = pd.DataFrame({
             'Gene1': [1, 3, 5, 7, 9, 11],
             'Gene2': [10, 1, 10, 1, 10, 1],
             'Gene3': [3, 4, 4, 5, 6, 7],
@@ -21,7 +21,7 @@ class TaskRunTest(Test):
             CELL_TYPE_COL: ['TypeA', 'TypeB', 'TypeA', 'TypeB', 'TypeA', 'TypeB'],
         }, index=['Cell1', 'Cell2', 'Cell3', 'Cell4', 'Cell5', 'Cell6'])
 
-        self.pseudotime = pd.DataFrame({
+        self.scaled_pseudotime = pd.DataFrame({
             1: [0.1, 0.25, 0.3, None, 0.44, 0.5],
             2: [0.6, 0.3, 0.9, 0.1, 1.0, 1.2],
         }, index=['Cell1', 'Cell2', 'Cell3', 'Cell4', 'Cell5', 'Cell6'])
@@ -33,7 +33,7 @@ class TaskRunTest(Test):
 
         for predictor in self.predictors:
             task_args = {
-                'expression': self.expression,
+                'scaled_expression': self.scaled_expression,
                 'predictor': predictor,
                 'metric': CLASSIFICATION_METRIC,
                 'set_size': 1,
@@ -66,7 +66,7 @@ class TaskRunTest(Test):
 
         for predictor in self.predictors:
             task_args = {
-                'expression': self.expression,
+                'scaled_expression': self.scaled_expression,
                 'predictor': predictor,
                 'metric': 'neg_mean_squared_error',
                 'set_size': 1,
@@ -75,7 +75,7 @@ class TaskRunTest(Test):
                 'repeats': 10,
                 'seed': SEED,
                 'distribution': 'gamma',
-                'pseudotime': self.pseudotime,
+                'scaled_pseudotime': self.scaled_pseudotime,
                 'lineage': 1,
                 'trim_background': False,
                 'cache': None  # avoid saving to cache during test
