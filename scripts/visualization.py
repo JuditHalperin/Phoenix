@@ -278,7 +278,7 @@ def _plot_gene_set_expression(
     ):
     cells = cells if cells is not None else expression.index
     gene_expression = sum_gene_expression(expression.loc[cells, gene_set])
-    clean_expression = remove_outliers(gene_expression)
+    clean_expression = remove_outliers(gene_expression) if len(gene_expression) > 2 else gene_expression
     
     plt.scatter(reduction.iloc[:, 0], reduction.iloc[:, 1], s=POINT_SIZE, c=BACKGROUND_COLOR)
     plt.scatter(reduction.loc[cells].iloc[:, 0], reduction.loc[cells].iloc[:, 1], s=POINT_SIZE, c=gene_expression, cmap=plt.cm.Blues, vmin=min(clean_expression), vmax=max(clean_expression))
