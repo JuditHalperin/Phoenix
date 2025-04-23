@@ -175,7 +175,7 @@ def retrieve_pathway(id: str, organism: str) -> dict[str, list[str]]:
     raise NotImplementedError('Pathway ID is not supported yet. Provide a valid pathway file instead.')
 
 
-def intersect_genes(gene_set: list[str], all_genes: list[str], required_len: int = 5) -> list[str]:
+def intersect_genes(gene_set: list[str], all_genes: list[str], required_len: int = 3) -> list[str]:
 
     is_set = lambda gene_set: len(list(set(gene_set).intersection(set(all_genes)))) >= min(required_len, len(gene_set) // 2)
     intersect_set = lambda gene_set: sorted([g for g in set(gene_set) if g in all_genes])
