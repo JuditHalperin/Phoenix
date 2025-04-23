@@ -70,9 +70,9 @@ def save_background_scores(background_scores: list[float], background: str, cach
             yaml.dump(background_scores, file)
 
 
-def read_gene_sets(output_path: str, title: str = 'gene_sets') -> dict[str, list[str]]:
-    if isinstance(output_path, dict):
-        return output_path
+def read_gene_sets(output_path: str, title: str | dict = 'gene_sets') -> dict[str, list[str]]:
+    if isinstance(title, dict):
+        return title
     path = output_path if '.csv' in output_path else os.path.join(output_path, f'{make_valid_filename(title)}.csv') 
     df = read_csv(path, index_col=False, dtype=str)
     return {column: df[column].dropna().tolist() for column in df.columns}
