@@ -1,5 +1,5 @@
 import warnings
-warnings.filterwarnings(action='ignore', category=FutureWarning)
+warnings.filterwarnings(action='ignore', category=[FutureWarning, UserWarning])
 
 import random
 import pandas as pd
