@@ -237,7 +237,7 @@ def _plot_pseudotime(
     for lineage in trajectories:
         plt.scatter(reduction.loc[cells, reduction.columns[0]], reduction.loc[cells, reduction.columns[1]], s=POINT_SIZE, c=pseudotime.loc[cells, lineage], cmap=plt.cm.plasma)
     if title: plt.title(f'{trajectory} Trajectory' if trajectory else 'Trajectories')
-    if subtitle: plt.suptitle(f'n = {len(cells):,}', y=0.83, x=0.7, fontsize=11)
+    if subtitle: plt.suptitle(f'n = {len(reduction.index):,}', y=0.83, x=0.7, fontsize=11)
     plt.xlabel(reduction.columns[0])
     plt.ylabel(reduction.columns[1])
     plt.colorbar(label='Pseudotime')
