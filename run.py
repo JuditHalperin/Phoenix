@@ -71,7 +71,7 @@ def run_experiments(
     pseudotime = get_preprocessed_data(pseudotime, output)
 
     scaled_expression = scale_expression(expression)
-    scaled_pseudotime = scale_pseudotime(pseudotime)
+    scaled_pseudotime = scale_pseudotime(pseudotime) if pseudotime is not None else None
 
     gene_sets = read_gene_sets(output, gene_sets)
     batch_size = define_batch_size(len(gene_sets), processes)
