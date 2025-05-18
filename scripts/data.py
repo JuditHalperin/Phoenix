@@ -49,7 +49,7 @@ def reduce_dimension(expression: pd.DataFrame, reduction_method: str, seed: int)
         sc.tl.tsne(adata, random_state=seed)
 
     return pd.DataFrame(
-        adata.obsm[f'X_{reduction_method}'],
+        adata.obsm[f'X_{reduction_method}'][:, :2],
         columns=[f'{reduction_method}1', f'{reduction_method}2'],
         index=adata.obs_names
     )
