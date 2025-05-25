@@ -6,7 +6,7 @@ import random
 import pandas as pd
 import numpy as np
 import scanpy as sc
-from scripts.consts import ALL_CELLS, CELL_TYPE_COL, NUM_GENES, SEED
+from scripts.consts import ALL_CELLS, CELL_TYPE_COL, NUM_GENES, SEED, TARGET_COL
 from scripts.utils import transform_log, re_transform_log
 from scripts.output import save_csv
 from sklearn.discriminant_analysis import StandardScaler
@@ -145,7 +145,36 @@ def get_lineages(pseudotime: pd.DataFrame) -> list[str]:
     return lineage_list
 
 
-def sum_gene_expression(gene_set_expression: pd.DataFrame) -> pd.Series:
+def sum_gene_expression(gene_set_expression: pd.DataFrame, geometric: bool = False) -> pd.Series:
+    if geometric:
+        return gene_set_expression.sum() if gene_set_expression.ndim == 1 else gene_set_expression.sum(axis=1)
     untransformed = re_transform_log(gene_set_expression)
     summed = untransformed.sum() if untransformed.ndim == 1 else untransformed.sum(axis=1)
     return transform_log(summed)
+
+
+def calculate_cell_type_effect_size(row, expression, cell_types):
+    target = row[TARGET_COL]
+    genes = row['top_genes'].split('; ')
+
+    curr_cells = cell_types[cell_types[CELL_TYPE_COL] == target].index
+    other_cells = cell_types[cell_types[CELL_TYPE_COL] != target].index
+
+    curr_sum = sum_gene_expression(expression.loc[curr_cells, genes], geometric=True).mean()
+    other_sum = sum_gene_expression(expression.loc[other_cells, genes], geometric=True).mean()
+
+    return curr_sum - other_sum
+
+
+def calculate_pseudotime_effect_size(row, expression, pseudotime, percentile=0.2):
+    target = row[TARGET_COL]
+    genes = row['top_genes'].split('; ')
+
+    pseudotime_cells = pseudotime[target].dropna().sort_values(ascending=True).index
+    min_cells = pseudotime_cells[:int(np.ceil(len(pseudotime_cells) * percentile))]
+    max_cells = pseudotime_cells[-int(np.ceil(len(pseudotime_cells) * percentile)):]
+
+    min_sum = sum_gene_expression(expression.loc[min_cells, genes], geometric=True).mean()
+    max_sum = sum_gene_expression(expression.loc[max_cells, genes], geometric=True).mean()
+
+    return min_sum - max_sum
