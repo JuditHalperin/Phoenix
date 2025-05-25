@@ -153,8 +153,10 @@ def sum_gene_expression(gene_set_expression: pd.DataFrame, geometric: bool = Fal
     return transform_log(summed)
 
 
-def calculate_cell_type_effect_size(row, expression, cell_types):
+def calculate_cell_type_effect_size(row, expression, cell_types) -> float:
     target = row[TARGET_COL]
+    if target == ALL_CELLS:
+        return np.nan
     genes = row['top_genes'].split('; ')
 
     curr_cells = cell_types[cell_types[CELL_TYPE_COL] == target].index
@@ -166,7 +168,7 @@ def calculate_cell_type_effect_size(row, expression, cell_types):
     return curr_sum - other_sum
 
 
-def calculate_pseudotime_effect_size(row, expression, pseudotime, percentile=0.2):
+def calculate_pseudotime_effect_size(row, expression, pseudotime, percentile=0.2) -> float:
     target = row[TARGET_COL]
     genes = row['top_genes'].split('; ')
 

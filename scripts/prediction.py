@@ -5,11 +5,11 @@ from tqdm import tqdm
 import numpy as np
 import pandas as pd
 import scipy.stats as stats
-from scripts.data import get_cell_types, get_lineages
+from scripts.data import get_cell_types, get_lineages, calculate_cell_type_effect_size, calculate_pseudotime_effect_size
 from scripts.train import get_train_data, train
 from scripts.consts import CLASSIFIERS, REGRESSORS, CLASSIFIER_ARGS, REGRESSOR_ARGS
 from scripts.utils import define_background, define_set_size, remove_outliers
-from scripts.output import load_background_scores, save_background_scores, summarise_result, save_csv
+from scripts.output import load_background_scores, save_background_scores, summarise_result, save_csv, get_preprocessed_data
 
 
 def get_prediction_score(
@@ -219,6 +219,11 @@ def run_batch(
                 lineage, set_name, top_genes, set_size, feature_selection, regressor, regression_metric,
                 cross_validation, repeats, distribution, seed, pathway_score, background_scores, p_value
             ))
+
+    # Add effect size
+    expression = get_preprocessed_data(expression, output)  # not scaled
+    classification_results['effect_size'] = classification_results.apply(calculate_cell_type_effect_size, axis=1, expression=expression, cell_types=cell_types)
+    regression_results['effect_size'] = regression_results.apply(calculate_pseudotime_effect_size, axis=1, expression=expression, pseudotime=scaled_pseudotime)
 
     # Save results
     info = f'_batch{batch}' if batch else ''
