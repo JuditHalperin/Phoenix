@@ -114,11 +114,11 @@ class PreprocessingTest(Test):
 
         mean_min1 = 6
         mean_max = 7
-        assert effect_size[0] == mean_min1 - mean_max
+        assert effect_size[0] == mean_max - mean_min1
 
         mean_min2 = np.mean([np.sum([12, 17, 22]), np.sum([14, 19, 24])])
         mean_max2 = np.mean([np.sum([13, 18, 23]), np.sum([15, 20, 25])])
-        assert effect_size[1] == mean_min2 - mean_max2
+        assert effect_size[1] == mean_max2 - mean_min2
 
 
 if __name__ == '__main__':

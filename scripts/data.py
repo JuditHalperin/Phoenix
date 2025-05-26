@@ -179,4 +179,4 @@ def calculate_pseudotime_effect_size(row, expression, pseudotime, percentile=0.2
     min_sum = sum_gene_expression(expression.loc[min_cells, genes], geometric=True).mean()
     max_sum = sum_gene_expression(expression.loc[max_cells, genes], geometric=True).mean()
 
-    return min_sum - max_sum
+    return max_sum - min_sum
