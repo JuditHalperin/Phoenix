@@ -142,6 +142,7 @@ def _plot_expression_across_cell_types(
         cell_type: str,
         title: str = '',
         sep_genes: int = 5,
+        dots: bool = False,
     ):
     """
     pass copy
@@ -167,7 +168,8 @@ def _plot_expression_across_cell_types(
     #             sns.boxenplot(data=data_long[(data_long['genes'] == gene) & (data_long[CELL_TYPE_COL] == cell_type)], x='combination', y='expression', hue=CELL_TYPE_COL, palette=color_mapping, width=0.8)
     # else:
     sns.violinplot(data=data_long, x=CELL_TYPE_COL, y='expression', hue=CELL_TYPE_COL, palette=color_mapping, width=0.8)
-    sns.stripplot(data=data_long, x=CELL_TYPE_COL, y='expression', hue=CELL_TYPE_COL, palette='dark:black', alpha=0.2, size=1, jitter=0.08, zorder=1)  # linewidth=0.5
+    if dots:
+        sns.stripplot(data=data_long, x=CELL_TYPE_COL, y='expression', hue=CELL_TYPE_COL, palette='dark:black', alpha=0.2, size=1, jitter=0.08, zorder=1)  # linewidth=0.5
 
     plt.ylabel('Expression')
     plt.xlabel('')
