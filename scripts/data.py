@@ -153,6 +153,10 @@ def sum_gene_expression(gene_set_expression: pd.DataFrame, geometric: bool = Fal
     return transform_log(summed)
 
 
+def mean_gene_expression(gene_set_expression: pd.DataFrame) -> pd.Series:
+    return gene_set_expression.mean() if gene_set_expression.ndim == 1 else gene_set_expression.mean(axis=1)
+
+
 def calculate_cell_type_effect_size(row, expression, cell_types) -> float:
     target = row[TARGET_COL]
     if target == ALL_CELLS:
@@ -162,13 +166,13 @@ def calculate_cell_type_effect_size(row, expression, cell_types) -> float:
     curr_cells = cell_types[cell_types[CELL_TYPE_COL] == target].index
     other_cells = cell_types[cell_types[CELL_TYPE_COL] != target].index
 
-    curr_sum = sum_gene_expression(expression.loc[curr_cells, genes], geometric=True).mean()
-    other_sum = sum_gene_expression(expression.loc[other_cells, genes], geometric=True).mean()
+    curr_sum = mean_gene_expression(expression.loc[curr_cells, genes]).mean()
+    other_sum = mean_gene_expression(expression.loc[other_cells, genes]).mean()
 
     return curr_sum - other_sum
 
 
-def calculate_pseudotime_effect_size(row, expression, pseudotime, percentile=0.2) -> float:
+def calculate_pseudotime_effect_size(row, expression, pseudotime, percentile: float = 0.2) -> float:
     target = row[TARGET_COL]
     genes = row['top_genes'].split('; ')
 
@@ -176,7 +180,7 @@ def calculate_pseudotime_effect_size(row, expression, pseudotime, percentile=0.2
     min_cells = pseudotime_cells[:int(np.ceil(len(pseudotime_cells) * percentile))]
     max_cells = pseudotime_cells[-int(np.ceil(len(pseudotime_cells) * percentile)):]
 
-    min_sum = sum_gene_expression(expression.loc[min_cells, genes], geometric=True).mean()
-    max_sum = sum_gene_expression(expression.loc[max_cells, genes], geometric=True).mean()
+    min_sum = mean_gene_expression(expression.loc[min_cells, genes]).mean()
+    max_sum = mean_gene_expression(expression.loc[max_cells, genes]).mean()
 
     return max_sum - min_sum

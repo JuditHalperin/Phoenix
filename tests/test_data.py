@@ -78,12 +78,12 @@ class PreprocessingTest(Test):
 
         effect_size = results.apply(calculate_cell_type_effect_size, axis=1, expression=expression, cell_types=cell_types)
 
-        mean_target1 = np.mean([1 + 6, 2 + 7])
-        mean_other1 = np.mean([3 + 8, 4 + 9, 5 + 10])
+        mean_target1 = np.mean([np.mean([1, 6]), np.mean([2, 7])])
+        mean_other1 = np.mean([np.mean([3, 8]), np.mean([4, 9]), np.mean([5, 10])])
         assert effect_size[0] == mean_target1 - mean_other1
 
-        mean_target2 = np.mean([13 + 18 + 23, 14 + 19 + 24])
-        mean_other2 = np.mean([11 + 16 + 21, 12 + 17 + 22, 15 + 20 + 25])
+        mean_target2 = np.mean([np.mean([13, 18, 23]), np.mean([14, 19, 24])])
+        mean_other2 = np.mean([np.mean([11, 16, 21]), np.mean([12, 17, 22]), np.mean([15, 20, 25])])
         assert effect_size[1] == mean_target2 - mean_other2
 
     def test_pseudotime_effect_size(self):
@@ -116,8 +116,8 @@ class PreprocessingTest(Test):
         mean_max = 7
         assert effect_size[0] == mean_max - mean_min1
 
-        mean_min2 = np.mean([np.sum([12, 17, 22]), np.sum([14, 19, 24])])
-        mean_max2 = np.mean([np.sum([13, 18, 23]), np.sum([15, 20, 25])])
+        mean_min2 = np.mean([np.mean([12, 17, 22]), np.mean([14, 19, 24])])
+        mean_max2 = np.mean([np.mean([13, 18, 23]), np.mean([15, 20, 25])])
         assert effect_size[1] == mean_max2 - mean_min2
 
 

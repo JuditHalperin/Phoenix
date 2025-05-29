@@ -4,7 +4,7 @@ import numpy as np
 import dask.dataframe as dd
 import matplotlib.pyplot as plt
 from scripts.consts import TARGET_COL, CELL_TYPE_COL
-from scripts.utils import make_valid_filename, convert_to_str, convert_from_str, adjust_p_value
+from scripts.utils import make_valid_filename, convert_to_str, convert_from_str, adjust_p_value, correct_effect_size
 
 
 # TODO: add methods to return paths of cache, reports and batch results (if needed)
@@ -127,6 +127,7 @@ def aggregate_result(result_type: str, output: str, tmp: str | None) -> pd.DataF
     if df is not None:  # if run was in a single batch or results already aggregated
         if 'fdr' not in df.columns:
             df['fdr'] = adjust_p_value(df['p_value'])
+            df['effect_size'] = correct_effect_size(df['effect_size'], df[TARGET_COL])
             save_csv(df, result_type, output, keep_index=False)
         return df
     
@@ -141,6 +142,7 @@ def aggregate_result(result_type: str, output: str, tmp: str | None) -> pd.DataF
     
     df = pd.concat(dfs, ignore_index=True)
     df['fdr'] = adjust_p_value(df['p_value'])
+    df['effect_size'] = correct_effect_size(df['effect_size'], df[TARGET_COL])
     save_csv(dd.from_pandas(df, npartitions=1), result_type, output, keep_index=False)
     return df
 

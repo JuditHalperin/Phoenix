@@ -1,10 +1,11 @@
 import re, os, time
+import pandas as pd
 from functools import wraps
 from argparse import Namespace
 import numpy as np
 import seaborn as sns
 from statsmodels.stats.multitest import multipletests
-from scripts.consts import SIZES, LIST_SEP, CELL_TYPE_COL
+from scripts.consts import SIZES, LIST_SEP, CELL_TYPE_COL, ALL_CELLS
 
 
 transform_log = lambda x: np.log2(x + 1)
@@ -110,6 +111,15 @@ def remove_outliers(values: list[float]) -> list[float]:
     lower_bound = Q1 - 1.5 * IQR
     upper_bound = Q3 + 1.5 * IQR
     return [i for i in values if i >= lower_bound and i <= upper_bound]
+
+
+def correct_effect_size(effect_sizes: pd.Series, targets: pd.Series) -> pd.Series:
+    corrected_effect_sizes = effect_sizes.copy()
+    for target in targets.unique():
+        if target == ALL_CELLS:
+            continue
+        corrected_effect_sizes[targets == target] -= effect_sizes[targets == target].mean()
+    return corrected_effect_sizes
 
 
 def show_runtime(func):
