@@ -177,8 +177,9 @@ def calculate_pseudotime_effect_size(row, expression, pseudotime, percentile: fl
     genes = row['top_genes'].split('; ')
 
     pseudotime_cells = pseudotime[target].dropna().sort_values(ascending=True).index
-    min_cells = pseudotime_cells[:int(np.ceil(len(pseudotime_cells) * percentile))]
-    max_cells = pseudotime_cells[-int(np.ceil(len(pseudotime_cells) * percentile)):]
+    size = int(np.ceil(len(pseudotime_cells) * percentile))
+    min_cells = pseudotime_cells[:size]
+    max_cells = pseudotime_cells[-size:]
 
     min_sum = mean_gene_expression(expression.loc[min_cells, genes]).mean()
     max_sum = mean_gene_expression(expression.loc[max_cells, genes]).mean()
