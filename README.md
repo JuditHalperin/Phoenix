@@ -166,20 +166,3 @@ The folder specified in `--output` will include the following upon completion of
 ## Results
 
 Our [portal](https://nachmanilab.shinyapps.io/phoenix_results) provides easy access to the results of *Phoenix*, applied to datasets on embryonic development and hematopoietic stem cell differentiation across several organisms.
-
-
-## Tests
-
-To run all tests, use the `test.py` script:
-
-```
-python test.py
-```
-
-Alternatively, use the `unittest` module:
-
-```
-python -m unittest discover tests
-```
-
-
