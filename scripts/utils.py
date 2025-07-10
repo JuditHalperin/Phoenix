@@ -62,7 +62,7 @@ def convert_from_str(info: str) -> list | float | str:
         return info
 
 
-def define_task(cell_type: str = None, lineage: str = None):
+def define_task(cell_type: str | None = None, lineage: str | None = None):
     if lineage:
         return f'regression_{lineage}'
     if cell_type:
@@ -70,14 +70,14 @@ def define_task(cell_type: str = None, lineage: str = None):
     raise RuntimeError()
 
 
-def define_background(set_size: int, repeats: int, cell_type: str = None, lineage: str = None):
+def define_background(set_size: int, repeats: int, cell_type: str | None = None, lineage: str | None = None):
     # TODO: add info such as model name
     return f'{define_task(cell_type, lineage)}_size{set_size}_repeats{repeats}'
 
 
 def define_set_size(set_len: int, set_fraction: float, min_set_size: int) -> int:
     set_size = min(max(int(set_len * set_fraction), min_set_size), set_len)
-    return max((x for x in SIZES if x <= set_size), default=None)
+    return max((x for x in SIZES if x <= set_size), default=None)  # type: ignore[arg-type]
 
 
 def define_batch_size(gene_set_len: int, processes: int) -> int:

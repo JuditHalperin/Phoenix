@@ -30,7 +30,7 @@ def setup(
 
     expression, cell_types, pseudotime, reduction = read_raw_data(expression, cell_types, pseudotime, reduction)
     expression, cell_types, pseudotime, reduction = preprocess_data(expression, cell_types, pseudotime, reduction, preprocessed=preprocessed, exclude_cell_types=exclude_cell_types, exclude_lineages=exclude_lineages, seed=seed, output=output)
-    gene_sets = get_gene_sets(pathway_database, custom_pathways, organism, expression.columns, min_set_size, output)
+    gene_sets = get_gene_sets(pathway_database, custom_pathways, organism, expression.columns, min_set_size, output)  # type: ignore[attr-defined]
     
     print(f'Running experiments for {len(gene_sets)} gene annotations with batch size of {define_batch_size(len(gene_sets), processes)}...')
 
@@ -88,7 +88,7 @@ def run_experiments(
 
 def summarize(
         output: str,
-        tmp: str = None,
+        tmp: str | None = None,
     ) -> None:
     print('Aggregating results...')
     aggregate_result('cell_type_classification', output, tmp)
@@ -151,7 +151,7 @@ def run_tool(
         run_aggregation_cmd(exp_job_id, processes, output, tmp)
     
     else:
-        expression, cell_types, pseudotime, reduction, gene_sets = setup(expression, cell_types, pseudotime, reduction, preprocessed, exclude_cell_types, exclude_lineages, pathway_database, custom_pathways, organism, min_set_size, seed, processes, output, return_data=True)
+        expression, cell_types, pseudotime, reduction, gene_sets = setup(expression, cell_types, pseudotime, reduction, preprocessed, exclude_cell_types, exclude_lineages, pathway_database, custom_pathways, organism, min_set_size, seed, processes, output, return_data=True)  # type: ignore[misc]
         run_experiments(feature_selection, set_fraction, min_set_size, classifier, regressor, classification_metric, regression_metric, cross_validation, repeats, seed, distribution, processes, output, tmp, cache, expression, cell_types, pseudotime, gene_sets)
         summarize(output)
 

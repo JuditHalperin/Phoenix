@@ -1,4 +1,4 @@
-import os, requests, datetime, warnings
+import os, requests, datetime, warnings  # type: ignore[import-untyped]
 import gseapy as gp
 from bioservices.kegg import KEGG
 from scripts.consts import SIZES
@@ -99,7 +99,7 @@ def get_go_pathways(db, organism):
     return pathways
 
 
-def retrieve_all_go_pathways(organism: str, pathway_type: str = None) -> dict[str, list[str]]:
+def retrieve_all_go_pathways(organism: str, pathway_type: str | None = None) -> dict[str, list[str]]:
     
     pathway_types = [pathway_type] if pathway_type else ['bp', 'mf', 'cc']
     pathways = {}
@@ -125,7 +125,7 @@ def get_msigdb():
         return gp.Msigdb()
 
 
-def get_msigdb_organism(organism: str) -> str:
+def get_msigdb_organism(organism: str) -> str | None:
     if organism.lower() in ['human', 'hs', 'homo sapiens']:
         return 'Hs'
     elif organism.lower() in ['mouse', 'mm', 'mus musculus']:

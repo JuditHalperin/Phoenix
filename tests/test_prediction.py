@@ -368,7 +368,7 @@ class BatchTest(Test):
         self.gene_sets = {'set1': ['gene1'], 'set2': ['gene2'], 'set3': ['gene3'], 'set4': ['gene4'], 'set5': ['gene5'], 'set6': ['gene6']}
                     
     def test_get_gene_set_batch(self):
-        self.assertEqual(get_gene_set_batch(self.gene_sets), self.gene_sets)
+        self.assertEqual(get_gene_set_batch(self.gene_sets, batch=0, batch_size=-1), self.gene_sets)
         self.assertEqual(get_gene_set_batch(self.gene_sets, batch=1, batch_size=3), {'set1': ['gene1'], 'set2': ['gene2'], 'set3': ['gene3']})
         self.assertEqual(get_gene_set_batch(self.gene_sets, batch=2, batch_size=3), {'set4': ['gene4'], 'set5': ['gene5'], 'set6': ['gene6']})
         self.assertEqual(get_gene_set_batch(self.gene_sets, batch=3, batch_size=2), {'set5': ['gene5'], 'set6': ['gene6']})

@@ -6,12 +6,12 @@ def get_cmd(
         args: dict[str, str],
         script: str = 'run',
         sbatch: bool = True,
-        processes: int = None,
+        processes: int | None = None,
         mem: str = '1G',
         time: str = '0:30:0',
-        report_path: str = None,
-        previous_job_id: str = None,
-        previous_processes: int = None,
+        report_path: str | None = None,
+        previous_job_id: str | None = None,
+        previous_processes: int | None = None,
     ):
 
     parsed_args = ', '.join([f'{k}={repr(v) if isinstance(v, str) else v}' for k, v in args.items()])
@@ -44,7 +44,7 @@ def get_cmd(
     return sbatch_cmd
 
 
-def execute_sbatch_cmd(cmd, title: str, processes: int = None) -> int:
+def execute_sbatch_cmd(cmd, title: str, processes: int | None = None) -> str:
     process = subprocess.run(cmd, shell=True, capture_output=True, text=True)
     try:
         job_id = process.stdout.strip().split()[-1]
@@ -56,7 +56,7 @@ def execute_sbatch_cmd(cmd, title: str, processes: int = None) -> int:
 
 # TODO: estimate memory and time for each step
 
-def run_setup_cmd(args: dict, tmp: str = None) -> str:
+def run_setup_cmd(args: dict, tmp: str | None = None) -> str:
     cmd = get_cmd(
         func='setup',
         args=args,
@@ -68,7 +68,7 @@ def run_setup_cmd(args: dict, tmp: str = None) -> str:
     return execute_sbatch_cmd(cmd, 'initial setup')
 
 
-def run_experiments_cmd(setup_job_id: int, mem: int, time: int, args: dict, tmp: str = None) -> int:
+def run_experiments_cmd(setup_job_id: str, mem: int, time: int, args: dict, tmp: str | None = None) -> str:
     cmd = get_cmd(
         func='run_experiments', 
         args=args,
@@ -82,7 +82,7 @@ def run_experiments_cmd(setup_job_id: int, mem: int, time: int, args: dict, tmp:
     return execute_sbatch_cmd(cmd, 'experiments', args['processes'])
 
 
-def run_aggregation_cmd(exp_job_id: int, exp_processes: int | None, output: str, tmp: str) -> int:
+def run_aggregation_cmd(exp_job_id: str, exp_processes: int | None, output: str, tmp: str) -> str:
     cmd = get_cmd(
         func='summarize',
         args={'output': output, 'tmp': tmp},

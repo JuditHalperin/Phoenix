@@ -11,28 +11,28 @@ from scripts.utils import show_runtime
 
 
 def get_train_target(
-        cell_types: pd.DataFrame = None,
-        scaled_pseudotime: pd.DataFrame = None,
-        cell_type: str = None,
-        lineage: int = None,
+        cell_types: pd.DataFrame | None = None,
+        scaled_pseudotime: pd.DataFrame | None = None,
+        cell_type: str | None = None,
+        lineage: int | None = None,
     ):
     if scaled_pseudotime is not None:
         return scaled_pseudotime.loc[:, lineage].dropna()
     
     if cell_type == ALL_CELLS:
-        return cell_types[CELL_TYPE_COL]
-    return cell_types[CELL_TYPE_COL] == cell_type
+        return cell_types[CELL_TYPE_COL]  # type: ignore[index]
+    return cell_types[CELL_TYPE_COL] == cell_type  # type: ignore[index]
 
 
 def get_train_data(
         scaled_expression: pd.DataFrame,
-        features: list[str] = None,
-        cell_types: pd.DataFrame = None,
-        scaled_pseudotime: pd.DataFrame = None,
-        cell_type: str = None,
-        lineage: int = None,
-        set_size: int = None,
-        feature_selection: str = None,
+        features: list[str] | None = None,
+        cell_types: pd.DataFrame | None = None,
+        scaled_pseudotime: pd.DataFrame | None = None,
+        cell_type: str | None = None,
+        lineage: int | None = None,
+        set_size: int | None = None,
+        feature_selection: str | None = None,
         selection_args: dict = {},
         ordered_selection: bool = False,
         seed: int = SEED
@@ -88,7 +88,7 @@ def train(
         predictor,
         predictor_args: dict,
         metric: str,
-        cross_validation: int = None,
+        cross_validation: int | None = None,
         balanced_weights: bool = True,
         train_size: float = 0.8,
         bins: int = 3,

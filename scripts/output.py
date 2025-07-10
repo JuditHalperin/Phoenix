@@ -1,4 +1,4 @@
-import os, yaml, glob
+import os, yaml, glob  # type: ignore[import-untyped]
 import pandas as pd
 import numpy as np
 import dask.dataframe as dd
@@ -25,7 +25,7 @@ def read_csv(path: str, index_col: int = 0, dtype=None, verbose: bool = False) -
         raise RuntimeError(f"An unexpected error occurred while reading '{path}': {str(e)}")
 
 
-def save_csv(data: list[dict] | pd.DataFrame | None, title: str, output_path: str, keep_index: bool = True) -> None:
+def save_csv(data: list[dict] | pd.DataFrame | dd.DataFrame | None, title: str, output_path: str, keep_index: bool = True) -> None:
     # TODO: if already exists
      
     if data is None: return
@@ -51,7 +51,7 @@ def read_raw_data(expression: str, cell_types: str | None, pseudotime: str | Non
     return expression, cell_types, pseudotime, reduction
 
 
-def load_background_scores(background: str, cache_path: str = None, verbose: bool = False):
+def load_background_scores(background: str, cache_path: str | None = None, verbose: bool = False):
     background = make_valid_filename(background).lower()
     if cache_path and os.path.exists(f'{cache_path}/{background}.yml') and os.path.getsize(f'{cache_path}/{background}.yml') > 0:
         if verbose:
@@ -61,7 +61,7 @@ def load_background_scores(background: str, cache_path: str = None, verbose: boo
     return []
 
 
-def save_background_scores(background_scores: list[float], background: str, cache_path: str = None, verbose: bool = False):
+def save_background_scores(background_scores: list[float], background: str, cache_path: str | None = None, verbose: bool = False):
     if cache_path:
         background = make_valid_filename(background).lower()
         if verbose:
@@ -132,8 +132,8 @@ def aggregate_result(result_type: str, output: str, tmp: str | None) -> pd.DataF
         return df
     
     dfs = []
-    for path in glob.glob(os.path.join(tmp, f'{result_type}_batch*.csv')):
-        df = read_results(os.path.basename(path), tmp, index_col=None)
+    for path in glob.glob(os.path.join(tmp, f'{result_type}_batch*.csv')):  # type: ignore[arg-type]
+        df = read_results(os.path.basename(path), tmp, index_col=None)  # type: ignore[arg-type]
         if df is not None:
             dfs.append(df)
 
@@ -147,7 +147,7 @@ def aggregate_result(result_type: str, output: str, tmp: str | None) -> pd.DataF
     return df
 
 
-def get_experiment(results: pd.DataFrame | str, output_path: str, set_name: str = None, target: str = None) -> pd.DataFrame | dict:
+def get_experiment(results: pd.DataFrame | str, output_path: str, set_name: str | None = None, target: str | None = None) -> pd.DataFrame | dict:
     if isinstance(results, str):
         results = read_results(results, output_path)
     if set_name and results is not None:
@@ -162,7 +162,7 @@ def get_experiment(results: pd.DataFrame | str, output_path: str, set_name: str 
     return results
 
 
-def save_plot(title: str, output: str = None, format: str = 'png') -> None:
+def save_plot(title: str, output: str | None = None, format: str = 'png') -> None:
     plt.tight_layout()
     if output:
         create_dir(output)

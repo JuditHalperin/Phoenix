@@ -64,7 +64,7 @@ def preprocess_data(
         exclude_cell_types: list[str] = [],
         exclude_lineages: list[str] = [],
         seed: int = SEED,
-        output: str = None,
+        output: str | None = None,
         verbose: bool = True,
     ):
     """
@@ -153,8 +153,15 @@ def sum_gene_expression(gene_set_expression: pd.DataFrame, geometric: bool = Fal
     return transform_log(summed)
 
 
-def mean_gene_expression(gene_set_expression: pd.DataFrame) -> pd.Series:
-    return gene_set_expression.mean() if gene_set_expression.ndim == 1 else gene_set_expression.mean(axis=1)
+def mean_gene_expression(
+    gene_set_expression: pd.DataFrame,
+    zero_threshold: float | None = 0.01,
+) -> pd.Series:
+    # if zero_threshold:
+    # TODO: implement zero thresholding
+    if gene_set_expression.empty:
+        return pd.Series(dtype=float)
+    return gene_set_expression.mean(axis=1) if gene_set_expression.ndim > 1 else gene_set_expression.mean()
 
 
 def calculate_cell_type_effect_size(row, expression, cell_types) -> float:
@@ -169,6 +176,8 @@ def calculate_cell_type_effect_size(row, expression, cell_types) -> float:
     curr_sum = mean_gene_expression(expression.loc[curr_cells, genes]).mean()
     other_sum = mean_gene_expression(expression.loc[other_cells, genes]).mean()
 
+    if np.isnan(curr_sum) or np.isnan(other_sum):
+        return 0.0
     return curr_sum - other_sum
 
 
@@ -184,4 +193,6 @@ def calculate_pseudotime_effect_size(row, expression, pseudotime, percentile: fl
     min_sum = mean_gene_expression(expression.loc[min_cells, genes]).mean()
     max_sum = mean_gene_expression(expression.loc[max_cells, genes]).mean()
 
+    if np.isnan(min_sum) or np.isnan(max_sum):
+        return 0.0
     return max_sum - min_sum

@@ -45,10 +45,10 @@ def get_all_column_unique_pathways(data, size: int, threshold: float):
 def plot_p_values(
         heatmap_data: pd.DataFrame,
         cluster_rows: bool = False,
-        max_value: int = None,
+        max_value: int | None = None,
         target_fontsize: int = 10,
         title: str = '',
-        output: str = None,
+        output: str | None = None,
         format: str = 'png',
     ):
     
@@ -100,17 +100,17 @@ def _plot_prediction_scores(
     
     # Draw line for pathway of interest's score
     plt.axvline(
-        x=experiment['pathway_score'],
+        x=experiment['pathway_score'],  # type: ignore[arg-type]
         color=INTEREST_COLOR,
-        label=f'Pathway: {np.round(experiment["pathway_score"], 3)}, p={convert_to_sci(experiment["fdr"])}',
+        label=f'Pathway: {np.round(experiment["pathway_score"], 3)}, p={convert_to_sci(experiment["fdr"])}',  # type: ignore[arg-type]
         linestyle='--'
     )
 
     # Draw distribution for background score
-    background_scores = experiment['background_scores']
+    background_scores: list[float] = experiment['background_scores']  # type: ignore[assignment]
     plot_args = {
         'x': background_scores,
-        'label': f'Background: {np.round(experiment["background_score_mean"], 3)}',
+        'label': f'Background: {np.round(experiment["background_score_mean"], 3)}',  # type: ignore[arg-type]
         'color': BACKGROUND_COLOR
     }
     
@@ -130,7 +130,7 @@ def _plot_prediction_scores(
         fit_values = np.interp(bin_centers, x, pdf * len(background_scores) * np.diff(bin_edges)[0])  # scale fit to match histogram frequency
         plt.plot(bin_centers, fit_values, color='grey', lw=2, label='Gamma fit')
 
-    plt.xlabel(experiment['metric'])
+    plt.xlabel(experiment['metric'])  # type: ignore[arg-type]
     if add_legend:
         plt.legend(fontsize=LEGEND_FONT_SIZE)
     plt.title(title)
@@ -229,7 +229,7 @@ def _plot_expression_distribution(
 def _plot_pseudotime(
         reduction: pd.DataFrame,
         pseudotime: pd.DataFrame,
-        trajectory: str = None,
+        trajectory: str | None = None,
         title: bool = False,
         subtitle: bool = False,
     ):
@@ -276,7 +276,7 @@ def _plot_gene_set_expression(
         reduction: pd.DataFrame,
         gene_set: list[str],
         set_name: str = '',
-        cells: list[str] = None,
+        cells: list[str] | None = None,
     ):
     cells = cells if cells is not None else expression.index
     gene_expression = sum_gene_expression(expression.loc[cells, gene_set])
@@ -363,7 +363,7 @@ def plot_all_cell_types_and_trajectories(
         reduction: pd.DataFrame, 
         cell_types: pd.DataFrame | None,
         pseudotime: pd.DataFrame | None,
-        output: str = None,
+        output: str | None = None,
         subtitle: bool = False,
         format: str = 'png',
     ):
@@ -390,7 +390,7 @@ def plot(
         classification_results: pd.DataFrame | str = 'cell_type_classification',
         regression_results: pd.DataFrame | str = 'pseudotime_regression',
         threshold: float = THRESHOLD,
-        top: int = None,
+        top: int | None = None,
         all: bool = False,
     ):
     """
@@ -412,7 +412,7 @@ def plot(
         if target_data is None or results is None:
             continue
 
-        data = results.pivot(index='set_name', columns=TARGET_COL, values='fdr')
+        data = results.pivot(index='set_name', columns=TARGET_COL, values='fdr')  # type: ignore[union-attr]
         save_csv(data, f'p_values_{target_type}', output)
 
         heatmap_pathways, exp_plot_pathways = [], []

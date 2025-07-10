@@ -17,14 +17,14 @@ def get_prediction_score(
         predictor: str,
         metric: str,
         seed: int,
-        gene_set: list[str] = None,
-        set_size: int = None,
-        feature_selection: str = None,
-        cross_validation: int = None,
-        cell_types: pd.DataFrame = None,
-        scaled_pseudotime: pd.DataFrame = None,
-        cell_type: str = None,
-        lineage: int = None,
+        gene_set: list[str] | None = None,
+        set_size: int | None = None,
+        feature_selection: str | None = None,
+        cross_validation: int | None = None,
+        cell_types: pd.DataFrame | None = None,
+        scaled_pseudotime: pd.DataFrame | None = None,
+        cell_type: str | None = None,
+        lineage: int | None = None,
     ) -> tuple[float, list[str]]:
 
     X, y, selected_genes = get_train_data(
@@ -92,12 +92,12 @@ def run_comparison(
         repeats: int,
         seed: int,
         distribution: str,
-        cell_types: pd.DataFrame = None,
-        scaled_pseudotime: pd.DataFrame = None,
-        cell_type: str = None,
-        lineage: str = None,
+        cell_types: pd.DataFrame | None = None,
+        scaled_pseudotime: pd.DataFrame | None = None,
+        cell_type: str | None = None,
+        lineage: str | None = None,
         trim_background: bool = True,
-        cache: str = None
+        cache: str | None = None
     ):
 
     prediction_args = {
@@ -131,11 +131,11 @@ def run_comparison(
     return p_value, pathway_score, background_scores, top_genes
 
 
-def get_gene_set_batch(gene_sets: dict[str, list[str]], batch: int | None = None, batch_size: int | None = None) -> dict[str, list[str]]:
+def get_gene_set_batch(gene_sets: dict[str, list[str]], batch: int, batch_size: int) -> dict[str, list[str]]:
     """
-    batch: number between 1 and `processes`, or None for a single batch
+    batch: number between 1 and `processes`, or 0 for a single batch
     """
-    if batch is None:
+    if not batch or batch is None:
         return gene_sets
     batch_start = (batch - 1) * batch_size
     batch_end = min(batch_start + batch_size, len(gene_sets))
@@ -220,12 +220,15 @@ def run_batch(
                 cross_validation, repeats, distribution, seed, pathway_score, background_scores, p_value
             ))
 
+    classification = pd.DataFrame(classification_results)
+    regression = pd.DataFrame(regression_results)
+
     # Add effect size
-    expression = get_preprocessed_data(expression, output)  # not scaled
-    classification_results['effect_size'] = classification_results.apply(calculate_cell_type_effect_size, axis=1, expression=expression, cell_types=cell_types)
-    regression_results['effect_size'] = regression_results.apply(calculate_pseudotime_effect_size, axis=1, expression=expression, pseudotime=scaled_pseudotime)
+    expression = get_preprocessed_data('expression', output)  # not scaled
+    classification['effect_size'] = classification.apply(calculate_cell_type_effect_size, axis=1, expression=expression, cell_types=cell_types)
+    regression['effect_size'] = regression.apply(calculate_pseudotime_effect_size, axis=1, expression=expression, pseudotime=scaled_pseudotime)
 
     # Save results
     info = f'_batch{batch}' if batch else ''
-    save_csv(classification_results, f'cell_type_classification{info}', output, keep_index=False)
-    save_csv(regression_results, f'pseudotime_regression{info}', output, keep_index=False)
+    save_csv(classification, f'cell_type_classification{info}', output, keep_index=False)
+    save_csv(regression, f'pseudotime_regression{info}', output, keep_index=False)
