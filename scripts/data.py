@@ -157,11 +157,9 @@ def mean_gene_expression(
     gene_set_expression: pd.DataFrame,
     zero_threshold: float | None = 0.01,
 ) -> pd.Series:
-    # if zero_threshold:
-    # TODO: implement zero thresholding
-    if gene_set_expression.empty:
-        return pd.Series(dtype=float)
-    return gene_set_expression.mean(axis=1) if gene_set_expression.ndim > 1 else gene_set_expression.mean()
+    if zero_threshold is not None:
+        gene_set_expression = gene_set_expression.mask(gene_set_expression <= zero_threshold)
+    return gene_set_expression.mean(axis=1, skipna=True) if gene_set_expression.ndim > 1 else gene_set_expression.mean(skipna=True)
 
 
 def calculate_cell_type_effect_size(row, expression, cell_types) -> float:

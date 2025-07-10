@@ -2,7 +2,7 @@ import unittest
 import pandas as pd
 import numpy as np
 from tests.interface import Test
-from scripts.data import preprocess_expression, preprocess_data, scale_expression, scale_pseudotime, calculate_cell_type_effect_size, calculate_pseudotime_effect_size
+from scripts.data import preprocess_expression, preprocess_data, scale_expression, scale_pseudotime, mean_gene_expression, calculate_cell_type_effect_size, calculate_pseudotime_effect_size
 from scripts.consts import CELL_TYPE_COL, TARGET_COL
 
 
@@ -58,6 +58,42 @@ class PreprocessingTest(Test):
         assert all(scaled_pseudotime.min() == 0) and all(scaled_pseudotime.max() == 1)
         assert scaled_pseudotime.iloc[1, 1] == (0.5 - np.min([0.4, 0.5, 0.6])) / (np.max([0.4, 0.5, 0.6]) - np.min([0.4, 0.5, 0.6]))
         assert scaled_pseudotime.iloc[1, 0] == (0.2 - np.min([0.1, 0.2])) / (np.max([0.1, 0.2]) - np.min([0.1, 0.2]))
+
+def test_mean_gene_expression_without_filtering(self):
+    df = pd.DataFrame({
+        "gene1": [1.0, 2.0],
+        "gene2": [3.0, 4.0]
+    }, index=["cell1", "cell2"])
+    
+    result = mean_gene_expression(df, zero_threshold=None)
+    expected = pd.Series([2.0, 3.0], index=["cell1", "cell2"])
+    pd.testing.assert_series_equal(result, expected)
+
+def test_mean_gene_expression_with_filtering(self):
+    df = pd.DataFrame({
+        "gene1": [0.0, 2.0],
+        "gene2": [4.0, 0.005]
+    }, index=["cell1", "cell2"])
+
+    result = mean_gene_expression(df, zero_threshold=0.01)
+    expected = pd.Series([4.0, 2.0], index=["cell1", "cell2"])  # only one non-masked value per row
+    pd.testing.assert_series_equal(result, expected)
+
+def test_mean_gene_expression_with_series_input(self):
+    s = pd.Series([0.0, 5.0, 10.0])
+    result = mean_gene_expression(s, zero_threshold=1.0)
+    expected = (5.0 + 10.0) / 2
+    assert result == expected
+
+def test_mean_gene_expression_when_all_masked(self):
+    df = pd.DataFrame({
+        "gene1": [0.0, 0.0],
+        "gene2": [0.0, 0.0]
+    }, index=["cell1", "cell2"])
+
+    result = mean_gene_expression(df, zero_threshold=0.01)
+    expected = pd.Series([np.nan, np.nan], index=["cell1", "cell2"])
+    pd.testing.assert_series_equal(result, expected)
 
     def test_cell_type_effect_size(self):
         results = pd.DataFrame({
