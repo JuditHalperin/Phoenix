@@ -2,7 +2,7 @@ import unittest
 import pandas as pd
 import numpy as np
 from tests.interface import Test
-from scripts.data import preprocess_expression, preprocess_data, scale_expression, scale_pseudotime, mean_gene_expression, calculate_cell_type_effect_size, calculate_pseudotime_effect_size
+from scripts.data import preprocess_expression, preprocess_data, reduce_dimension, scale_expression, scale_pseudotime, sum_gene_expression, mean_gene_expression, calculate_cell_type_effect_size, calculate_pseudotime_effect_size, transform_log, re_transform_log
 from scripts.consts import CELL_TYPE_COL, TARGET_COL
 
 
@@ -28,6 +28,14 @@ class PreprocessingTest(Test):
     def test_preprocessing_flow(self):
         preprocess_data(self.expression, self.cell_types, self.pseudotime, self.reduction, verbose=False)
 
+    def test_reduction_flow(self):
+        num_cells = 31
+        expression = self.generate_data(7, num_cells)
+        reduction = reduce_dimension(expression, reduction_method='umap', seed=42, verbose=False)
+        assert reduction.shape == (num_cells, 2)
+        reduction = reduce_dimension(expression, reduction_method='tsne', seed=42, verbose=False)
+        assert reduction.shape == (num_cells, 2)
+
     def test_gene_filtering(self):
         expression = self.generate_data(num_genes=10, mean=5, std=1)
         lowly_expressed = ['Gene3', 'Gene6']
@@ -35,6 +43,43 @@ class PreprocessingTest(Test):
         expression = preprocess_expression(expression, preprocessed=True, num_genes=8, verbose=False)
         for gene in lowly_expressed:
             assert gene not in expression.columns
+
+    def test_filter_cell_types_and_pseudotime(self):
+        expression = pd.DataFrame({
+            "gene1": [1, 2, 3],
+            "gene2": [4, 5, 6]
+        }, index=["cell1", "cell2", "cell3"])
+        cell_types = pd.DataFrame({
+            CELL_TYPE_COL: ["T", "B", "T"]
+        }, index=["cell1", "cell2", "cell3"])
+        pseudotime = pd.DataFrame({
+            "lin1": [0.1, 0.2, 0.3],
+            "lin2": [0.4, 0.5, 0.6]
+        }, index=["cell1", "cell2", "cell3"])
+        reduction = pd.DataFrame({
+            "pca1": [0.1, 0.2, 0.3],
+            "pca2": [0.4, 0.5, 0.6]
+        }, index=["cell1", "cell2", "cell3"])
+
+        expr, ct, pt, red = preprocess_data(
+            expression=expression,
+            cell_types=cell_types,
+            pseudotime=pseudotime,
+            reduction=reduction,
+            exclude_cell_types=["B"],
+            exclude_lineages=["lin2"],
+            preprocessed=True,
+            verbose=False
+        )
+
+        expected_index = ["cell1", "cell3"]
+        assert list(expr.index) == expected_index
+        assert list(ct.index) == expected_index
+        assert list(pt.index) == expected_index
+        assert list(red.index) == expected_index
+
+        assert "lin2" not in pt.columns
+        assert "lin1" in pt.columns
 
     def test_scaled_expression(self):
         expression = pd.DataFrame({
@@ -59,41 +104,76 @@ class PreprocessingTest(Test):
         assert scaled_pseudotime.iloc[1, 1] == (0.5 - np.min([0.4, 0.5, 0.6])) / (np.max([0.4, 0.5, 0.6]) - np.min([0.4, 0.5, 0.6]))
         assert scaled_pseudotime.iloc[1, 0] == (0.2 - np.min([0.1, 0.2])) / (np.max([0.1, 0.2]) - np.min([0.1, 0.2]))
 
-def test_mean_gene_expression_without_filtering(self):
-    df = pd.DataFrame({
-        "gene1": [1.0, 2.0],
-        "gene2": [3.0, 4.0]
-    }, index=["cell1", "cell2"])
-    
-    result = mean_gene_expression(df, zero_threshold=None)
-    expected = pd.Series([2.0, 3.0], index=["cell1", "cell2"])
-    pd.testing.assert_series_equal(result, expected)
+    def test_sum_gene_expression_geometric(self):
+        df = pd.DataFrame({
+            "gene1": [1, 2],
+            "gene2": [3, 4]
+        }, index=["cell1", "cell2"])
+        result = sum_gene_expression(df, geometric=True)
+        expected = pd.Series([4, 6], index=["cell1", "cell2"])
+        pd.testing.assert_series_equal(result, expected)
 
-def test_mean_gene_expression_with_filtering(self):
-    df = pd.DataFrame({
-        "gene1": [0.0, 2.0],
-        "gene2": [4.0, 0.005]
-    }, index=["cell1", "cell2"])
+        s = pd.Series([1, 2, 3])
+        result = sum_gene_expression(s, geometric=True)
+        expected = pd.Series([6]).squeeze()
+        assert result == expected
 
-    result = mean_gene_expression(df, zero_threshold=0.01)
-    expected = pd.Series([4.0, 2.0], index=["cell1", "cell2"])  # only one non-masked value per row
-    pd.testing.assert_series_equal(result, expected)
+    def test_sum_gene_expression_log_transformed(self):
+        df = pd.DataFrame({
+            "gene1": [1, 2],
+            "gene2": [3, 4]
+        }, index=["cell1", "cell2"])
+        result = sum_gene_expression(df, geometric=False)
+        expected_values = pd.Series([
+            transform_log(re_transform_log(1) + re_transform_log(3)),
+            transform_log(re_transform_log(2) + re_transform_log(4))
+        ], index=["cell1", "cell2"])
+        pd.testing.assert_series_equal(result, expected_values)
 
-def test_mean_gene_expression_with_series_input(self):
-    s = pd.Series([0.0, 5.0, 10.0])
-    result = mean_gene_expression(s, zero_threshold=1.0)
-    expected = (5.0 + 10.0) / 2
-    assert result == expected
+    def test_sum_gene_expression_all_zeros(self):
+        df = pd.DataFrame({
+            "gene1": [0.0, 0.0],
+            "gene2": [0.0, 0.0]
+        }, index=["cell1", "cell2"])
+        result = sum_gene_expression(df, geometric=False)
+        expected = pd.Series([0.0, 0.0], index=["cell1", "cell2"])
+        pd.testing.assert_series_equal(result, expected)
 
-def test_mean_gene_expression_when_all_masked(self):
-    df = pd.DataFrame({
-        "gene1": [0.0, 0.0],
-        "gene2": [0.0, 0.0]
-    }, index=["cell1", "cell2"])
+    def test_mean_gene_expression_without_filtering(self):
+        df = pd.DataFrame({
+            "gene1": [1.0, 2.0],
+            "gene2": [3.0, 4.0]
+        }, index=["cell1", "cell2"])
+        
+        result = mean_gene_expression(df, zero_threshold=None)
+        expected = pd.Series([2.0, 3.0], index=["cell1", "cell2"])
+        pd.testing.assert_series_equal(result, expected)
 
-    result = mean_gene_expression(df, zero_threshold=0.01)
-    expected = pd.Series([np.nan, np.nan], index=["cell1", "cell2"])
-    pd.testing.assert_series_equal(result, expected)
+    def test_mean_gene_expression_with_filtering(self):
+        df = pd.DataFrame({
+            "gene1": [0.0, 2.0],
+            "gene2": [4.0, 0.005]
+        }, index=["cell1", "cell2"])
+
+        result = mean_gene_expression(df, zero_threshold=0.01)
+        expected = pd.Series([4.0, 2.0], index=["cell1", "cell2"])  # only one non-masked value per row
+        pd.testing.assert_series_equal(result, expected)
+
+    def test_mean_gene_expression_with_series_input(self):
+        s = pd.Series([0.0, 5.0, 10.0])
+        result = mean_gene_expression(s, zero_threshold=1.0)
+        expected = (5.0 + 10.0) / 2
+        assert result == expected
+
+    def test_mean_gene_expression_when_all_masked(self):
+        df = pd.DataFrame({
+            "gene1": [0.0, 0.0],
+            "gene2": [0.0, 0.0]
+        }, index=["cell1", "cell2"])
+
+        result = mean_gene_expression(df, zero_threshold=0.01)
+        expected = pd.Series([np.nan, np.nan], index=["cell1", "cell2"])
+        pd.testing.assert_series_equal(result, expected)
 
     def test_cell_type_effect_size(self):
         results = pd.DataFrame({

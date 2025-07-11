@@ -36,8 +36,9 @@ def preprocess_expression(expression: pd.DataFrame, preprocessed: bool, num_gene
     return pd.DataFrame(data=adata.X, index=adata.obs_names, columns=adata.var_names)
 
 
-def reduce_dimension(expression: pd.DataFrame, reduction_method: str, seed: int) -> pd.DataFrame:
-    print('Reducing single-cell dimensionality...')
+def reduce_dimension(expression: pd.DataFrame, reduction_method: str, seed: int, verbose: bool = True) -> pd.DataFrame:
+    if verbose:
+        print('Reducing single-cell dimensionality...')
 
     adata = sc.AnnData(expression)
 

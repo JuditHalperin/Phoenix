@@ -12,7 +12,7 @@ def get_cmd(
         report_path: str | None = None,
         previous_job_id: str | None = None,
         previous_processes: int | None = None,
-    ):
+    ) -> str:
 
     parsed_args = ', '.join([f'{k}={repr(v) if isinstance(v, str) else v}' for k, v in args.items()])
     parsed_args = parsed_args.replace("'", '\\"')
