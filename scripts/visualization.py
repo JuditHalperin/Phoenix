@@ -115,7 +115,7 @@ def _plot_prediction_scores(
     }
     
     if by_freq:
-        plt.hist(bins=50 if len(np.unique(background_scores)) > 50 else None, **plot_args)
+        plt.hist(bins=50 if len(np.unique(background_scores)) > 50 else None, **plot_args)  # type: ignore[arg-type]
         plt.ylabel('Frequency')
     else:
         sns.kdeplot(fill=True, **plot_args)
@@ -237,7 +237,7 @@ def _plot_pseudotime(
     trajectories = [trajectory] if trajectory else pseudotime.columns.tolist()
     cells = reduction.index.intersection(pseudotime.index)
     for lineage in trajectories:
-        plt.scatter(reduction.loc[cells, reduction.columns[0]], reduction.loc[cells, reduction.columns[1]], s=POINT_SIZE, c=pseudotime.loc[cells, lineage], cmap=plt.cm.plasma)
+        plt.scatter(reduction.loc[cells, reduction.columns[0]], reduction.loc[cells, reduction.columns[1]], s=POINT_SIZE, c=pseudotime.loc[cells, lineage], cmap=plt.cm.plasma)  # type: ignore[attr-defined]
     if title: plt.title(f'{trajectory} Trajectory' if trajectory else 'Trajectories')
     if subtitle: plt.suptitle(f'n = {len(reduction.index):,}', y=0.83, x=0.7, fontsize=11)
     plt.xlabel(reduction.columns[0])
@@ -285,7 +285,7 @@ def _plot_gene_set_expression(
     clean_expression = remove_outliers(gene_expression)
     
     plt.scatter(reduction.iloc[:, 0], reduction.iloc[:, 1], s=POINT_SIZE, c=BACKGROUND_COLOR)
-    plt.scatter(reduction.loc[cells].iloc[:, 0], reduction.loc[cells].iloc[:, 1], s=POINT_SIZE, c=gene_expression, cmap=plt.cm.Blues, vmin=min(clean_expression), vmax=max(clean_expression))
+    plt.scatter(reduction.loc[cells].iloc[:, 0], reduction.loc[cells].iloc[:, 1], s=POINT_SIZE, c=gene_expression, cmap=plt.cm.Blues, vmin=min(clean_expression), vmax=max(clean_expression))  # type: ignore[attr-defined]
     
     plt.colorbar(label='Pathway expression sum')
     plt.xlabel(reduction.columns[0])

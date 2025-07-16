@@ -36,7 +36,7 @@ def get_kegg_organism(organism):
     return None
 
 
-def retrieve_all_kegg_pathways(organism: str, subset: int = False) -> dict[str, list[str]]:
+def retrieve_all_kegg_pathways(organism: str, subset: int = 0) -> dict[str, list[str]]:
 
     # If organism is supported by MSigDB and includes KEGG, use it as it is much faster
     if organism == 'human':
@@ -51,7 +51,7 @@ def retrieve_all_kegg_pathways(organism: str, subset: int = False) -> dict[str, 
     k.organism = kegg_organism
     pathway_list = k.pathwayIds
 
-    if subset:
+    if subset > 0:
         pathway_list = pathway_list[:subset]
 
     pathways = {}
