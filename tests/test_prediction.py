@@ -3,9 +3,9 @@ import pandas as pd
 import numpy as np
 from tests.interface import Test
 from scripts.train import get_train_target, get_train_data, train
-from scripts.prediction import compare_scores, get_gene_set_batch
+from scripts.prediction import compare_scores, get_gene_set_batch, run_comparison
 from scripts.utils import adjust_p_value
-from scripts.consts import CELL_TYPE_COL, ALL_CELLS, CLASSIFIERS, CLASSIFIER_ARGS, REGRESSORS, REGRESSOR_ARGS, THRESHOLD
+from scripts.consts import CELL_TYPE_COL, ALL_CELLS, CLASSIFIERS, CLASSIFIER_ARGS, REGRESSORS, REGRESSOR_ARGS, THRESHOLD, CLASSIFICATION_METRIC, FEATURE_SELECTION, SEED
 
 
 class TrainDataTest(Test):
@@ -374,6 +374,97 @@ class BatchTest(Test):
         self.assertEqual(get_gene_set_batch(self.gene_sets, batch=3, batch_size=2), {'set5': ['gene5'], 'set6': ['gene6']})
         self.assertEqual(get_gene_set_batch(self.gene_sets, batch=1, batch_size=4), {'set1': ['gene1'], 'set2': ['gene2'], 'set3': ['gene3'], 'set4': ['gene4']})
 
+
+class TaskRunTest(Test):
+
+    def setUp(self) -> None:
+
+        self.scaled_expression = pd.DataFrame({
+            'Gene1': [1, 3, 5, 7, 9, 11],
+            'Gene2': [10, 1, 10, 1, 10, 1],
+            'Gene3': [3, 4, 4, 5, 6, 7],
+            'Gene4': [4, 4, 4, 4, 4, 4],
+            'Gene5': [10, 1, 10, 1, 10, 1],
+        }, index=['Cell1', 'Cell2', 'Cell3', 'Cell4', 'Cell5', 'Cell6'])
+
+        self.cell_types = pd.DataFrame({
+            CELL_TYPE_COL: ['TypeA', 'TypeB', 'TypeA', 'TypeB', 'TypeA', 'TypeB'],
+        }, index=['Cell1', 'Cell2', 'Cell3', 'Cell4', 'Cell5', 'Cell6'])
+
+        self.scaled_pseudotime = pd.DataFrame({
+            1: [0.1, 0.25, 0.3, None, 0.44, 0.5],
+            2: [0.6, 0.3, 0.9, 0.1, 1.0, 1.2],
+        }, index=['Cell1', 'Cell2', 'Cell3', 'Cell4', 'Cell5', 'Cell6'])
+
+        self.cross_validation = 3
+        self.predictors = ['RF', 'Reg', 'DTree']
+    
+    def test_classification_run(self):
+
+        for predictor in self.predictors:
+            task_args = {
+                'scaled_expression': self.scaled_expression,
+                'predictor': predictor,
+                'metric': CLASSIFICATION_METRIC,
+                'set_size': 1,
+                'feature_selection': FEATURE_SELECTION,
+                'cross_validation': self.cross_validation,
+                'repeats': 50,
+                'seed': SEED,
+                'distribution': 'gamma',
+                'cell_types': self.cell_types,
+                'cell_type': ALL_CELLS,
+                'trim_background': False,
+                'cache': None  # avoid saving to cache during test
+            }
+            
+            good_gene_set = ['Gene2']
+            p_value = run_comparison(gene_set=good_gene_set, **task_args)[0]
+            self.assertLessEqual(p_value, THRESHOLD)
+            good_gene_set = ['Gene5']
+            p_value = run_comparison(gene_set=good_gene_set, **task_args)[0]
+            self.assertLessEqual(p_value, THRESHOLD)
+
+            bad_gene_set = ['Gene4']
+            p_value = run_comparison(gene_set=bad_gene_set, **task_args)[0]
+            self.assertGreaterEqual(p_value, THRESHOLD)
+            bad_gene_set = ['Gene1']
+            p_value = run_comparison(gene_set=bad_gene_set, **task_args)[0]
+            self.assertGreaterEqual(p_value, THRESHOLD)
+
+    def test_regression_run(self):
+
+        for predictor in self.predictors:
+            task_args = {
+                'scaled_expression': self.scaled_expression,
+                'predictor': predictor,
+                'metric': 'neg_mean_squared_error',
+                'set_size': 1,
+                'feature_selection': FEATURE_SELECTION,
+                'cross_validation': self.cross_validation,
+                'repeats': 10,
+                'seed': SEED,
+                'distribution': 'gamma',
+                'scaled_pseudotime': self.scaled_pseudotime,
+                'lineage': 1,
+                'trim_background': False,
+                'cache': None  # avoid saving to cache during test
+            }
+            
+            good_gene_set = ['Gene1']
+            p_value = run_comparison(gene_set=good_gene_set, **task_args)[0]
+            self.assertLessEqual(p_value, THRESHOLD)
+            good_gene_set = ['Gene3']
+            p_value = run_comparison(gene_set=good_gene_set, **task_args)[0]
+            self.assertLessEqual(p_value, THRESHOLD)
+
+            bad_gene_set = ['Gene2']
+            p_value = run_comparison(gene_set=bad_gene_set, **task_args)[0]
+            self.assertGreaterEqual(p_value, THRESHOLD)
+            bad_gene_set = ['Gene4']
+            p_value = run_comparison(gene_set=bad_gene_set, **task_args)[0]
+            self.assertGreaterEqual(p_value, THRESHOLD)
+        
 
 if __name__ == '__main__':
     unittest.main()

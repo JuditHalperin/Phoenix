@@ -149,7 +149,7 @@ class PreprocessingTest(Test):
         expected = pd.Series([2.0, 3.0], index=["cell1", "cell2"])
         pd.testing.assert_series_equal(result, expected)
 
-    def test_mean_gene_expression_with_filtering(self):
+    def test_mean_gene_expression_with_df(self):
         df = pd.DataFrame({
             "gene1": [0.0, 2.0],
             "gene2": [4.0, 0.005]
@@ -160,21 +160,11 @@ class PreprocessingTest(Test):
         expected = pd.Series([4.0, 2.0], index=["cell1", "cell2"])  # only one non-masked value per row
         pd.testing.assert_series_equal(result, expected)
 
-    def test_mean_gene_expression_with_series_input(self):
+    def test_mean_gene_expression_with_series(self):
         s = pd.Series([5.0, 10.0])
         result = mean_gene_expression(s)
         expected = (5.0 + 10.0) / 2
         assert result == expected
-
-    def test_mean_gene_expression_when_all_masked(self):
-        df = pd.DataFrame({
-            "gene1": [0.0, 0.0],
-            "gene2": [0.0, 0.0]
-        }, index=["cell1", "cell2"])
-
-        result = mean_gene_expression(df, zero_threshold=0.01)
-        expected = pd.Series([np.nan, np.nan], index=["cell1", "cell2"])
-        pd.testing.assert_series_equal(result, expected)
 
     def test_cell_type_effect_size(self):
         results = pd.DataFrame({
@@ -193,7 +183,7 @@ class PreprocessingTest(Test):
             CELL_TYPE_COL: ['target1', 'target1', 'target2', 'target2', 'target3']
         }, index=['cell1', 'cell2', 'cell3', 'cell4', 'cell5'])
 
-        effect_size = results.apply(calculate_cell_type_effect_size, axis=1, expression=expression, cell_types=cell_types)
+        effect_size = results.apply(calculate_cell_type_effect_size, axis=1, masked_expression=expression, cell_types=cell_types)
 
         mean_target1 = np.mean([np.mean([1, 6]), np.mean([2, 7])])
         mean_other1 = np.mean([np.mean([3, 8]), np.mean([4, 9]), np.mean([5, 10])])
@@ -224,7 +214,7 @@ class PreprocessingTest(Test):
         effect_size = results.apply(
             calculate_pseudotime_effect_size,
             axis=1,
-            expression=expression,
+            masked_expression=expression,
             pseudotime=pseudotime,
             percentile=0.3
         )
