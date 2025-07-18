@@ -145,7 +145,7 @@ class PreprocessingTest(Test):
             "gene2": [3.0, 4.0]
         }, index=["cell1", "cell2"])
         
-        result = mean_gene_expression(df, zero_threshold=None)
+        result = mean_gene_expression(df)
         expected = pd.Series([2.0, 3.0], index=["cell1", "cell2"])
         pd.testing.assert_series_equal(result, expected)
 
@@ -154,14 +154,15 @@ class PreprocessingTest(Test):
             "gene1": [0.0, 2.0],
             "gene2": [4.0, 0.005]
         }, index=["cell1", "cell2"])
+        df = df.mask(df < 0.01)  
 
-        result = mean_gene_expression(df, zero_threshold=0.01)
+        result = mean_gene_expression(df)
         expected = pd.Series([4.0, 2.0], index=["cell1", "cell2"])  # only one non-masked value per row
         pd.testing.assert_series_equal(result, expected)
 
     def test_mean_gene_expression_with_series_input(self):
-        s = pd.Series([0.0, 5.0, 10.0])
-        result = mean_gene_expression(s, zero_threshold=1.0)
+        s = pd.Series([5.0, 10.0])
+        result = mean_gene_expression(s)
         expected = (5.0 + 10.0) / 2
         assert result == expected
 

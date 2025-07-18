@@ -162,6 +162,7 @@ def run_batch(
         distribution: str,
         output: str,
         cache: str,
+        effect_size_threshold: float = 0.3
     ) -> None:
     """
     output: main output path for a single batch and temp output path for many batches
@@ -225,8 +226,9 @@ def run_batch(
 
     # Add effect size
     expression = get_preprocessed_data('expression', output)  # not scaled
-    classification['effect_size'] = classification.apply(calculate_cell_type_effect_size, axis=1, expression=expression, cell_types=cell_types)
-    regression['effect_size'] = regression.apply(calculate_pseudotime_effect_size, axis=1, expression=expression, pseudotime=scaled_pseudotime)
+    masked_expression = expression.mask(expression <= effect_size_threshold)
+    classification['effect_size'] = classification.apply(calculate_cell_type_effect_size, axis=1, masked_expression=masked_expression, cell_types=cell_types)
+    regression['effect_size'] = regression.apply(calculate_pseudotime_effect_size, axis=1, masked_expression=masked_expression, pseudotime=scaled_pseudotime)
 
     # Save results
     info = f'_batch{batch}' if batch else ''

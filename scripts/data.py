@@ -154,16 +154,11 @@ def sum_gene_expression(gene_set_expression: pd.DataFrame, geometric: bool = Fal
     return transform_log(summed)
 
 
-def mean_gene_expression(
-    gene_set_expression: pd.DataFrame,
-    zero_threshold: float | None = 0.01,
-) -> pd.Series:
-    if zero_threshold is not None:
-        gene_set_expression = gene_set_expression.mask(gene_set_expression <= zero_threshold)
+def mean_gene_expression(gene_set_expression: pd.DataFrame) -> pd.Series:
     return gene_set_expression.mean(axis=1, skipna=True) if gene_set_expression.ndim > 1 else gene_set_expression.mean(skipna=True)
 
 
-def calculate_cell_type_effect_size(row, expression, cell_types) -> float:
+def calculate_cell_type_effect_size(row, masked_expression, cell_types) -> float:
     target = row[TARGET_COL]
     if target == ALL_CELLS:
         return np.nan
@@ -172,15 +167,15 @@ def calculate_cell_type_effect_size(row, expression, cell_types) -> float:
     curr_cells = cell_types[cell_types[CELL_TYPE_COL] == target].index
     other_cells = cell_types[cell_types[CELL_TYPE_COL] != target].index
 
-    curr_sum = mean_gene_expression(expression.loc[curr_cells, genes]).mean()
-    other_sum = mean_gene_expression(expression.loc[other_cells, genes]).mean()
+    curr_sum = mean_gene_expression(masked_expression.loc[curr_cells, genes]).mean()
+    other_sum = mean_gene_expression(masked_expression.loc[other_cells, genes]).mean()
 
     if np.isnan(curr_sum) or np.isnan(other_sum):
         return 0.0
     return curr_sum - other_sum
 
 
-def calculate_pseudotime_effect_size(row, expression, pseudotime, percentile: float = 0.2) -> float:
+def calculate_pseudotime_effect_size(row, masked_expression, pseudotime, percentile: float = 0.2) -> float:
     target = row[TARGET_COL]
     genes = row['top_genes'].split('; ')
 
@@ -189,8 +184,8 @@ def calculate_pseudotime_effect_size(row, expression, pseudotime, percentile: fl
     min_cells = pseudotime_cells[:size]
     max_cells = pseudotime_cells[-size:]
 
-    min_sum = mean_gene_expression(expression.loc[min_cells, genes]).mean()
-    max_sum = mean_gene_expression(expression.loc[max_cells, genes]).mean()
+    min_sum = mean_gene_expression(masked_expression.loc[min_cells, genes]).mean()
+    max_sum = mean_gene_expression(masked_expression.loc[max_cells, genes]).mean()
 
     if np.isnan(min_sum) or np.isnan(max_sum):
         return 0.0
