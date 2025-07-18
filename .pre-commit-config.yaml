@@ -13,3 +13,6 @@ repos:
         language: system
         pass_filenames: false
         stages: [push]
+
+# pre-commit install --hook-type pre-commit
+# pre-commit install --hook-type pre-push
