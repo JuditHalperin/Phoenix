@@ -1,6 +1,6 @@
 numpy==1.26.4
 pandas==2.2.2
-dask==2024.7.1
+dask[dataframe]==2024.7.1
 scikit-learn==1.5.1
 scipy==1.14.0
 pyyaml==6.0.1

@@ -26,13 +26,15 @@ def setup(
         processes: int,
         output: str,
         return_data: bool = False,
+        verbose: bool = True,
     ) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, dict[str, list[str]]] | None:
 
     expression, cell_types, pseudotime, reduction = read_raw_data(expression, cell_types, pseudotime, reduction)
-    expression, cell_types, pseudotime, reduction = preprocess_data(expression, cell_types, pseudotime, reduction, preprocessed=preprocessed, exclude_cell_types=exclude_cell_types, exclude_lineages=exclude_lineages, seed=seed, output=output)
+    expression, cell_types, pseudotime, reduction = preprocess_data(expression, cell_types, pseudotime, reduction, preprocessed=preprocessed, exclude_cell_types=exclude_cell_types, exclude_lineages=exclude_lineages, seed=seed, output=output, verbose=verbose)
     gene_sets = get_gene_sets(pathway_database, custom_pathways, organism, expression.columns, min_set_size, output)  # type: ignore[attr-defined]
     
-    print(f'Running experiments for {len(gene_sets)} gene annotations with batch size of {define_batch_size(len(gene_sets), processes)}...')
+    if verbose:
+        print(f'Running experiments for {len(gene_sets)} gene annotations with batch size of {define_batch_size(len(gene_sets), processes)}...')
 
     if return_data:
         return expression, cell_types, pseudotime, reduction, gene_sets
@@ -59,6 +61,7 @@ def run_experiments(
         cell_types: pd.DataFrame | str = 'cell_types',
         pseudotime: pd.DataFrame | str = 'pseudotime',
         gene_sets: dict[str, list[str]] | str = 'gene_sets',
+        verbose: bool = True,
     ) -> None:
     """
     Run experiments for a single batch of gene sets.
@@ -83,18 +86,22 @@ def run_experiments(
         classifier, regressor, classification_metric, regression_metric,
         cross_validation, repeats, seed, distribution,
         tmp if batch else output, cache,
+        verbose=verbose,
     )
 
 
 def summarize(
         output: str,
         tmp: str | None = None,
+        verbose: bool = True,
     ) -> None:
-    print('Aggregating results...')
+    if verbose:
+        print('Aggregating results...')
     aggregate_result('cell_type_classification', output, tmp)
     aggregate_result('pseudotime_regression', output, tmp)
 
-    print('Plotting results...')
+    if verbose:
+        print('Plotting results...')
     plot(output)
 
 
@@ -126,6 +133,7 @@ def run_tool(
         output: str,
         cache: str,
         tmp: str,
+        verbose: bool = True,
     ) -> None:
 
     if processes:
@@ -151,9 +159,9 @@ def run_tool(
         run_aggregation_cmd(exp_job_id, processes, output, tmp)
     
     else:
-        expression, cell_types, pseudotime, reduction, gene_sets = setup(expression, cell_types, pseudotime, reduction, preprocessed, exclude_cell_types, exclude_lineages, pathway_database, custom_pathways, organism, min_set_size, seed, processes, output, return_data=True)  # type: ignore[misc]
-        run_experiments(feature_selection, set_fraction, min_set_size, classifier, regressor, classification_metric, regression_metric, cross_validation, repeats, seed, distribution, processes, output, tmp, cache, expression, cell_types, pseudotime, gene_sets)
-        summarize(output)
+        expression, cell_types, pseudotime, reduction, gene_sets = setup(expression, cell_types, pseudotime, reduction, preprocessed, exclude_cell_types, exclude_lineages, pathway_database, custom_pathways, organism, min_set_size, seed, processes, output, return_data=True, verbose=verbose)  # type: ignore[misc]
+        run_experiments(feature_selection, set_fraction, min_set_size, classifier, regressor, classification_metric, regression_metric, cross_validation, repeats, seed, distribution, processes, output, tmp, cache, expression, cell_types, pseudotime, gene_sets, verbose=verbose)
+        summarize(output, verbose=verbose)
 
 
 if __name__ == '__main__':

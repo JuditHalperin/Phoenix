@@ -162,7 +162,8 @@ def run_batch(
         distribution: str,
         output: str,
         cache: str,
-        effect_size_threshold: float = 0.3
+        effect_size_threshold: float = 0.3,
+        verbose: bool = True,
     ) -> None:
     """
     output: main output path for a single batch and temp output path for many batches
@@ -181,10 +182,13 @@ def run_batch(
         desc='Batch',
         ncols=80,
         ascii=True,
-        file=sys.stdout if batch else None
+        file=sys.stdout if batch else None,
+        disable=not verbose,
     ):
-        print(f'/n{logger}Pathway {i + 1}/{len(batch_gene_sets)}: {set_name}', flush=True)
-        sys.stdout.flush()
+        if verbose:
+
+            print(f'\n{logger}Pathway {i + 1}/{len(batch_gene_sets)}: {set_name}', flush=True)
+            sys.stdout.flush()
 
         set_size = define_set_size(len(gene_set), set_fraction, min_set_size)
         task_args = {

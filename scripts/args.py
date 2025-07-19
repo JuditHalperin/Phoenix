@@ -71,6 +71,8 @@ def parse_run_args() -> argparse.Namespace:
                         help='Time to allocate for each process (hours)')
     parser.add_argument('--output', type=str, required=True,
                         help='Path to output directory')
+    parser.add_argument('--verbose', action='store_true', default=True,
+                        help='Whether to print progress messages')
     
     return parser.parse_args()
 
