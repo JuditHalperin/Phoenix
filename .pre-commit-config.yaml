@@ -12,7 +12,7 @@ repos:
         entry: python test.py
         language: system
         pass_filenames: false
-        stages: [push]
+        stages: [pre-push]
 
 # pre-commit install --hook-type pre-commit
 # pre-commit install --hook-type pre-push
