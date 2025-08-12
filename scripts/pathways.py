@@ -153,7 +153,7 @@ def get_msigdb_category(msig, category, organism):
     )
 
 
-def retrieve_all_msigdb_pathways(organism: str) -> dict[str, list[str]]:
+def retrieve_all_msigdb_pathways(organism: str, categories: list[str] | None = None) -> dict[str, list[str]]:
     msigdb_organism = get_msigdb_organism(organism)
     if not msigdb_organism:
         raise RuntimeError(f'Organism {organism} is not supported by MSigBD annotations - provide either `human` or `mouse`')
@@ -161,7 +161,8 @@ def retrieve_all_msigdb_pathways(organism: str) -> dict[str, list[str]]:
     msig = get_msigdb()
 
     pathways = {}
-    for category in msigdb_categories[msigdb_organism]:
+    categories = categories or msigdb_categories[msigdb_organism]
+    for category in categories:
         pathways.update(get_msigdb_category(msig, category, msigdb_organism))
     return pathways
 
